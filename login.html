@@ -24,30 +24,41 @@
     </div>
 
     <script>
-        document.getElementById('formLogin').onsubmit = async (e) => {
-            e.preventDefault();
-            const dados = {
-                email: document.getElementById('email').value,
-                senha: document.getElementById('senha').value
-            };
-
-            const response = await fetch('http://localhost:3001/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados)
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                // Guarda o nome do usuário para usar no site principal
-                localStorage.setItem('usuarioNome', result.usuario.nome);
-                alert('Bem-vindo, ' + result.usuario.nome + '! ✅');
-                window.location.href = 'Rod.html'; // Redireciona para o site
-            } else {
-                alert(result.erro);
-            }
+    document.getElementById('formLogin').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const emailDigitado = document.getElementById('email').value; // Pegamos o e-mail digitado
+        const dados = {
+            email: emailDigitado,
+            senha: document.getElementById('senha').value
         };
-    </script>
+
+        const response = await fetch('http://localhost:3001/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // 1. Salva o nome e o e-mail para as outras páginas reconhecerem você
+            localStorage.setItem('usuarioNome', result.usuario.nome);
+            localStorage.setItem('usuarioEmail', emailDigitado); // Importante para a "tranca" do admin
+
+            alert('Bem-vindo, ' + result.usuario.nome + '! ✅');
+
+            // 2. LOGICA DE REDIRECIONAMENTO
+            // Troque 'SEU_EMAIL_AQUI' pelo e-mail que você cadastrou como administrador
+            if (emailDigitado === 'davizaia1345@gmail.com') {
+                window.location.href = 'admin.html'; // Te manda para o Painel
+            } else {
+                window.location.href = 'Rod.html'; // Manda clientes para o Agendamento
+            }
+        } else {
+            alert(result.erro);
+        }
+    };
+</script>
 </body>
 </html>

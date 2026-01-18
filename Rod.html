@@ -38,28 +38,73 @@
   </section>
 
  <script>
+    // 1. Lógica para mostrar o nome do usuário ao carregar a página
     window.onload = function() {
-    const nomeUsuario = localStorage.getItem('usuarioNome');
-    const divLogado = document.getElementById('logado');
-    const divDeslogado = document.getElementById('deslogado');
-    const spanNome = document.getElementById('boas-vindas');
+        const nomeUsuario = localStorage.getItem('usuarioNome');
+        const divLogado = document.getElementById('logado');
+        const divDeslogado = document.getElementById('deslogado');
+        const spanNome = document.getElementById('boas-vindas');
 
-    if (nomeUsuario) {
-        divLogado.style.display = 'block';
-        divDeslogado.style.display = 'none';
-        spanNome.innerText = "Olá, " + nomeUsuario + "!";
-        
-        const campoNome = document.getElementById('nome');
-        if(campoNome) {
-            campoNome.value = nomeUsuario;
-            campoNome.readOnly = true;
+        if (nomeUsuario) {
+            divLogado.style.display = 'block';
+            divDeslogado.style.display = 'none';
+            spanNome.innerText = "Olá, " + nomeUsuario + "!";
+            
+            const campoNome = document.getElementById('nome');
+            if(campoNome) {
+                campoNome.value = nomeUsuario;
+                campoNome.readOnly = true; // Impede o cliente de mudar o nome
+            }
         }
-    } else {
-        divLogado.style.display = 'none';
-        divDeslogado.style.display = 'block';
+    };
+
+    // 2. Função para o botão de sair
+    function fazerLogout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
     }
-};
-  
+
+    // 3. Lógica para enviar o agendamento para o servidor
+    const form = document.getElementById("form-agendamento");
+    const mensagem = document.getElementById("mensagem");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const dados = {
+            nome: document.getElementById("nome").value,
+            data: document.getElementById("data").value,
+            hora: document.getElementById("hora").value
+        };
+
+        try {
+            // Envia os dados para a rota de agendamento no seu servidor
+            const response = await fetch('http://localhost:3001/agendar', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dados)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Se der certo, mostra a mensagem verde
+                mensagem.innerText = "Agendamento realizado com sucesso ✅";
+                mensagem.style.color = "lightgreen";
+                form.reset();
+                // Mantém o nome do usuário no campo após resetar
+                document.getElementById('nome').value = localStorage.getItem('usuarioNome');
+            } else {
+                // Se o servidor der erro (ex: horário ocupado)
+                mensagem.innerText = "Erro ao agendar: " + result.mensagem;
+                mensagem.style.color = "#ff6b6b";
+            }
+        } catch (error) {
+            // Se o servidor estiver desligado
+            mensagem.innerText = "Erro de conexão com o servidor ❌";
+            mensagem.style.color = "#ff6b6b";
+        }
+    });
 </script>
 
 </body>

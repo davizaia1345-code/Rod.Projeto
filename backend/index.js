@@ -68,13 +68,25 @@ app.get('/agendamentos', async (req, res) => {
 });
 
 app.post('/agendar', async (req, res) => {
-  try {
-    const novoAgendamento = new Agendamento(req.body);
-    await novoAgendamento.save();
-    res.json({ mensagem: 'Agendamento realizado com sucesso! ✅' });
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro interno ao salvar' });
-  }
+    try {
+        const { nome, data, hora } = req.body;
+
+        // 1. BUSCA: Verifica se já existe um agendamento igual no banco
+        const conflito = await Agendamento.findOne({ data: data, hora: hora });
+
+        if (conflito) {
+            // Se achou alguém, para aqui e avisa o usuário
+            return res.status(400).json({ mensagem: "Este horário já está reservado por outro cliente! ❌" });
+        }
+
+        // 2. CRIAÇÃO: Se o horário estiver livre, salva o novo
+        const novoAgendamento = new Agendamento({ nome, data, hora });
+        await novoAgendamento.save();
+        
+        res.status(201).json({ mensagem: "Agendamento realizado com sucesso! ✅" });
+    } catch (err) {
+        res.status(500).json({ mensagem: "Erro no servidor ao agendar." });
+    }
 });
 
 app.delete('/agendamentos/:id', async (req, res) => {

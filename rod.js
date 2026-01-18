@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const API_URL = "https://SEU_BACKEND_AQUI/agendar"; 
+const API_URL = "http://localhost:3001/agendar";
 // depois você troca pela URL do Render
 
 // ===============================

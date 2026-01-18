@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Barbearia Rod</title>
+    <style>
+        body { font-family: Arial; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background: #222; padding: 30px; border-radius: 10px; width: 300px; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        h2 { color: orange; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; background: #333; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: orange; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        a { color: orange; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Entrar</h2>
+        <form id="formLogin">
+            <input type="email" id="email" placeholder="Seu E-mail" required>
+            <input type="password" id="senha" placeholder="Sua Senha" required>
+            <button type="submit">ENTRAR</button>
+        </form>
+        <p style="font-size: 14px; margin-top: 15px;">Não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+    </div>
+
+    <script>
+        document.getElementById('formLogin').onsubmit = async (e) => {
+            e.preventDefault();
+            const dados = {
+                email: document.getElementById('email').value,
+                senha: document.getElementById('senha').value
+            };
+
+            const response = await fetch('http://localhost:3001/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Guarda o nome do usuário para usar no site principal
+                localStorage.setItem('usuarioNome', result.usuario.nome);
+                alert('Bem-vindo, ' + result.usuario.nome + '! ✅');
+                window.location.href = 'Rod.html'; // Redireciona para o site
+            } else {
+                alert(result.erro);
+            }
+        };
+    </script>
+</body>
+</html>

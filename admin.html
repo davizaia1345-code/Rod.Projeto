@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel ADM - Barbearia Rod</title>
+    <style>
+        body { font-family: Arial; background: #222; color: white; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #444; padding: 12px; text-align: left; }
+        th { background: #333; }
+        tr:nth-child(even) { background: #2a2a2a; }
+        .btn-excluir { background: #ff4444; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .btn-excluir:hover { background: #cc0000; }
+    </style>
+</head>
+<body>
+    <h1>Agendamentos Recebidos</h1>
+    <table id="tabela-agendamentos">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function carregarAgendamentos() {
+            const response = await fetch('http://localhost:3001/agendamentos');
+            const dados = await response.json();
+            const corpoTabela = document.querySelector('#tabela-agendamentos tbody');
+            
+            corpoTabela.innerHTML = dados.map(ag => `
+                <tr>
+                    <td>${ag.nome}</td>
+                    <td>${ag.data}</td>
+                    <td>${ag.hora}</td>
+                    <td><button class="btn-excluir" onclick="excluir('${ag._id}')">Concluído / Excluir</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function excluir(id) {
+            if(confirm("Deseja mesmo remover este agendamento?")) {
+                await fetch(`http://localhost:3001/agendamentos/${id}`, { method: 'DELETE' });
+                carregarAgendamentos(); // Recarrega a lista após excluir
+            }
+        }
+        carregarAgendamentos();
+    </script>
+</body>
+</html>

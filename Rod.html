@@ -3,9 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Barbearia do Rod</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="rod.css">
 </head>
 <body>
+
+<div id="area-usuario" style="background: #333; color: orange; padding: 10px; text-align: right;">
+    <div id="logado" style="display: none;">
+        <span id="boas-vindas"></span>
+        <button onclick="fazerLogout()" style="margin-left: 10px; background: red; color: white; border: none; cursor: pointer; border-radius: 3px; padding: 5px 10px;">Sair</button>
+    </div>
+    
+    <div id="deslogado">
+        <span>Ainda não tem conta? </span>
+        <a href="login.html" style="color: orange; font-weight: bold; text-decoration: none; margin-left: 5px;">Entrar / Cadastrar</a>
+    </div>
+</div>
 
   <header>
     <h1>Barbearia do Rod</h1>
@@ -25,6 +37,30 @@
     <p id="mensagem"></p>
   </section>
 
-  <script src="js/script.js"></script>
+ <script>
+    window.onload = function() {
+    const nomeUsuario = localStorage.getItem('usuarioNome');
+    const divLogado = document.getElementById('logado');
+    const divDeslogado = document.getElementById('deslogado');
+    const spanNome = document.getElementById('boas-vindas');
+
+    if (nomeUsuario) {
+        divLogado.style.display = 'block';
+        divDeslogado.style.display = 'none';
+        spanNome.innerText = "Olá, " + nomeUsuario + "!";
+        
+        const campoNome = document.getElementById('nome');
+        if(campoNome) {
+            campoNome.value = nomeUsuario;
+            campoNome.readOnly = true;
+        }
+    } else {
+        divLogado.style.display = 'none';
+        divDeslogado.style.display = 'block';
+    }
+};
+  
+</script>
+
 </body>
 </html>

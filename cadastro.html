@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Barbearia Rod</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .cadastro-container { background: #222; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); width: 350px; text-align: center; }
+        h2 { color: orange; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: orange; border: none; border-radius: 5px; color: #1a1a1a; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background: #e69500; }
+        p { margin-top: 15px; font-size: 14px; color: #bbb; }
+        a { color: orange; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="cadastro-container">
+        <h2>Criar Conta</h2>
+        <form id="formCadastro">
+            <input type="text" id="nome" placeholder="Nome Completo" required>
+            <input type="email" id="email" placeholder="Seu Melhor E-mail" required>
+            <input type="password" id="senha" placeholder="Crie uma Senha" required>
+            <button type="submit">CADASTRAR</button>
+        </form>
+        <p>Já tem conta? <a href="login.html">Faça login</a></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('formCadastro');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+
+            const dados = {
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                senha: document.getElementById('senha').value
+            };
+
+            try {
+                // Faz a chamada para a rota que criamos no index.js
+                const response = await fetch('http://localhost:3001/cadastro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.mensagem);
+                    // Limpa o formulário após o sucesso
+                    form.reset();
+                } else {
+                    alert('Erro: ' + result.erro);
+                }
+            } catch (error) {
+                console.error('Erro na conexão:', error);
+                alert('Erro ao conectar com o servidor. Verifique se o terminal está rodando!');
+            }
+        };
+    </script>
+</body>
+</html>

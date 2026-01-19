@@ -28,11 +28,11 @@
     <script>
         // 🔒 SEGURANÇA: Verifica se quem está acessando é o ADM
         const usuarioLogado = localStorage.getItem('usuarioEmail');
-        const emailAdmin = 'davizaia1345@gmail.com'; // 
+        const emailAdmin = 'davizaia1345@gmail.com'; 
 
         if (usuarioLogado !== emailAdmin) {
             alert('Acesso negado! Apenas o administrador pode ver esta página.');
-            window.location.href = 'login.html'; // Manda para o login
+            window.location.href = 'login.html'; 
         }
 
         async function carregarAgendamentos() {
@@ -47,7 +47,7 @@
                     tabela.innerHTML += `
                         <tr>
                             <td>${agend.nome}</td>
-                            <td>${agend.data}</td>
+                            <td>${agend.data} às ${agend.hora}</td> 
                             <td>
                                 <button onclick="deletarAgendamento('${agend._id}')">Concluído/Excluir</button>
                             </td>

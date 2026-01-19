@@ -4,108 +4,48 @@
   <meta charset="UTF-8">
   <title>Barbearia do Rod</title>
   <link rel="stylesheet" href="rod.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-<div id="area-usuario" style="background: #333; color: orange; padding: 10px; text-align: right;">
+<div id="area-usuario">
     <div id="logado" style="display: none;">
         <span id="boas-vindas"></span>
-        <button onclick="fazerLogout()" style="margin-left: 10px; background: red; color: white; border: none; cursor: pointer; border-radius: 3px; padding: 5px 10px;">Sair</button>
+        <button onclick="fazerLogout()" class="btn-sair">Sair</button>
     </div>
     
     <div id="deslogado">
         <span>Ainda não tem conta? </span>
-        <a href="login.html" style="color: orange; font-weight: bold; text-decoration: none; margin-left: 5px;">Entrar / Cadastrar</a>
+        <a href="login.html" class="link-entrar">Entrar / Cadastrar</a>
     </div>
 </div>
 
   <header>
     <h1>Barbearia do Rod</h1>
-    <p>Agende seu corte online</p>
+    <p>Reforme sua Auto Estima</p>
   </header>
 
-  <section>
-    <h2>Agendamento</h2>
+  <main>
+      <section class="container">
+        <h2>Agendamento Online</h2>
+        <form id="form-agendamento">
+          <input type="text" id="nome" placeholder="Seu nome" required>
+          <input type="date" id="data" required>
+          <input type="time" id="hora" required>
+          <button type="submit">Agendar Agora</button>
+        </form>
+        <p id="mensagem"></p>
+      </section>
 
-    <form id="form-agendamento">
-      <input type="text" id="nome" placeholder="Seu nome" required>
-      <input type="date" id="data" required>
-      <input type="time" id="hora" required>
-      <button type="submit">Agendar</button>
-    </form>
+      <section class="container">
+        <h2>Sobre o Barbeiro</h2>
+        <p>Especialista em cortes modernos, barboterapia e design de sobrancelhas. Localizado no centro, oferecemos o melhor atendimento para quem valoriza a aparência.</p>
+      </section>
 
-    <p id="mensagem"></p>
-  </section>
-
- <script>
-    // 1. Lógica para mostrar o nome do usuário ao carregar a página
-    window.onload = function() {
-        const nomeUsuario = localStorage.getItem('usuarioNome');
-        const divLogado = document.getElementById('logado');
-        const divDeslogado = document.getElementById('deslogado');
-        const spanNome = document.getElementById('boas-vindas');
-
-        if (nomeUsuario) {
-            divLogado.style.display = 'block';
-            divDeslogado.style.display = 'none';
-            spanNome.innerText = "Olá, " + nomeUsuario + "!";
-            
-            const campoNome = document.getElementById('nome');
-            if(campoNome) {
-                campoNome.value = nomeUsuario;
-                campoNome.readOnly = true; // Impede o cliente de mudar o nome
-            }
-        }
-    };
-
-    // 2. Função para o botão de sair
-    function fazerLogout() {
-        localStorage.clear();
-        window.location.href = 'login.html';
-    }
-
-    // 3. Lógica para enviar o agendamento para o servidor
-    const form = document.getElementById("form-agendamento");
-    const mensagem = document.getElementById("mensagem");
-
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        const dados = {
-            nome: document.getElementById("nome").value,
-            data: document.getElementById("data").value,
-            hora: document.getElementById("hora").value
-        };
-
-        try {
-            // Envia os dados para a rota de agendamento no seu servidor
-            const response = await fetch('http://localhost:3001/agendar', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(dados)
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                // Se der certo, mostra a mensagem verde
-                mensagem.innerText = "Agendamento realizado com sucesso ✅";
-                mensagem.style.color = "lightgreen";
-                form.reset();
-                // Mantém o nome do usuário no campo após resetar
-                document.getElementById('nome').value = localStorage.getItem('usuarioNome');
-            } else {
-                // Se o servidor der erro (ex: horário ocupado)
-                mensagem.innerText = "Erro ao agendar: " + result.mensagem;
-                mensagem.style.color = "#ff6b6b";
-            }
-        } catch (error) {
-            // Se o servidor estiver desligado
-            mensagem.innerText = "Erro de conexão com o servidor ❌";
-            mensagem.style.color = "#ff6b6b";
-        }
-    });
-</script>
-
-</body>
-</html>
+      <section class="container">
+        <h2>Tabela de Preços</h2>
+        <div class="precos-grid">
+            <div class="preco-item"><span>Corte Masculino</span> <span>R$ 50,00</span></div>
+            <div class="preco-item"><span>Barba Completa</span> <span>R$ 40,00</span></div>
+            <div class="preco-item"><span>Corte + Barba</span> <span>R$ 80,00</span></div>
+            <div class="preco-item"><span>Sobrancel

@@ -1,23 +1,13 @@
-// ===============================
-// CONFIG
-// ===============================
-const API_URL = "http://localhost:3001/agendar";
-// depois você troca pela URL do Render
 
-// ===============================
-// ELEMENTOS
-// ===============================
+const API_URL = "http://localhost:3001/agendar";
+
 const form = document.getElementById("form-agendamento");
 const mensagem = document.getElementById("mensagem");
 
-// ===============================
-// EVENTOS
-// ===============================
+
 form.addEventListener("submit", handleSubmit);
 
-// ===============================
-// FUNÇÕES
-// ===============================
+
 async function handleSubmit(event) {
   event.preventDefault();
 

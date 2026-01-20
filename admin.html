@@ -2,71 +2,252 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel do Barbeiro - Admin</title>
-    <link rel="stylesheet" href="rod.css">
-</head>
-<body>
-    <header>
-        <h1>Agendamentos da Barbearia</h1>
-        <button onclick="window.location.href='Rod.html'">Voltar ao Site</button>
-    </header>
-
-    <main>
-        <table id="tabela-agendamentos" border="1">
-            <thead>
-                <tr>
-                    <th>Cliente</th>
-                    <th>Data e Hora</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="corpo-tabela">
-                </tbody>
-        </table>
-    </main>
+    <title>Painel do Barbeiro - Agendamentos</title>
 
     <script>
-        // 🔒 SEGURANÇA: Verifica se quem está acessando é o ADM
+        
         const usuarioLogado = localStorage.getItem('usuarioEmail');
-        const emailAdmin = 'davizaia1345@gmail.com'; 
+        
+        
+        const emailDono = "rdbarbercontato@gmail.com"; 
 
-        if (usuarioLogado !== emailAdmin) {
-            alert('Acesso negado! Apenas o administrador pode ver esta página.');
-            window.location.href = 'login.html'; 
+        
+        if (usuarioLogado !== emailDono) {
+            alert("⛔ ACESSO NEGADO! Apenas o dono pode ver esta página.");
+            window.location.href = "Rod.html"; 
         }
-
-        async function carregarAgendamentos() {
-            try {
-                const resposta = await fetch('http://localhost:3001/agendamentos');
-                const agendamentos = await resposta.json();
-
-                const tabela = document.getElementById('corpo-tabela');
-                tabela.innerHTML = '';
-
-                agendamentos.forEach(agend => {
-                    tabela.innerHTML += `
-                        <tr>
-                            <td>${agend.nome}</td>
-                            <td>${agend.data} às ${agend.hora}</td> 
-                            <td>
-                                <button onclick="deletarAgendamento('${agend._id}')">Concluído/Excluir</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-            }
-        }
-
-        async function deletarAgendamento(id) {
-            if(confirm('Deseja remover este agendamento?')) {
-                await fetch(`http://localhost:3001/agendamentos/${id}`, { method: 'DELETE' });
-                carregarAgendamentos();
-            }
-        }
-
-        window.onload = carregarAgendamentos;
     </script>
+    <link rel="stylesheet" href="rod.css"> 
+    <style>
+       
+        body {
+            background-color: #f0f2f5; 
+            color: #333;
+            padding: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        .admin-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #fff; 
+            padding: 30px;
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        
+        
+        .header-admin {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+        }
+        h1 { 
+            margin: 0; 
+            color: #2c3e50; 
+            font-size: 1.8em; 
+            display: flex; 
+            align-items: center; 
+        }
+        h1 i { margin-right: 10px; color: #d4af37; } 
+        
+        .btn-voltar {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            border: 2px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        .btn-voltar i { margin-right: 8px; }
+        .btn-voltar:hover { 
+            background-color: #d4af37; 
+            color: white; 
+            border-color: #d4af37;
+        }
+
+        
+        table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            margin-top: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+        
+        th { 
+            background-color: #d4af37; 
+            color: white; 
+            text-transform: uppercase; 
+            font-size: 0.9em; 
+            font-weight: 700;
+            padding: 18px 15px;
+            text-align: left;
+            letter-spacing: 0.5px;
+        }
+        
+        td { 
+            padding: 16px 15px; 
+            text-align: left; 
+            border-bottom: 1px solid #f0f0f0;
+            color: #333; 
+            vertical-align: middle;
+        }
+        td strong { color: #2c3e50; font-size: 1.05em; }
+        
+        tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        tbody tr:nth-child(odd) { background-color: #fff; }
+        
+        tbody tr:hover { 
+            background-color: #f0f4f8; 
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        
+       
+        .btn-excluir {
+            background-color: #fff;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+        }
+        .btn-excluir i { margin-right: 6px; font-size: 1.1em; }
+        .btn-excluir:hover { 
+            background-color: #e74c3c; 
+            color: white; 
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+        
+        
+        .loading { 
+            text-align: center; 
+            font-size: 1.2em; 
+            color: #777; 
+            margin-top: 40px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        .loading i {
+            display: block;
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #d4af37;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-container">
+    <div class="header-admin">
+        <h1><i class="fas fa-cut"></i> Agenda do Rod</h1>
+        <a href="Rod.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Site</a>
+    </div>
+
+    <table id="tabela-agendamentos">
+        <thead>
+            <tr>
+                <th><i class="fas fa-user"></i> Cliente</th>
+                <th><i class="fas fa-envelope"></i> E-mail</th>
+                <th><i class="far fa-calendar-alt"></i> Data</th>
+                <th><i class="far fa-clock"></i> Horário</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+
+    <p id="mensagem-carga" class="loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        Carregando agenda...
+    </p>
+</div>
+
+<script>
+    
+    async function carregarAgenda() {
+        try {
+            const response = await fetch('http://localhost:3001/agendamentos');
+            const lista = await response.json();
+            
+            const tbody = document.querySelector("#tabela-agendamentos tbody");
+            const msg = document.getElementById("mensagem-carga");
+
+            tbody.innerHTML = ""; 
+            
+            if (lista.length === 0) {
+                msg.innerHTML = '<i class="far fa-calendar-times"></i> Nenhum corte agendado ainda.';
+                msg.style.display = "block";
+                return;
+            }
+
+            msg.style.display = "none"; 
+
+            
+            lista.forEach(item => {
+                const dataFormatada = item.data.split('-').reverse().join('/'); 
+                
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${item.nome}</strong></td>
+                    <td>${item.email}</td>
+                    <td>${dataFormatada}</td>
+                    <td><span style="background: #f0f2f5; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${item.hora}</span></td>
+                    <td>
+                        <button class="btn-excluir" onclick="cancelarCorte('${item._id}')">
+                            <i class="fas fa-trash-alt"></i> Cancelar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (error) {
+            const msg = document.getElementById("mensagem-carga");
+            msg.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> Erro ao conectar com o servidor.';
+            msg.style.color = "#e74c3c";
+            console.error(error);
+        }
+    }
+
+    async function cancelarCorte(id) {
+        if(confirm("Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.")) {
+            try {
+                const response = await fetch(`http://localhost:3001/agendamentos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    carregarAgenda(); 
+                } else {
+                    alert("Não foi possível cancelar. Tente novamente.");
+                }
+            } catch (error) {
+                alert("Erro de conexão ao tentar cancelar.");
+                console.error(error);
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", carregarAgenda);
+</script>
+
 </body>
 </html>

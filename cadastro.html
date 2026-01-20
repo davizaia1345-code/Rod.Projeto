@@ -41,7 +41,9 @@
             };
 
             try {
-                // Faz a chamada para a rota que criamos no index.js
+
+                
+
                 const response = await fetch('http://localhost:3001/cadastro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -52,7 +54,6 @@
 
                 if (response.ok) {
                     alert(result.mensagem);
-                    // Limpa o formulário após o sucesso
                     form.reset();
                 } else {
                     alert('Erro: ' + result.erro);

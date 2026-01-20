@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose'); 
+const nodemailer = require('nodemailer'); 
 const app = express();
 
 app.use(cors());
@@ -13,9 +14,24 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('Conectado ao Banco de dados com sucesso! ✅'))
   .catch(err => console.error('Erro ao conectar no banco:', err));
 
-// --- MODELOS ---
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, 
+    auth: {
+        user: 'rdbarbercontato@gmail.com', 
+        pass: 'dvamkapedjwkjniv' 
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+
 const Agendamento = mongoose.model('Agendamento', {
   nome: String,
+  email: String, 
   data: String,
   hora: String
 });
@@ -26,7 +42,7 @@ const Usuario = mongoose.model('Usuario', {
   senha: String
 });
 
-// --- ROTAS DE USUÁRIO (Login/Cadastro) ---
+
 app.post('/cadastro', async (req, res) => {
   try {
     const { nome, email, senha } = req.body;
@@ -57,7 +73,53 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// --- ROTAS DE AGENDAMENTO ---
+
+app.post('/agendar', async (req, res) => {
+    try {
+        const { nome, email, data, hora } = req.body; 
+
+        
+        const conflito = await Agendamento.findOne({ data: data, hora: hora });
+        if (conflito) {
+            return res.status(400).json({ mensagem: "Este horário já está reservado! ❌" });
+        }
+
+        
+        const novoAgendamento = new Agendamento({ nome, email, data, hora });
+        await novoAgendamento.save();
+
+        
+        const mailOptions = {
+            from: '"Barbearia do Rod ✂️" <rdbarbercontato@gmail.com>',
+            to: email, 
+            subject: 'Confirmação de Agendamento - Barbearia do Rod ✂️',
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; border: 1px solid #ddd; padding: 20px;">
+                    <h2 style="color: #d4af37;">Olá, ${nome}!</h2>
+                    <p>Seu horário na <strong>Barbearia do Rod</strong> foi confirmado com sucesso!</p>
+                    <hr>
+                    <p>📅 <strong>Data:</strong> ${data}</p>
+                    <p>⏰ <strong>Horário:</strong> ${hora}</p>
+                    <p>📍 <strong>Local:</strong> Rua Mário Ferraz de Souza, 889, Cidade Tiradentes</p>
+                    <hr>
+                    <p>Te esperamos para essa experiência!</p>
+                </div>
+            `
+        };
+
+        // 4. Envia o e-mail
+        await transporter.sendMail(mailOptions);
+        console.log("E-mail enviado com sucesso para: " + email);
+        
+        res.status(201).json({ mensagem: "Agendamento realizado e e-mail enviado! ✅" });
+    } catch (err) {
+        console.error("Erro detalhado no envio:", err);
+        
+        res.status(201).json({ mensagem: "Agendamento salvo, mas houve erro no envio do e-mail." });
+    }
+}); 
+
+
 app.get('/agendamentos', async (req, res) => {
   try {
     const lista = await Agendamento.find();
@@ -67,26 +129,17 @@ app.get('/agendamentos', async (req, res) => {
   }
 });
 
-app.post('/agendar', async (req, res) => {
-    try {
-        const { nome, data, hora } = req.body;
 
-        // 1. BUSCA: Verifica se já existe um agendamento igual no banco
-        const conflito = await Agendamento.findOne({ data: data, hora: hora });
+app.get('/meus-agendamentos', async (req, res) => {
+  try {
+    const { email } = req.query; 
+    if (!email) return res.status(400).json({ erro: 'E-mail é obrigatório' });
 
-        if (conflito) {
-            // Se achou alguém, para aqui e avisa o usuário
-            return res.status(400).json({ mensagem: "Este horário já está reservado por outro cliente! ❌" });
-        }
-
-        // 2. CRIAÇÃO: Se o horário estiver livre, salva o novo
-        const novoAgendamento = new Agendamento({ nome, data, hora });
-        await novoAgendamento.save();
-        
-        res.status(201).json({ mensagem: "Agendamento realizado com sucesso! ✅" });
-    } catch (err) {
-        res.status(500).json({ mensagem: "Erro no servidor ao agendar." });
-    }
+    const lista = await Agendamento.find({ email: email }); 
+    res.json(lista);
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao buscar histórico' });
+  }
 });
 
 app.delete('/agendamentos/:id', async (req, res) => {
@@ -100,5 +153,4 @@ app.delete('/agendamentos/:id', async (req, res) => {
 
 app.get('/', (req, res) => res.send('Back-end online!'));
 
-// --- INICIALIZAÇÃO (Sempre por último) ---
 app.listen(3001, () => console.log('Servidor rodando em http://localhost:3001'));

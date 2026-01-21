@@ -1,68 +1,215 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Barbearia Rod</title>
+    <title>Cadastro | RodBarber</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { font-family: 'Arial', sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .cadastro-container { background: #222; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); width: 350px; text-align: center; }
-        h2 { color: orange; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: orange; border: none; border-radius: 5px; color: #1a1a1a; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        button:hover { background: #e69500; }
-        p { margin-top: 15px; font-size: 14px; color: #bbb; }
-        a { color: orange; text-decoration: none; }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body {
+            background-color: #000;
+            
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        
+        .register-container {
+            background: #121212; 
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        
+        .register-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: #e62e2e;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            display: block;
+            text-transform: uppercase;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .logo span { color: #e62e2e; }
+
+        h2 { margin-bottom: 20px; font-size: 1.2rem; color: #ccc; font-weight: 400; }
+
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-size: 0.85rem; 
+            color: #888; 
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #e62e2e; 
+            background: #222;
+        }
+
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #e62e2e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 46, 46, 0.3);
+        }
+
+        
+        .footer-links {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .footer-links a {
+            color: #e62e2e;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer-links a:hover { text-decoration: underline; }
+
+        #mensagem { margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="cadastro-container">
-        <h2>Criar Conta</h2>
-        <form id="formCadastro">
-            <input type="text" id="nome" placeholder="Nome Completo" required>
-            <input type="email" id="email" placeholder="Seu Melhor E-mail" required>
-            <input type="password" id="senha" placeholder="Crie uma Senha" required>
+    <div class="register-container">
+        <a href="Rod.html" class="logo"><span>/</span> RodBarber</a>
+        
+        <h2>Crie sua conta</h2>
+
+        <form id="form-cadastro">
+            <div class="input-group">
+                <label>Nome Completo</label>
+                <input type="text" id="nome" placeholder="Seu nome" required>
+            </div>
+
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="senha" placeholder="Crie uma senha" required>
+            </div>
+
             <button type="submit">CADASTRAR</button>
         </form>
-        <p>Já tem conta? <a href="login.html">Faça login</a></p>
+
+        <p id="mensagem"></p>
+
+        <div class="footer-links">
+            <p>Já tem conta? <a href="login.html">Faça login</a></p>
+        </div>
     </div>
 
     <script>
-        const form = document.getElementById('formCadastro');
+        const form = document.getElementById('form-cadastro');
+        const mensagem = document.getElementById('mensagem');
 
-        form.onsubmit = async (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const btn = form.querySelector('button');
 
-            const dados = {
-                nome: document.getElementById('nome').value,
-                email: document.getElementById('email').value,
-                senha: document.getElementById('senha').value
-            };
+            btn.disabled = true;
+            btn.innerText = "Criando...";
+            mensagem.innerText = "";
 
             try {
-
                 
-
                 const response = await fetch('http://localhost:3001/cadastro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dados)
+                    body: JSON.stringify({ nome, email, senha })
                 });
 
-                const result = await response.json();
+                const data = await response.json();
 
                 if (response.ok) {
-                    alert(result.mensagem);
-                    form.reset();
+                    mensagem.style.color = '#25d366'; 
+                    mensagem.innerText = "Cadastro realizado! Indo para o login...";
+                    
+                    
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
                 } else {
-                    alert('Erro: ' + result.erro);
+                    mensagem.style.color = '#ff4d4d'; 
+                    mensagem.innerText = data.erro || "Erro ao cadastrar.";
+                    btn.disabled = false;
+                    btn.innerText = "CADASTRAR";
                 }
             } catch (error) {
-                console.error('Erro na conexão:', error);
-                alert('Erro ao conectar com o servidor. Verifique se o terminal está rodando!');
+                mensagem.style.color = '#ff4d4d';
+                mensagem.innerText = "Erro de conexão com o servidor.";
+                btn.disabled = false;
+                btn.innerText = "CADASTRAR";
             }
-        };
+        });
     </script>
+
 </body>
 </html>

@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt');
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose'); 
-const nodemailer = require('nodemailer'); 
+const mongoose = require('mongoose');
+const nodemailer = require('nodemailer');
 const app = express();
 
 app.use(cors());
@@ -14,26 +14,25 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('Conectado ao Banco de dados com sucesso! ✅'))
   .catch(err => console.error('Erro ao conectar no banco:', err));
 
-
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
-    secure: false, 
+    secure: false,
     auth: {
-        user: 'rdbarbercontato@gmail.com', 
-        pass: 'dvamkapedjwkjniv' 
+        user: 'rdbarbercontato@gmail.com',
+        pass: 'dvamkapedjwkjniv'
     },
     tls: {
         rejectUnauthorized: false
     }
 });
 
-
 const Agendamento = mongoose.model('Agendamento', {
   nome: String,
-  email: String, 
+  email: String,
   data: String,
-  hora: String
+  hora: String,
+  servico: String
 });
 
 const Usuario = mongoose.model('Usuario', {
@@ -41,7 +40,6 @@ const Usuario = mongoose.model('Usuario', {
   email: { type: String, unique: true },
   senha: String
 });
-
 
 app.post('/cadastro', async (req, res) => {
   try {
@@ -64,93 +62,112 @@ app.post('/login', async (req, res) => {
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
     if (!senhaValida) return res.status(400).json({ erro: 'Senha incorreta' });
 
-    res.json({ 
-      mensagem: 'Login realizado com sucesso! ✅', 
-      usuario: { nome: usuario.nome, email: usuario.email } 
+    res.json({
+      mensagem: 'Login realizado com sucesso! ✅',
+      usuario: { nome: usuario.nome, email: usuario.email }
     });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao fazer login' });
   }
 });
 
+app.get('/agendamentos/ocupados', async (req, res) => {
+    const { data } = req.query;
+    if (!data) return res.status(400).json({ mensagem: "Data é obrigatória" });
+
+    try {
+        const agendamentos = await Agendamento.find({ data: data });
+        const horariosOcupados = agendamentos.map(ag => ag.hora);
+        res.json(horariosOcupados);
+    } catch (error) {
+        res.status(500).json({ mensagem: "Erro ao buscar horários." });
+    }
+});
 
 app.post('/agendar', async (req, res) => {
     try {
-        const { nome, email, data, hora } = req.body; 
+        const { nome, email, data, hora, servico } = req.body;
 
-        
         const conflito = await Agendamento.findOne({ data: data, hora: hora });
         if (conflito) {
-            return res.status(400).json({ mensagem: "Este horário já está reservado! ❌" });
+            return res.status(400).json({ mensagem: "Este horário acabou de ser reservado! ❌" });
         }
 
-        
-        const novoAgendamento = new Agendamento({ nome, email, data, hora });
+        const novoAgendamento = new Agendamento({ nome, email, data, hora, servico });
         await novoAgendamento.save();
 
-        
-        const mailOptions = {
-            from: '"Barbearia do Rod ✂️" <rdbarbercontato@gmail.com>',
-            to: email, 
-            subject: 'Confirmação de Agendamento - Barbearia do Rod ✂️',
+        const mailOptionsCliente = {
+            from: '"Barbearia do Rod" <rdbarbercontato@gmail.com>',
+            to: email,
+            subject: 'Agendamento Confirmado - Barbearia do Rod ✅',
             html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; border: 1px solid #ddd; padding: 20px;">
+                <div style="font-family: Arial; padding: 20px; border: 1px solid #ccc;">
                     <h2 style="color: #d4af37;">Olá, ${nome}!</h2>
-                    <p>Seu horário na <strong>Barbearia do Rod</strong> foi confirmado com sucesso!</p>
-                    <hr>
-                    <p>📅 <strong>Data:</strong> ${data}</p>
-                    <p>⏰ <strong>Horário:</strong> ${hora}</p>
-                    <p>📍 <strong>Local:</strong> Rua Mário Ferraz de Souza, 889, Cidade Tiradentes</p>
-                    <hr>
-                    <p>Te esperamos para essa experiência!</p>
+                    <p>Seu horário está confirmado.</p>
+                    <p>📅 <strong>${data}</strong> às <strong>${hora}</strong></p>
+                    <p>✂️ Serviço: ${servico}</p>
+                    <p>Te esperamos lá!</p>
                 </div>
             `
         };
 
-        // 4. Envia o e-mail
-        await transporter.sendMail(mailOptions);
-        console.log("E-mail enviado com sucesso para: " + email);
-        
-        res.status(201).json({ mensagem: "Agendamento realizado e e-mail enviado! ✅" });
-    } catch (err) {
-        console.error("Erro detalhado no envio:", err);
-        
-        res.status(201).json({ mensagem: "Agendamento salvo, mas houve erro no envio do e-mail." });
-    }
-}); 
+        const mailOptionsBarbeiro = {
+            from: '"Sistema RodBarber" <rdbarbercontato@gmail.com>',
+            to: 'rdbarbercontato@gmail.com',
+            subject: `🔔 NOVO CLIENTE: ${nome} às ${hora}`,
+            html: `
+                <div style="font-family: Arial; padding: 20px; background-color: #f4f4f4;">
+                    <h2 style="color: #e62e2e;">🔔 Novo Agendamento!</h2>
+                    <p>Um cliente acabou de marcar um horário:</p>
+                    <hr>
+                    <p>👤 <strong>Cliente:</strong> ${nome}</p>
+                    <p>📧 <strong>E-mail:</strong> ${email}</p>
+                    <p>✂️ <strong>Serviço:</strong> ${servico}</p>
+                    <p>📅 <strong>Data:</strong> ${data}</p>
+                    <p>⏰ <strong>Horário:</strong> ${hora}</p>
+                    <hr>
+                    <p>Acesse o painel admin para ver mais detalhes.</p>
+                </div>
+            `
+        };
 
+        await transporter.sendMail(mailOptionsCliente);
+        console.log("E-mail do Cliente enviado.");
+
+        await transporter.sendMail(mailOptionsBarbeiro);
+        console.log("Alerta do Barbeiro enviado.");
+
+        res.status(201).json({ mensagem: "Agendamento realizado com sucesso! ✅" });
+
+    } catch (err) {
+        console.error("Erro no agendamento:", err);
+        res.status(201).json({ mensagem: "Agendamento salvo (possível erro no envio de e-mail)." });
+    }
+});
 
 app.get('/agendamentos', async (req, res) => {
   try {
     const lista = await Agendamento.find();
     res.json(lista);
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao buscar dados' });
-  }
+  } catch (error) { res.status(500).json({ erro: 'Erro ao buscar dados' }); }
 });
-
 
 app.get('/meus-agendamentos', async (req, res) => {
   try {
-    const { email } = req.query; 
-    if (!email) return res.status(400).json({ erro: 'E-mail é obrigatório' });
-
-    const lista = await Agendamento.find({ email: email }); 
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ erro: 'E-mail obrigatório' });
+    const lista = await Agendamento.find({ email: email });
     res.json(lista);
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao buscar histórico' });
-  }
+  } catch (error) { res.status(500).json({ erro: 'Erro ao buscar' }); }
 });
 
 app.delete('/agendamentos/:id', async (req, res) => {
   try {
     await Agendamento.findByIdAndDelete(req.params.id);
     res.json({ mensagem: 'Agendamento removido!' });
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao excluir' });
-  }
+  } catch (error) { res.status(500).json({ erro: 'Erro ao excluir' }); }
 });
 
 app.get('/', (req, res) => res.send('Back-end online!'));
 
-app.listen(3001, () => console.log('Servidor rodando em http://localhost:3001'));
+app.listen(3001, () => console.log('🚀 Servidor rodando na porta 3001'));

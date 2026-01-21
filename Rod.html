@@ -1,29 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Barbearia do Rod</title>
-  <link rel="stylesheet" href="rod.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <title>Barbearia do Rod</title>
+    <link rel="stylesheet" href="rod.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
 <div id="area-usuario" style="display: none;">
-    
     <div id="logado" style="display: none; align-items: center;">
         <span id="boas-vindas" style="margin-right: 15px;"></span>
-        
-        <a href="admin.html" id="btn-painel-dono" style="display: none; background-color: #d4af37; color: #000; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.9em; margin-right: 10px;">
+        <a href="admin.html" id="btn-painel-dono" class="btn-painel" style="display: none;">
             <i class="fas fa-user-cog"></i> Painel
         </a>
-
         <a href="meus-agendamentos.html" style="background-color: #333; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9em; margin-right: 10px;">
             <i class="far fa-calendar-alt"></i> Meus Cortes
         </a>
-
         <button onclick="fazerLogout()" class="btn-sair">Sair</button>
     </div>
-
     <div id="deslogado" style="display: none;">
          <span>Ainda não tem conta? </span>
          <a href="login.html" class="link-entrar">Entrar / Cadastrar</a>
@@ -34,174 +29,281 @@
     <div class="logo">
         <span class="logo-icon">/</span> RODBARBER
     </div>
-    
     <nav>
         <ul class="nav-links">
             <li><a href="#agendamento">Agendamento</a></li>
             <li><a href="#sobre">Sobre</a></li>
             <li><a href="#precos">Preços</a></li>
+            <li><a href="#depoimentos">Depoimentos</a></li>
             <li><a href="#contatos">Contatos</a></li>
-            
             <li id="btn-admin" style="display: none;">
                 <a href="admin.html" style="color: #d4af37; font-weight: bold;">👑 ADMIN</a>
             </li>
         </ul>
     </nav>
-
-    <a href="#agendamento" class="btn-book">Book Now</a>
+    <a href="https://wa.me/5511949411527" target="_blank" class="btn-book" style="background-color: #25d366;">
+        <i class="fab fa-whatsapp"></i> Fale Conosco
+    </a>
 </header>
 <br><br><br><br>
 
 <main class="hero">
-    <div class="hero-content">
-        <h1>Muito Além de um Corte, Uma Experiência de Cuidado Masculino.</h1>
-        
-        <div class="address">
-            <p>o melhor lugar</p>
-            <p>para agendar seu corte.</p>
+    <div class="hero-wrapper">
+        <div class="hero-content">
+            <h1>Muito Além de um Corte, Uma Experiência de Cuidado Masculino.</h1>
+            <div class="address">
+                <p>o melhor lugar</p>
+                <p>para agendar seu corte.</p>
+            </div>
         </div>
+
+        <section class="container" id="agendamento">
+            <div id="aviso-bloqueio" style="text-align: center; padding: 30px; display: block;">
+                <p style="margin-bottom: 20px; font-size: 1.2em;">Você precisa estar logado para agendar.</p>
+                <a href="login.html" style="background-color: #e62e2e; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                    Fazer Login
+                </a>
+            </div>
+
+            <div id="area-formulario" style="display: none;">
+                <form id="form-agendamento">
+                    
+                    <input type="hidden" id="servico-selecionado">
+                    <input type="hidden" id="hora-selecionada">
+
+                    <label><i class="fas fa-user"></i> Seus Dados:</label>
+                    <input type="text" id="nome" required readonly placeholder="Nome">
+                    <input type="email" id="email" required readonly placeholder="E-mail">
+                    
+                    <label><i class="fas fa-calendar-alt"></i> Data:</label>
+                    <input type="date" id="data" required onchange="carregarHorariosDisponiveis()">
+
+                    <label><i class="fas fa-cut"></i> Escolha o Serviço:</label>
+                    <div class="services-grid">
+                        
+                        <div class="service-card" onclick="selecionarServico('Corte Masculino', this)">
+                            <div class="service-info">
+                                <span class="service-name">Corte Masculino</span>
+                                <span class="service-time">⏱ 40 min</span>
+                            </div>
+                            <i class="fas fa-check-circle" style="display: none;"></i>
+                        </div>
+
+                        <div class="service-card" onclick="selecionarServico('Barba Completa', this)">
+                            <div class="service-info">
+                                <span class="service-name">Barba Completa</span>
+                                <span class="service-time">⏱ 20 min</span>
+                            </div>
+                            <i class="fas fa-check-circle" style="display: none;"></i>
+                        </div>
+
+                        <div class="service-card" onclick="selecionarServico('Corte + Barba', this)">
+                            <div class="service-info">
+                                <span class="service-name">Corte + Barba</span>
+                                <span class="service-time">⏱ 1h (60 min)</span>
+                            </div>
+                            <i class="fas fa-check-circle" style="display: none;"></i>
+                        </div>
+
+                    </div>
+
+                    <label><i class="fas fa-clock"></i> Horários Disponíveis:</label>
+                    <p id="aviso-horario" style="font-size: 12px; color: #888; margin-bottom: 5px;">Selecione uma data para ver os horários.</p>
+                    
+                    <div class="time-grid" id="container-horarios"></div>
+                    
+                    <button type="submit" style="margin-top: 15px;">Confirmar Agendamento</button>
+                </form>
+                <p id="mensagem" style="text-align: center; margin-top: 10px; font-weight: bold;"></p>
+            </div>
+        </section>
     </div>
-
-    <section class="container" id="agendamento">
-        
-        <div id="aviso-bloqueio" style="text-align: center; padding: 30px; display: block;">
-            <p style="margin-bottom: 20px;">Você precisa estar logado para agendar um horário.</p>
-            <a href="login.html" style="background-color: #ff0000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Fazer Login ou Cadastrar
-            </a>
-        </div>
-
-        <div id="area-formulario" style="display: none;">
-            <form id="form-agendamento">
-                <label>Nome:</label>
-                <input type="text" id="nome" required readonly style="background-color: #242121; cursor: not-allowed;">
-                
-                <label>E-mail:</label>
-                <input type="email" id="email" required readonly style="background-color: #242121; cursor: not-allowed;">
-                
-                <label>Data:</label>
-                <input type="date" id="data" required>
-                
-                <label>Horário:</label>
-                <input type="time" id="hora" required>
-                
-                <button type="submit">Agendar Agora</button>
-            </form>
-            <p id="mensagem"></p>
-        </div>
-    </section>
 </main>
 <br><br><br>
 
-<section class="about-section" id="sobre">
+<section class="about-section hidden" id="sobre">
+    <div class="about-background-icon">
+        <i class="fas fa-cut"></i>
+    </div>
     <div class="about-container">
         <div class="about-content">
-            <h2 class="about-title">SOBRE</h2>
+            <div class="about-header">
+                <h2 class="about-title">SOBRE NÓS</h2>
+                <div class="about-separator"></div>
+            </div>
             <p class="about-text">
-               A trajetória de <strong>Rodney Abrão</strong> no mercado começou em 2022. O que iniciou como um desafio na barbearia de um grande amigo de infância, rapidamente se transformou em uma carreira de excelência.
+               <i class="fas fa-quote-left about-quote-icon"></i>
+               A trajetória de <strong class="highlight-red">Rodney Abrão</strong> no mercado começou em 2022. O que iniciou como um desafio na barbearia de um grande amigo de infância, rapidamente se transformou em uma <strong class="highlight-white">carreira de excelência</strong>.
                <br><br>
-               Hoje, Rodney não é apenas um barbeiro, mas um especialista que busca constantemente a perfeição. Com diversos certificados técnicos e especializações no currículo, ele domina desde os cortes clássicos até as tendências mais modernas do mercado. Cada atendimento é guiado pela precisão técnica e pelo respeito à história de cada cliente, garantindo que o seu visual esteja sempre em mãos profissionais e atualizadas.
+               Hoje, Rodney não é apenas um barbeiro, mas um <strong class="highlight-white">especialista</strong> que busca constantemente a perfeição em cada corte e detalhe.
             </p>
         </div>
-
         <div class="about-image-wrapper">
-            <img src="https://i.ibb.co/nqhFH490/Whats-App-Image-2026-01-20-at-18-56-57.jpg" alt="Foto de Rodney Abrão" class="about-img">
+            <div class="image-frame">
+                <img src="rodimagem.jpg.jpg" alt="Foto de Rodney Abrão" class="about-img">
+            </div>
         </div>
     </div>
 </section>
 
-<section class="container" id="precos">
+<section class="container hidden" id="precos">
     <h2>Tabela de Preços</h2>
     <div class="precos-grid">
-        <div class="preco-item"><span>Corte Masculino</span> <span>R$ 40,00</span></div>
-        <div class="preco-item"><span>Barba Completa</span> <span>R$ 20,00</span></div>
-        <div class="preco-item"><span>Corte + Barba</span> <span>R$ 60,00</span></div>
-        <div class="preco-item"><span>Sobrancelha</span> <span>R$ 10,00</span></div>
+        <div class="preco-item">
+            <span class="nome-servico"><i class="fas fa-cut"></i> Corte Masculino</span> 
+            <span class="preco-valor">R$ 40,00</span>
+        </div>
+        <div class="preco-item">
+            <span class="nome-servico"><i class="fas fa-user-tie"></i> Barba Completa</span> 
+            <span class="preco-valor">R$ 20,00</span>
+        </div>
+        <div class="preco-item">
+            <span class="nome-servico"><i class="fas fa-star"></i> Corte + Barba</span> 
+            <span class="preco-valor">R$ 60,00</span>
+        </div>
+        <div class="preco-item">
+            <span class="nome-servico"><i class="fas fa-magic"></i> Sobrancelha</span> 
+            <span class="preco-valor">R$ 10,00</span>
+        </div>
     </div>
 </section>
 
-<section class="container">
-    <h2>Nossos Cortes</h2>
-    <div class="galeria">
-        <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=250&h=250&auto=format&fit=crop" alt="Corte Degradê">
-        <img src="https://images.unsplash.com/photo-1621605815841-aa88c82b02aa?q=80&w=250&h=250&auto=format&fit=crop" alt="Barba Estilizada">
-        <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=250&h=250&auto=format&fit=crop" alt="Corte Clássico">
+<section class="container hidden">
+    <h2>Galeria de Estilo</h2>
+    <div class="galeria-grid">
+        <div class="corte-card">
+            <img src="imagemum.jpg.jpg" alt="Freestyle">
+            <div class="corte-info"><h3>FREESTYLE LATERAL</h3><p>Personalidade em cada traço.</p></div>
+        </div>
+        <div class="corte-card">
+            <img src="imagemdois.jpg.jpg" alt="Arte">
+            <div class="corte-info"><h3>ARTE NA NAVALHA</h3><p>Design exclusivo.</p></div>
+        </div>
+        <div class="corte-card">
+            <img src="imagemtres.jpg.jpg" alt="Nudred">
+            <div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="container hidden" id="depoimentos">
+    <h2>O Que Dizem Nossos Clientes</h2>
+    <div class="depoimentos-grid">
+        <div class="depoimento-card">
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p>"O melhor degradê da região. O Rod é fera demais! Ambiente top e atendimento de primeira."</p>
+            <h4>- Davi</h4>
+            <div class="stars">★★★★★</div>
+        </div>
+        <div class="depoimento-card">
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p>"Profissionalismo puro. Cheguei e fui atendido na hora com muita qualidade. Recomendo muito!"</p>
+            <h4>- Marcelo</h4>
+            <div class="stars">★★★★★</div>
+        </div>
     </div>
 </section>
 
 <div class="social-floating">
-    <a href="https://www.instagram.com/souzard_barber/" target="_blank" class="btn-float instagram">
-        <i class="fab fa-instagram"></i>
-    </a>
-    <a href="https://wa.me/5511949411527?text=Olá!%20Gostaria%20de%20agendar%20um%20horário." target="_blank" class="btn-float whatsapp">
-        <i class="fab fa-whatsapp"></i>
-    </a>
+    <a href="https://www.instagram.com/souzard_barber/" target="_blank" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
+    <a href="https://wa.me/5511949411527" target="_blank" class="btn-float whatsapp"><i class="fab fa-whatsapp"></i></a>
 </div>
 
-<footer id="contatos">
-    <p>📍 Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, São Paulo SP</p>
-    <p>© 2026 Barbearia do Rod</p>
+<footer id="contatos" class="footer-premium hidden">
+    <div class="footer-content">
+        <i class="fas fa-map-marker-alt footer-icon"></i>
+        <div class="mapa-wrapper">
+             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.3606990393245!2d-46.41738232375336!3d-23.59141096269609!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce6f7a6a4a6a57%3A0x8e8e8e8e8e8e8e8e!2sCidade%20Tiradentes%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+        <p class="footer-text">
+            Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, SP<br>
+            <span style="color: #bbb; font-size: 0.9em; margin-top: 5px; display: inline-block;">📧 rdbarbercontato@gmail.com</span>
+        </p>
+    </div>
+    <div class="footer-separator"></div>
+    <p class="copyright">© 2026 <strong>Barbearia do Rod</strong>.</p>
 </footer>
 
 <script>
-    window.onload = function() {
-        const nomeUsuario = localStorage.getItem('usuarioNome');
-        const emailUsuario = localStorage.getItem('usuarioEmail');
+    const API_URL = 'http://localhost:3001';
+
+    async function carregarHorariosDisponiveis() {
+        const inputData = document.getElementById('data').value;
+        const container = document.getElementById('container-horarios');
+        const aviso = document.getElementById('aviso-horario');
         
+        container.innerHTML = '';
         
-        const areaUsuario = document.getElementById('area-usuario');
-        const divLogado = document.getElementById('logado');
-        const divDeslogado = document.getElementById('deslogado');
-        const spanNome = document.getElementById('boas-vindas');
-
-        const btnAdminMenu = document.getElementById('btn-admin');
-        const btnPainelDono = document.getElementById('btn-painel-dono');
-        const emailDono = "rdbarbercontato@gmail.com"; 
-
-        const divAviso = document.getElementById('aviso-bloqueio');
-        const divForm = document.getElementById('area-formulario');
-
-        if (nomeUsuario && emailUsuario) {
-
-            if(areaUsuario) areaUsuario.style.display = 'block'; 
-            if(divLogado) divLogado.style.display = 'flex';
-            if(divDeslogado) divDeslogado.style.display = 'none';
-            if(spanNome) spanNome.innerText = "Olá, " + nomeUsuario + "!";
-
-            if (emailUsuario === emailDono) {
-                if(btnAdminMenu) btnAdminMenu.style.display = 'block';
-                if(btnPainelDono) btnPainelDono.style.display = 'inline-block';
-            } else {
-                if(btnAdminMenu) btnAdminMenu.style.display = 'none';
-                if(btnPainelDono) btnPainelDono.style.display = 'none';
-            }
-            
-            
-            if(divAviso) divAviso.style.display = 'none';
-            if(divForm) divForm.style.display = 'block';
-            
-            
-            const campoNome = document.getElementById('nome');
-            const campoEmail = document.getElementById('email');
-            if(campoNome) campoNome.value = nomeUsuario;
-            if(campoEmail) campoEmail.value = emailUsuario;
-
-        } else {
-        
-            if(areaUsuario) areaUsuario.style.display = 'none'; 
-            if(divLogado) divLogado.style.display = 'none';
-            
-           
-            
-        
-            if(divAviso) divAviso.style.display = 'block';
-            if(divForm) divForm.style.display = 'none';
+        if (!inputData) {
+            aviso.innerText = "Selecione uma data para ver os horários.";
+            aviso.style.display = 'block';
+            return;
         }
-    };
 
-    function fazerLogout() {
-        localStorage.clear();
-        window.location.href = 'login.html';
+        aviso.innerText = "Carregando horários...";
+        aviso.style.display = 'block';
+
+        try {
+            const response = await fetch(`${API_URL}/agendamentos/ocupados?data=${inputData}`);
+            const horariosOcupados = await response.json(); 
+
+            aviso.style.display = 'none';
+
+            const inicioManha = 9 * 60;
+            const fimManha = 11 * 60 + 30;
+            const inicioTarde = 13 * 60;
+            const fimTarde = 21 * 60 + 30;
+            const intervalo = 35;
+
+            function criarBotoes(inicio, fim) {
+                for (let tempo = inicio; tempo <= fim; tempo += intervalo) {
+                    const horas = Math.floor(tempo / 60);
+                    const minutos = tempo % 60;
+                    
+                    const horarioFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+
+                    if (horariosOcupados.includes(horarioFormatado)) {
+                        continue; 
+                    }
+
+                    const btn = document.createElement('div');
+                    btn.className = 'time-btn';
+                    btn.innerText = horarioFormatado;
+                    btn.onclick = function() { selecionarHora(horarioFormatado, this) };
+                    container.appendChild(btn);
+                }
+            }
+
+            criarBotoes(inicioManha, fimManha);
+            criarBotoes(inicioTarde, fimTarde);
+
+            if (container.children.length === 0) {
+                aviso.innerText = "🚫 Agenda lotada para este dia!";
+                aviso.style.display = 'block';
+                aviso.style.color = '#e62e2e';
+            }
+
+        } catch (error) {
+            console.error(error);
+            aviso.innerText = "Erro ao buscar agenda.";
+            aviso.style.color = 'red';
+        }
+    }
+
+    function selecionarServico(nomeServico, elementoClicado) {
+        document.getElementById('servico-selecionado').value = nomeServico;
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.classList.remove('selected');
+            card.querySelector('.fa-check-circle').style.display = 'none';
+        });
+        elementoClicado.classList.add('selected');
+        elementoClicado.querySelector('.fa-check-circle').style.display = 'block';
+    }
+
+    function selecionarHora(horario, elementoClicado) {
+        document.getElementById('hora-selecionada').value = horario;
+        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('selected'));
+        elementoClicado.classList.add('selected');
     }
 
     const form = document.getElementById("form-agendamento");
@@ -210,47 +312,89 @@
     if(form) {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
+            const servico = document.getElementById('servico-selecionado').value;
+            const hora = document.getElementById('hora-selecionada').value;
+            const data = document.getElementById('data').value;
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
             
+            if(!servico || !hora || !data) {
+                mensagem.innerText = "⚠️ Preencha data, serviço e horário.";
+                mensagem.style.color = "orange";
+                return;
+            }
+
             const botao = form.querySelector("button");
             botao.disabled = true;
             botao.innerText = "Agendando...";
 
-            const dados = {
-                nome: document.getElementById("nome").value,
-                email: document.getElementById("email").value,
-                data: document.getElementById("data").value,
-                hora: document.getElementById("hora").value
-            };
-
             try {
-                const response = await fetch('http://localhost:3001/agendar', {
+                const response = await fetch(`${API_URL}/agendar`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dados)
+                    body: JSON.stringify({ nome, email, data, hora, servico })
                 });
-
                 const result = await response.json();
-
+                
                 if (response.ok) {
-                    mensagem.innerText = "Agendamento realizado e e-mail enviado! ✅";
+                    mensagem.innerText = "Agendamento confirmado! ✅";
                     mensagem.style.color = "lightgreen";
-                    form.reset();
                     
-                    document.getElementById('nome').value = localStorage.getItem('usuarioNome');
-                    document.getElementById('email').value = localStorage.getItem('usuarioEmail');
+                    await carregarHorariosDisponiveis();
+                    document.getElementById('hora-selecionada').value = "";
+                    
+                    setTimeout(() => { 
+                        mensagem.innerText = ""; 
+                        botao.disabled = false; 
+                        botao.innerText = "Confirmar Agendamento"; 
+                    }, 3000);
                 } else {
-                    mensagem.innerText = "Erro: " + result.mensagem;
+                    mensagem.innerText = result.mensagem;
                     mensagem.style.color = "#ff6b6b";
+                    botao.disabled = false;
+                    botao.innerText = "Confirmar Agendamento";
+                    if(result.mensagem.includes("reservado")) carregarHorariosDisponiveis();
                 }
             } catch (error) {
-                mensagem.innerText = "Erro de conexão com o servidor ❌";
+                mensagem.innerText = "Erro de conexão ❌";
                 mensagem.style.color = "#ff6b6b";
-            } finally {
                 botao.disabled = false;
-                botao.innerText = "Agendar Agora";
+                botao.innerText = "Confirmar Agendamento";
             }
         });
     }
+
+    const observer = new IntersectionObserver((entries) => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('show') }));
+    document.querySelectorAll('.hidden').forEach((el) => observer.observe(el));
+
+    window.onload = function() {
+        const hoje = new Date().toISOString().split('T')[0];
+        const inputData = document.getElementById('data');
+        if(inputData) inputData.setAttribute('min', hoje);
+
+        const nomeUsuario = localStorage.getItem('usuarioNome');
+        const emailUsuario = localStorage.getItem('usuarioEmail');
+        
+        if (nomeUsuario && emailUsuario) {
+            document.getElementById('area-usuario').style.display = 'block'; 
+            document.getElementById('logado').style.display = 'flex';
+            document.getElementById('boas-vindas').innerText = "Olá, " + nomeUsuario + "!";
+            document.getElementById('aviso-bloqueio').style.display = 'none'; 
+            document.getElementById('area-formulario').style.display = 'block';
+            document.getElementById('nome').value = nomeUsuario;
+            document.getElementById('email').value = emailUsuario;
+
+            if (emailUsuario === "rdbarbercontato@gmail.com") {
+                document.getElementById('btn-admin').style.display = 'block';
+                document.getElementById('btn-painel-dono').style.display = 'inline-block';
+            }
+        } else {
+            document.getElementById('area-usuario').style.display = 'none';
+            document.getElementById('aviso-bloqueio').style.display = 'block'; 
+            document.getElementById('area-formulario').style.display = 'none';
+        }
+    };
+    function fazerLogout() { localStorage.clear(); window.location.href = 'login.html'; }
 </script>
 </body>
 </html>

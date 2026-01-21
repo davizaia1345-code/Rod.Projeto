@@ -1,63 +1,215 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Barbearia Rod</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | RodBarber</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { font-family: Arial; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-container { background: #222; padding: 30px; border-radius: 10px; width: 300px; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        h2 { color: orange; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; background: #333; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: orange; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        a { color: orange; text-decoration: none; font-size: 14px; }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body {
+            background-color: #000;
+            
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        
+        .login-container {
+            background: #121212; 
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            border: 1px solid #333; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8); 
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: #e62e2e;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            display: block;
+            text-transform: uppercase;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .logo span { color: #e62e2e; }
+
+        h2 { margin-bottom: 20px; font-size: 1.2rem; color: #ccc; font-weight: 400; }
+
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-size: 0.85rem; 
+            color: #888; 
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #e62e2e; 
+            background: #222;
+        }
+
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #e62e2e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff4d4d;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 46, 46, 0.3);
+        }
+
+
+        .footer-links {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .footer-links a {
+            color: #e62e2e;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer-links a:hover { text-decoration: underline; }
+
+        #mensagem { margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
     </style>
 </head>
 <body>
+
     <div class="login-container">
-        <h2>Entrar</h2>
-        <form id="formLogin">
-            <input type="email" id="email" placeholder="Seu E-mail" required>
-            <input type="password" id="senha" placeholder="Sua Senha" required>
-            <button type="submit">ENTRAR</button>
+        <a href="Rod.html" class="logo"><span>/</span> RodBarber</a>
+        
+        <h2>Acesse sua conta</h2>
+
+        <form id="form-login">
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="senha" placeholder="********" required>
+            </div>
+
+            <button type="submit">Entrar</button>
         </form>
-        <p style="font-size: 14px; margin-top: 15px;">Não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+
+        <p id="mensagem"></p>
+
+        <div class="footer-links">
+            <p>Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+            <br>
+            <a href="Rod.html" style="color: #666; font-size: 0.8rem;">← Voltar ao site</a>
+        </div>
     </div>
 
     <script>
-    document.getElementById('formLogin').onsubmit = async (e) => {
-        e.preventDefault();
-        
-        const emailDigitado = document.getElementById('email').value; 
-        const dados = {
-            email: emailDigitado,
-            senha: document.getElementById('senha').value
-        };
+        const form = document.getElementById('form-login');
+        const mensagem = document.getElementById('mensagem');
 
-        const response = await fetch('http://localhost:3001/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            localStorage.setItem('usuarioNome', result.usuario.nome);
-            localStorage.setItem('usuarioEmail', emailDigitado); 
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const btn = form.querySelector('button');
 
-            alert('Bem-vindo, ' + result.usuario.nome + '! ✅');
+            btn.disabled = true;
+            btn.innerText = "Carregando...";
+            mensagem.innerText = "";
 
-            
-            if (emailDigitado === 'davizaia1345@gmail.com') {
-                window.location.href = 'admin.html'; 
-            } else {
-                window.location.href = 'Rod.html'; 
+            try {
+                
+                const response = await fetch('http://localhost:3001/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensagem.style.color = '#25d366'; // Verde
+                    mensagem.innerText = "Login realizado! Redirecionando...";
+                    
+                    
+                    localStorage.setItem('usuarioNome', data.usuario.nome);
+                    localStorage.setItem('usuarioEmail', data.usuario.email);
+
+                    
+                    setTimeout(() => {
+                        window.location.href = 'Rod.html';
+                    }, 1500);
+                } else {
+                    mensagem.style.color = '#ff4d4d';
+                    mensagem.innerText = data.erro || "Erro ao entrar.";
+                    btn.disabled = false;
+                    btn.innerText = "ENTRAR";
+                }
+            } catch (error) {
+                mensagem.style.color = '#ff4d4d';
+                mensagem.innerText = "Erro de conexão com o servidor.";
+                btn.disabled = false;
+                btn.innerText = "ENTRAR";
             }
-        } else {
-            alert(result.erro);
-        }
-    };
-</script>
+        });
+    </script>
+
 </body>
 </html>

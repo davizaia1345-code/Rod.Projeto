@@ -2,252 +2,238 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel do Barbeiro - Agendamentos</title>
-
-    <script>
-        
-        const usuarioLogado = localStorage.getItem('usuarioEmail');
-        
-        
-        const emailDono = "rdbarbercontato@gmail.com"; 
-
-        
-        if (usuarioLogado !== emailDono) {
-            alert("⛔ ACESSO NEGADO! Apenas o dono pode ver esta página.");
-            window.location.href = "Rod.html"; 
-        }
-    </script>
-    <link rel="stylesheet" href="rod.css"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin | RodBarber</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-       
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
         body {
-            background-color: #f0f2f5; 
-            color: #333;
-            padding: 40px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #000;
+            background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.95)), url('fundo-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            padding: 40px 20px;
         }
+
         .admin-container {
-            max-width: 1100px;
+            max-width: 1000px;
             margin: 0 auto;
-            background: #fff; 
-            padding: 30px;
-            border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            background: #121212;
+            border-radius: 15px;
+            border: 1px solid #333;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+            position: relative;
         }
-        
-        
-        .header-admin {
+
+        .admin-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: #e62e2e;
+        }
+
+        .admin-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 20px;
+            padding: 30px;
+            border-bottom: 1px solid #222;
         }
-        h1 { 
-            margin: 0; 
-            color: #2c3e50; 
-            font-size: 1.8em; 
-            display: flex; 
-            align-items: center; 
+
+        .admin-header h1 {
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            color: #fff;
+            letter-spacing: 1px;
         }
-        h1 i { margin-right: 10px; color: #d4af37; } 
-        
+
+        .admin-header h1 span { color: #e62e2e; }
+
         .btn-voltar {
             text-decoration: none;
-            color: #555;
+            color: #ccc;
             font-weight: 600;
-            border: 2px solid #ddd;
-            padding: 10px 20px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-        .btn-voltar i { margin-right: 8px; }
-        .btn-voltar:hover { 
-            background-color: #d4af37; 
-            color: white; 
-            border-color: #d4af37;
+            font-size: 0.9rem;
+            border: 1px solid #444;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: 0.3s;
         }
 
-        
-        table { 
-            width: 100%; 
-            border-collapse: separate; 
-            border-spacing: 0; 
-            margin-top: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px; 
-            overflow: hidden; 
+        .btn-voltar:hover {
+            background: #e62e2e;
+            border-color: #e62e2e;
+            color: white;
         }
-        
-        th { 
-            background-color: #d4af37; 
-            color: white; 
-            text-transform: uppercase; 
-            font-size: 0.9em; 
-            font-weight: 700;
-            padding: 18px 15px;
+
+        .table-responsive { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        thead { background-color: #1f1f1f; }
+
+        thead th {
+            color: #e62e2e;
             text-align: left;
+            padding: 20px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            font-weight: 800;
             letter-spacing: 0.5px;
         }
-        
-        td { 
-            padding: 16px 15px; 
-            text-align: left; 
-            border-bottom: 1px solid #f0f0f0;
-            color: #333; 
-            vertical-align: middle;
-        }
-        td strong { color: #2c3e50; font-size: 1.05em; }
-        
-        tbody tr:nth-child(even) { background-color: #f9f9f9; }
-        tbody tr:nth-child(odd) { background-color: #fff; }
-        
-        tbody tr:hover { 
-            background-color: #f0f4f8; 
-            transition: background-color 0.2s ease;
+
+        tbody tr {
+            border-bottom: 1px solid #222;
+            transition: background 0.2s;
         }
 
-        tbody tr:last-child td { border-bottom: none; }
-        
-       
-        .btn-excluir {
-            background-color: #fff;
-            color: #e74c3c;
-            border: 2px solid #e74c3c;
-            padding: 8px 14px;
-            border-radius: 6px;
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background-color: #1a1a1a; }
+
+        td { padding: 20px; color: #ddd; }
+
+        .badge-hora {
+            background: #222;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            font-weight: bold;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: 1px solid #ff4d4d;
+            color: #ff4d4d;
+            padding: 6px 12px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 0.9em;
-            display: flex;
-            align-items: center;
+            transition: 0.3s;
+            font-size: 0.85rem;
         }
-        .btn-excluir i { margin-right: 6px; font-size: 1.1em; }
-        .btn-excluir:hover { 
-            background-color: #e74c3c; 
-            color: white; 
-            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+
+        .btn-delete:hover {
+            background: #ff4d4d;
+            color: white;
         }
-        
-        
-        .loading { 
-            text-align: center; 
-            font-size: 1.2em; 
-            color: #777; 
-            margin-top: 40px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-        }
-        .loading i {
-            display: block;
-            font-size: 2em;
-            margin-bottom: 15px;
-            color: #d4af37;
+
+        #mensagem-status {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-<div class="admin-container">
-    <div class="header-admin">
-        <h1><i class="fas fa-cut"></i> Agenda do Rod</h1>
-        <a href="Rod.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Site</a>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Agenda do <span>Rod</span></h1>
+            <a href="Rod.html" class="btn-voltar">
+                <i class="fas fa-arrow-left"></i> Voltar ao Site
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table id="tabela-agendamentos">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Cliente</th>
+                        <th><i class="fas fa-cut"></i> Serviço</th>
+                        <th><i class="fas fa-envelope"></i> E-mail</th>
+                        <th><i class="fas fa-calendar-alt"></i> Data</th>
+                        <th><i class="fas fa-clock"></i> Horário</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-corpo"></tbody>
+            </table>
+            <p id="mensagem-status">Carregando agendamentos...</p>
+        </div>
     </div>
 
-    <table id="tabela-agendamentos">
-        <thead>
-            <tr>
-                <th><i class="fas fa-user"></i> Cliente</th>
-                <th><i class="fas fa-envelope"></i> E-mail</th>
-                <th><i class="far fa-calendar-alt"></i> Data</th>
-                <th><i class="far fa-clock"></i> Horário</th>
-                <th>Ação</th>
-            </tr>
-        </thead>
-        <tbody>
-            </tbody>
-    </table>
+    <script>
+        const API_URL = 'http://localhost:3001';
+        const listaCorpo = document.getElementById('lista-corpo');
+        const statusMsg = document.getElementById('mensagem-status');
 
-    <p id="mensagem-carga" class="loading">
-        <i class="fas fa-spinner fa-spin"></i>
-        Carregando agenda...
-    </p>
-</div>
-
-<script>
-    
-    async function carregarAgenda() {
-        try {
-            const response = await fetch('http://localhost:3001/agendamentos');
-            const lista = await response.json();
-            
-            const tbody = document.querySelector("#tabela-agendamentos tbody");
-            const msg = document.getElementById("mensagem-carga");
-
-            tbody.innerHTML = ""; 
-            
-            if (lista.length === 0) {
-                msg.innerHTML = '<i class="far fa-calendar-times"></i> Nenhum corte agendado ainda.';
-                msg.style.display = "block";
-                return;
-            }
-
-            msg.style.display = "none"; 
-
-            
-            lista.forEach(item => {
-                const dataFormatada = item.data.split('-').reverse().join('/'); 
-                
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><strong>${item.nome}</strong></td>
-                    <td>${item.email}</td>
-                    <td>${dataFormatada}</td>
-                    <td><span style="background: #f0f2f5; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${item.hora}</span></td>
-                    <td>
-                        <button class="btn-excluir" onclick="cancelarCorte('${item._id}')">
-                            <i class="fas fa-trash-alt"></i> Cancelar
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-        } catch (error) {
-            const msg = document.getElementById("mensagem-carga");
-            msg.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> Erro ao conectar com o servidor.';
-            msg.style.color = "#e74c3c";
-            console.error(error);
+        function formatarData(dataISO) {
+            if(!dataISO) return "--/--/----";
+            const partes = dataISO.split('-');
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
-    }
 
-    async function cancelarCorte(id) {
-        if(confirm("Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.")) {
+        async function carregarAgendamentos() {
             try {
-                const response = await fetch(`http://localhost:3001/agendamentos/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    carregarAgenda(); 
-                } else {
-                    alert("Não foi possível cancelar. Tente novamente.");
+                const response = await fetch(`${API_URL}/agendamentos`);
+                const agendamentos = await response.json();
+
+                listaCorpo.innerHTML = '';
+
+                if (agendamentos.length === 0) {
+                    statusMsg.innerText = "Nenhum agendamento encontrado.";
+                    statusMsg.style.display = 'block';
+                    return;
                 }
+
+                statusMsg.style.display = 'none';
+                agendamentos.reverse(); 
+
+                agendamentos.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: bold; color: #fff;">${item.nome}</td>
+                        <td style="color: #bbb;">${item.servico || '-'}</td>
+                        <td>${item.email}</td>
+                        <td>${formatarData(item.data)}</td>
+                        <td><span class="badge-hora">${item.hora}</span></td>
+                        <td>
+                            <button class="btn-delete" onclick="excluirAgendamento('${item._id}')">
+                                <i class="fas fa-trash"></i> Cancelar
+                            </button>
+                        </td>
+                    `;
+                    listaCorpo.appendChild(tr);
+                });
+
             } catch (error) {
-                alert("Erro de conexão ao tentar cancelar.");
                 console.error(error);
+                statusMsg.innerText = "Erro ao carregar a agenda. Verifique o servidor.";
+                statusMsg.style.color = "#ff4d4d";
             }
         }
-    }
 
-    document.addEventListener("DOMContentLoaded", carregarAgenda);
-</script>
+        async function excluirAgendamento(id) {
+            if (confirm("Tem certeza que deseja cancelar este agendamento?")) {
+                try {
+                    const response = await fetch(`${API_URL}/agendamentos/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        carregarAgendamentos();
+                    } else {
+                        alert("Erro ao excluir.");
+                    }
+                } catch (error) {
+                    alert("Erro de conexão.");
+                }
+            }
+        }
+
+        window.onload = carregarAgendamentos;
+    </script>
 
 </body>
 </html>

@@ -8,6 +8,88 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
+    <style>
+        /* ESTILOS EXTRAS PARA OS BOTÕES DE PAGAMENTO */
+        .btn-choice-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+        }
+
+        .btn-pay-now {
+            background-color: #25d366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        .btn-pay-now:hover { background-color: #1ebc57; transform: scale(1.02); }
+
+        .btn-pay-card {
+            background-color: #009ee3; /* Azul Mercado Pago */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 300px;
+            text-decoration: none; /* Importante pois é um link <a> */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        .btn-pay-card:hover { background-color: #007eb5; transform: scale(1.02); }
+
+        .btn-pay-later {
+            background-color: transparent;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 300px;
+            transition: 0.3s;
+        }
+        .btn-pay-later:hover { border-color: #fff; color: #fff; }
+
+        /* Estilos do PIX */
+        .pix-code-area {
+            width: 100%;
+            background: #000;
+            color: #0f0;
+            border: 1px solid #333;
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 5px;
+            resize: none;
+            margin-bottom: 10px;
+        }
+        .btn-copy {
+            background: #333; color: #fff; border: 1px solid #555;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer;
+            font-size: 0.9em; width: 100%; transition: 0.3s;
+        }
+        .btn-copy:hover { border-color: #25d366; color: #25d366; }
+    </style>
 </head>
 <body>
 
@@ -52,14 +134,14 @@
                 <a href="admin.html" style="color: #d4af37; font-weight: bold;">👑 ADMIN</a>
             </li>
             <li class="mobile-only" style="display: none;"> 
-                <a href="https://wa.me/5511949411527" target="_blank" class="btn-book" style="background-color: #25d366; display: block; text-align: center;">
+                <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20entrar%20em%20contato." target="_blank" class="btn-book" style="background-color: #25d366; display: block; text-align: center;">
                     <i class="fab fa-whatsapp"></i> Fale Conosco
                 </a>
             </li>
         </ul>
     </nav>
     
-    <a href="https://wa.me/5511949411527" target="_blank" class="btn-book desktop-only" style="background-color: #25d366;">
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20entrar%20em%20contato." target="_blank" class="btn-book desktop-only" style="background-color: #25d366;">
         <i class="fab fa-whatsapp"></i> Fale Conosco
     </a>
 </header>
@@ -140,9 +222,6 @@
 <br><br><br>
 
 <section class="about-section hidden" id="sobre">
-    <div class="about-background-icon">
-        <i class="fas fa-cut"></i>
-    </div>
     <div class="about-container">
         <div class="about-content">
             <div class="about-header">
@@ -201,6 +280,14 @@
             <img src="https://i.ibb.co/sGhJh9M/imagemtres-jpg.jpg" alt="Nudred">
             <div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div>
         </div>
+          <div class="corte-card">
+            <img src="https://i.ibb.co/p65kNzFq/Whats-App-Image-2026-01-21-at-22-53-19-1.jpg" alt="Nudred">
+            <div class="corte-info"><h3>SOCIAL & FADE</h3><p>Imponência fio a fio.</p></div>
+        </div>
+              <div class="corte-card">
+            <img src="https://i.ibb.co/zT9vRwrM/Whats-App-Image-2026-01-21-at-22-53-19.jpg" alt="Nudred">
+            <div class="corte-info"><h3>MILITAR CUT KID</h3><p>degradê impecável.</p></div>
+        </div>
     </div>
 </section>
 
@@ -219,19 +306,31 @@
             <h4>- Marcelo</h4>
             <div class="stars">★★★★★</div>
         </div>
+        <div class="depoimento-card">
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p>"Papo reto, atendimento excelente, o melhor da região."</p>
+            <h4>- Rafael</h4>
+            <div class="stars">★★★★★</div>
+        </div>
+        <div class="depoimento-card">
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p>"Corto a anos com o rod, otimo profissional e boa pessoa."</p>
+            <h4>- Daniel</h4>
+            <div class="stars">★★★★★</div>
+        </div>
     </div>
 </section>
 
 <div class="social-floating">
     <a href="https://www.instagram.com/souzard_barber/" target="_blank" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
-    <a href="https://wa.me/5511949411527" target="_blank" class="btn-float whatsapp"><i class="fab fa-whatsapp"></i></a>
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20entrar%20em%20contato." target="_blank" class="btn-float whatsapp"><i class="fab fa-whatsapp"></i></a>
 </div>
 
 <footer id="contatos" class="footer-premium hidden">
     <div class="footer-content">
         <i class="fas fa-map-marker-alt footer-icon"></i>
         <div class="mapa-wrapper">
-             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.3606990393245!2d-46.41738232375336!3d-23.59141096269609!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce6f7a6a4a6a57%3A0x8e8e8e8e8e8e8e8e!2sCidade%20Tiradentes%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.924765627252!2d-46.40879132375631!3d-23.57114247879434!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce657c7293b749%3A0x8e8334887372338!2sR.%20M%C3%A1rio%20Ferraz%20de%20Souza%2C%20889%20-%20Cidade%20Tiradentes%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2008474-320!5e0!3m2!1spt-BR!2sbr!4v1706030000000!5m2!1spt-BR!2sbr" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
         </div>
         <p class="footer-text">
             Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, SP<br>
@@ -352,7 +451,7 @@
             const email = document.getElementById('email').value;
             
             let preco = 0;
-            if(servico.includes("Corte Masculino")) preco = 1.00;
+            if(servico.includes("Corte Masculino")) preco = 40.00;
             else if(servico.includes("Barba Completa")) preco = 20.00;
             else if(servico.includes("Corte + Barba")) preco = 60.00;
             else if(servico.includes("Sobrancelha")) preco = 10.00;
@@ -387,6 +486,17 @@
                     const idPagamento = result.idPagamento;
                     const imagemBase64 = result.qrCodeBase64; 
                     const textoPix = pixCode ? pixCode : "Erro ao gerar PIX. Verifique com a barbearia.";
+                    
+                    // --- NOVO: PEGA O LINK DO CARTÃO ---
+                    const linkCartao = result.urlPagamentoCartao;
+                    let btnCartaoHTML = '';
+                    if(linkCartao) {
+                        btnCartaoHTML = `
+                            <a href="${linkCartao}" target="_blank" class="btn-pay-card">
+                                <i class="far fa-credit-card"></i> Pagar c/ Cartão
+                            </a>
+                        `;
+                    }
 
                     mensagem.innerHTML = `
                         <div class="success-container">
@@ -396,9 +506,11 @@
                             
                             <div class="btn-choice-container" id="area-escolha">
                                 <button type="button" class="btn-pay-now" onclick="mostrarAreaPix('${idPagamento}')">
-                                    <i class="fa-brands fa-pix"></i> Pagar Agora (R$ ${preco},00)
+                                    <i class="fa-brands fa-pix"></i> Pagar com PIX
                                 </button>
                                 
+                                ${btnCartaoHTML}
+
                                 <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">
                                     Pagar Depois
                                 </button>

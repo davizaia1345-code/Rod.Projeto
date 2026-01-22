@@ -2,252 +2,205 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Meus Agendamentos - Barbearia do Rod</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Cortes - RodBarber</title>
     <link rel="stylesheet" href="rod.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
     <style>
-        
-        
         body {
-            
-            background-color: #000; 
+            background-color: #1a1a1a; 
             color: #fff;
-            padding: 40px 20px;
-            text-align: center; 
-            min-height: 100vh; 
+            padding: 20px;
+            text-align: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
         }
-        
-       
-        .container-perfil {
-            max-width: 900px;
-            margin: 0 auto;
-           
-            background: #1a1a1a; 
-            padding: 40px;
-            border-radius: 15px;
-            
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
-            border: 1px solid #333;
-            text-align: left; 
+        .dashboard-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
         }
-        
-        
-        .header-perfil {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #333; 
-            padding-bottom: 25px;
+            border-bottom: 2px solid #e62e2e;
+            padding-bottom: 15px;
             margin-bottom: 30px;
         }
-        
-        h1 {
-            color: #d4af37; 
-            margin: 0;
-            font-size: 2em;
+        .page-title {
+            color: #d4af37;
+            font-size: 1.8rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-       
-        .btn-voltar {
-            text-decoration: none;
-            color: #fff;
-            font-weight: bold;
-            border: 2px solid #d4af37; 
-            padding: 10px 20px;
-            border-radius: 6px;
+            font-weight: 800;
             display: flex;
             align-items: center;
-            transition: 0.3s;
+            gap: 10px;
+        }
+        .btn-voltar {
             background: transparent;
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .btn-voltar:hover {
-            background: #d4af37; 
-            color: #000;
-        }
-        .btn-voltar i { margin-right: 8px; }
-
-        
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 20px;
-            border-radius: 8px;
-            overflow: hidden;
+        .btn-voltar:hover { background: #d4af37; color: #000; }
+        .agendamento-card {
+            background: #0f0f0f;
             border: 1px solid #333;
-        }
-        
-        
-        th {
-            background-color: #000; 
-            color: #d4af37; 
+            border-radius: 10px;
             padding: 20px;
-            text-align: left;
-            text-transform: uppercase;
-            font-size: 0.9em;
-            letter-spacing: 1px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        
-        
-        td {
-            padding: 20px;
-            border-bottom: 1px solid #333;
-            color: #fff; 
-            background-color: #222; 
-            vertical-align: middle;
-        }
-        
-        
-        tbody tr:hover td {
-            background-color: #2a2a2a;
-            transition: 0.3s;
-        }
-        
-        
-        .status-ok {
-            color: #2ecc71; 
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.9em;
-        }
-
-        
-        .btn-cancelar {
-            background-color: #e62e2e; 
-            color: white; 
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.8em;
-            transition: 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        .btn-cancelar:hover {
-            background-color: #ff1a1a; 
-            transform: translateY(-2px); 
-        }
-
-        
-        .loading-txt, .vazio-txt {
-            text-align: center;
-            color: #999;
-            padding: 50px;
-            font-size: 1.2em;
-            font-style: italic;
-        }
-        .loading-txt i { color: #d4af37; margin-right: 10px; }
+        .agendamento-card:hover { border-color: #e62e2e; transform: translateY(-2px); }
+        .card-info { text-align: left; flex: 1; min-width: 250px; }
+        .card-date { color: #e62e2e; font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
+        .card-service { color: #fff; font-size: 1.2rem; font-weight: 700; display: block; }
+        .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; justify-content: flex-end; flex: 1; }
+        .status-badge { padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
+        .status-pendente { background: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid #ffc107; }
+        .status-pago { background: rgba(40, 167, 69, 0.15); color: #2ecc71; border: 1px solid #2ecc71; }
+        .btn-pagar { background: #25d366; color: #fff; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .btn-card { background: #009ee3; color: #fff; padding: 8px 16px; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+        .btn-cancelar { background: #222; color: #888; border: 1px solid #444; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .btn-cancelar:hover { border-color: #e62e2e; color: #e62e2e; }
+        .loading-state { padding: 60px; color: #666; font-style: italic; }
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 15px; border: 2px solid #e62e2e; max-width: 400px; width: 90%; text-align: center; }
+        .pix-img { width: 200px; border: 4px solid #fff; margin: 20px auto; display: block; border-radius: 8px; }
+        .pix-textarea { width: 100%; background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 0.8rem; border-radius: 5px; resize: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container-perfil">
-    <div class="header-perfil">
-        <h1><i class="far fa-calendar-check"></i> Meus Cortes</h1>
-        <a href="Rod.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Site</a>
+<div class="dashboard-container">
+    <div class="page-header">
+        <div class="page-title"><i class="fas fa-calendar-check"></i> Meus Cortes</div>
+        <a href="Rod.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
     </div>
+    <div id="lista-agendamentos">
+        <div class="loading-state"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando seus horários...</div>
+    </div>
+</div>
 
-    <p id="loading" class="loading-txt">
-        <i class="fas fa-spinner fa-spin"></i> Carregando seus horários...
-    </p>
-
-    <table id="tabela-meus-cortes" style="display: none;">
-        <thead>
-            <tr>
-                <th><i class="far fa-calendar-alt"></i> Data</th>
-                <th><i class="far fa-clock"></i> Horário</th>
-                <th>Status</th>
-                <th>Ação</th>
-            </tr>
-        </thead>
-        <tbody>
-            </tbody>
-    </table>
-    
-    <div id="aviso-vazio" class="vazio-txt" style="display: none;">
-        Você ainda não tem nenhum agendamento marcado.
+<div id="modal-pix" class="modal-overlay">
+    <div class="modal-content">
+        <span style="cursor:pointer; float:right; color:#888;" onclick="fecharModal()">&times;</span>
+        <h3 style="color:#fff;">Pagamento PIX</h3>
+        <img id="qr-image" src="" class="pix-img">
+        <textarea id="pix-text" class="pix-textarea" readonly></textarea>
+        <button onclick="copiarPix()" class="btn-pagar" style="width:100%; justify-content:center; margin-bottom:10px;"><i class="fas fa-copy"></i> COPIAR CÓDIGO</button>
+        <div id="status-verificacao" style="color:#d4af37; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Aguardando confirmação...</div>
     </div>
 </div>
 
 <script>
-    async function carregarMeusCortes() {
-        const emailUsuario = localStorage.getItem('usuarioEmail');
-        
-        if (!emailUsuario) {
-            alert("Você precisa estar logado para ver seus cortes.");
-            window.location.href = "login.html";
-            return;
-        }
+    const API_URL = 'http://127.0.0.1:3001';
+    let intervaloVerificacao = null;
 
+    function formatarData(dataISO) {
+        if (!dataISO) return '--/--/----';
+        const p = dataISO.split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    async function carregarAgendamentos() {
+        const email = localStorage.getItem('usuarioEmail');
+        if (!email) { window.location.href = 'login.html'; return; }
+        const container = document.getElementById('lista-agendamentos');
         try {
-            
-            const response = await fetch(`http://localhost:3001/meus-agendamentos?email=${emailUsuario}`);
-            const lista = await response.json();
-
-            const tbody = document.querySelector("#tabela-meus-cortes tbody");
-            const tabela = document.getElementById("tabela-meus-cortes");
-            const loading = document.getElementById("loading");
-            const vazio = document.getElementById("aviso-vazio");
-
-            loading.style.display = "none";
-            tbody.innerHTML = "";
-
+            const res = await fetch(`${API_URL}/meus-agendamentos?email=${email}`);
+            const lista = await res.json();
+            container.innerHTML = '';
             if (lista.length === 0) {
-                vazio.style.display = "block";
+                container.innerHTML = '<div class="loading-state">Nenhum agendamento encontrado.</div>';
                 return;
             }
-
-            tabela.style.display = "table";
-
-            lista.forEach(item => {
-                
-                const dataObj = new Date(item.data);
-                const dataFormatada = dataObj.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-                
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><strong>${dataFormatada}</strong></td>
-                    <td>${item.hora}</td>
-                    <td><span class="status-ok"><i class="fas fa-check-circle"></i> Confirmado</span></td>
-                    <td>
-                        <button class="btn-cancelar" onclick="cancelarMeuCorte('${item._id}')">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+            lista.reverse().forEach(item => {
+                const pago = item.statusPagamento === 'approved';
+                const card = document.createElement('div');
+                card.className = 'agendamento-card';
+                card.innerHTML = `
+                    <div class="card-info">
+                        <span class="card-date"><i class="far fa-calendar-alt"></i> ${formatarData(item.data)} às ${item.hora}</span>
+                        <span class="card-service">${item.servico}</span>
+                        <span style="color:#888; font-size:0.9rem;">R$ ${item.valor},00</span>
+                    </div>
+                    <div class="card-actions">
+                        <span class="status-badge ${pago ? 'status-pago' : 'status-pendente'}">${pago ? 'PAGO' : 'PENDENTE'}</span>
+                        ${!pago && item.pixCopiaCola ? `<button class="btn-pagar" onclick='abrirModal("${item.qrCodeBase64}", "${item.pixCopiaCola}", "${item.pagamentoId}")'><i class="fa-brands fa-pix"></i> PIX</button>` : ''}
+                        ${!pago && item.urlPagamentoCartao ? `<a href="${item.urlPagamentoCartao}" target="_blank" class="btn-card"><i class="far fa-credit-card"></i> CARTÃO</a>` : ''}
+                        <button class="btn-cancelar" onclick="cancelar('${item._id}')"><i class="fas fa-trash"></i></button>
+                    </div>`;
+                container.appendChild(card);
             });
-
-        } catch (error) {
-            console.error(error);
-            const loading = document.getElementById("loading");
-            loading.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #e62e2e;"></i> Erro ao buscar dados. Verifique se o servidor está rodando.';
-            loading.style.color = "#e62e2e";
-        }
+        } catch (e) { container.innerHTML = '<p style="color:red">Erro ao conectar com o servidor.</p>'; }
     }
 
-    async function cancelarMeuCorte(id) {
-        if(confirm("Tem certeza que deseja desmarcar este horário?")) {
+    function abrirModal(base64, copiaCola, id) {
+        document.getElementById('qr-image').src = `data:image/jpeg;base64,${base64}`;
+        document.getElementById('pix-text').value = copiaCola;
+        document.getElementById('modal-pix').style.display = 'flex';
+        iniciarVerificacao(id);
+    }
+
+    function fecharModal() { document.getElementById('modal-pix').style.display = 'none'; clearInterval(intervaloVerificacao); }
+
+    function copiarPix() {
+        const t = document.getElementById('pix-text'); t.select(); navigator.clipboard.writeText(t.value);
+        Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Copiado!', showConfirmButton: false, timer: 1500, background: '#333', color: '#fff' });
+    }
+
+    function iniciarVerificacao(id) {
+        clearInterval(intervaloVerificacao);
+        intervaloVerificacao = setInterval(async () => {
             try {
-                const response = await fetch(`http://localhost:3001/agendamentos/${id}`, { method: 'DELETE' });
-                if (response.ok) {
-                    
-                    carregarMeusCortes(); 
-                } else {
-                    alert("Não foi possível cancelar agora.");
+                const res = await fetch(`${API_URL}/status-pagamento/${id}`);
+                const data = await res.json();
+                if (data.status === 'approved') {
+                    clearInterval(intervaloVerificacao);
+                    Swal.fire({ icon: 'success', title: 'Pago!', background: '#1a1a1a', color: '#fff' });
+                    fecharModal(); carregarAgendamentos();
                 }
-            } catch (error) {
-                 alert("Erro de conexão ao tentar cancelar.");
-            }
-        }
+            } catch (e) {}
+        }, 3000);
     }
 
-    window.onload = carregarMeusCortes;
+    async function cancelar(id) {
+        const result = await Swal.fire({
+            title: 'Cancelar horário?',
+            text: "Essa vaga será liberada para outros clientes.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e62e2e',
+            cancelButtonColor: '#333',
+            confirmButtonText: 'Sim, cancelar',
+            background: '#1a1a1a',
+            color: '#fff'
+        });
+        if (result.isConfirmed) {
+            try {
+                await fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
+                Swal.fire({ title: 'Cancelado!', icon: 'success', background: '#1a1a1a', color: '#fff', timer: 1500, showConfirmButton: false });
+                carregarAgendamentos();
+            } catch (e) { Swal.fire('Erro', 'Não foi possível cancelar.', 'error'); }
+        }
+    }
+    window.onload = carregarAgendamentos;
 </script>
-
 </body>
 </html>

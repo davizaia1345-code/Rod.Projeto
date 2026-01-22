@@ -842,3 +842,65 @@ h2 {
     color: #fff;
     background: rgba(255,255,255,0.05);
 }
+
+@media (max-width: 768px) {
+    /* Transforma o grid em uma linha infinita para o lado */
+    .depoimentos-grid {
+        display: flex;
+        flex-wrap: nowrap; 
+        overflow-x: auto; 
+        scroll-snap-type: x mandatory; 
+        gap: 15px;
+        padding: 20px 10px;
+        justify-content: flex-start; 
+        -webkit-overflow-scrolling: touch; 
+    }
+
+    
+    .depoimentos-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    
+    .depoimento-card {
+        min-width: 85%; 
+        scroll-snap-align: center; 
+        flex-shrink: 0; 
+        margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Transforma a galeria em carrossel lateral no mobile */
+    .galeria-grid {
+        display: flex;
+        flex-direction: row !important; 
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 20px;
+        padding: 40px 20px; 
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    
+    .galeria-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Ajusta os cards da galeria para o carrossel */
+    .corte-card {
+        min-width: 280px; 
+        scroll-snap-align: center;
+        flex-shrink: 0;
+        margin: 0 !important; 
+        transform: none !important; 
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+    /* Efeito de destaque leve ao chegar no centro */
+    .corte-card:hover {
+        transform: scale(1.02) !important;
+    }
+}

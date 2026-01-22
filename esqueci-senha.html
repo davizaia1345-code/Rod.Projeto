@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha | RodBarber</title>
+    <style>
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body {
+            background-color: #000;
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .container {
+            background: #121212; padding: 40px; width: 100%; max-width: 400px; border-radius: 15px;
+            border: 1px solid #333; text-align: center; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        }
+        .container::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #e62e2e; }
+        h2 { margin-bottom: 20px; color: #ccc; }
+        input {
+            width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333;
+            border-radius: 6px; color: #fff; margin-bottom: 15px; outline: none;
+        }
+        input:focus { border-color: #e62e2e; }
+        button {
+            width: 100%; padding: 12px; background: #e62e2e; color: white; border: none;
+            border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        button:hover { background: #ff4d4d; }
+        #mensagem { margin-top: 15px; font-size: 0.9rem; }
+        a { color: #888; text-decoration: none; font-size: 0.9rem; margin-top: 10px; display: block; }
+        a:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Recuperar Senha</h2>
+        <p style="color:#777; margin-bottom:20px; font-size:0.9em;">Digite seu e-mail para receber o link.</p>
+        
+        <input type="email" id="email" placeholder="Seu e-mail cadastrado">
+        <button onclick="enviarEmail()">ENVIAR LINK</button>
+        
+        <p id="mensagem"></p>
+        <a href="login.html">← Voltar ao Login</a>
+    </div>
+
+    <script>
+        async function enviarEmail() {
+            const email = document.getElementById('email').value;
+            const msg = document.getElementById('mensagem');
+            const btn = document.querySelector('button');
+
+            if(!email) return alert("Digite o e-mail");
+
+            btn.disabled = true; btn.innerText = "Enviando...";
+            msg.innerText = "";
+
+            try {
+                
+                const response = await fetch('http://localhost:3001/esqueci-senha', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                
+                msg.innerText = data.mensagem || data.erro;
+                msg.style.color = response.ok ? '#25d366' : '#ff4d4d';
+            } catch (e) {
+                msg.innerText = "Erro ao conectar com o servidor.";
+                msg.style.color = '#ff4d4d';
+            }
+            btn.disabled = false; btn.innerText = "ENVIAR LINK";
+        }
+    </script>
+</body>
+</html>

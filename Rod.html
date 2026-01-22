@@ -2,9 +2,12 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barbearia do Rod</title>
     <link rel="stylesheet" href="rod.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body>
 
@@ -27,21 +30,36 @@
 
 <header class="navbar">
     <div class="logo">
-        <span class="logo-icon">/</span> RODBARBER
+        <img src="https://i.ibb.co/0jFF6FcM/IMG-5529.png" alt="Logo" style="width: 70px; vertical-align: middle; filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));">
+        RODBARBER
     </div>
+    
+    <input type="checkbox" id="menu-toggle" class="menu-toggle">
+    <label for="menu-toggle" class="menu-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
     <nav>
         <ul class="nav-links">
-            <li><a href="#agendamento">Agendamento</a></li>
-            <li><a href="#sobre">Sobre</a></li>
-            <li><a href="#precos">Preços</a></li>
-            <li><a href="#depoimentos">Depoimentos</a></li>
-            <li><a href="#contatos">Contatos</a></li>
+            <li><a href="#agendamento" onclick="fecharMenuMobile()">Agendamento</a></li>
+            <li><a href="#sobre" onclick="fecharMenuMobile()">Sobre</a></li>
+            <li><a href="#precos" onclick="fecharMenuMobile()">Preços</a></li>
+            <li><a href="#depoimentos" onclick="fecharMenuMobile()">Depoimentos</a></li>
+            <li><a href="#contatos" onclick="fecharMenuMobile()">Contatos</a></li>
             <li id="btn-admin" style="display: none;">
                 <a href="admin.html" style="color: #d4af37; font-weight: bold;">👑 ADMIN</a>
             </li>
+            <li class="mobile-only" style="display: none;"> 
+                <a href="https://wa.me/5511949411527" target="_blank" class="btn-book" style="background-color: #25d366; display: block; text-align: center;">
+                    <i class="fab fa-whatsapp"></i> Fale Conosco
+                </a>
+            </li>
         </ul>
     </nav>
-    <a href="https://wa.me/5511949411527" target="_blank" class="btn-book" style="background-color: #25d366;">
+    
+    <a href="https://wa.me/5511949411527" target="_blank" class="btn-book desktop-only" style="background-color: #25d366;">
         <i class="fab fa-whatsapp"></i> Fale Conosco
     </a>
 </header>
@@ -52,8 +70,8 @@
         <div class="hero-content">
             <h1>Muito Além de um Corte, Uma Experiência de Cuidado Masculino.</h1>
             <div class="address">
-                <p>o melhor lugar</p>
-                <p>para agendar seu corte.</p>
+                <p>O Melhor Lugar</p>
+                <p>Para Agendar seu Corte.</p>
             </div>
         </div>
 
@@ -72,8 +90,8 @@
                     <input type="hidden" id="hora-selecionada">
 
                     <label><i class="fas fa-user"></i> Seus Dados:</label>
-                    <input type="text" id="nome" required readonly placeholder="Nome">
-                    <input type="email" id="email" required readonly placeholder="E-mail">
+                    <input type="text" id="nome" required readonly placeholder="Nome" style="cursor: not-allowed; opacity: 0.7;">
+                    <input type="email" id="email" required readonly placeholder="E-mail" style="cursor: not-allowed; opacity: 0.7;">
                     
                     <label><i class="fas fa-calendar-alt"></i> Data:</label>
                     <input type="date" id="data" required onchange="carregarHorariosDisponiveis()">
@@ -114,7 +132,7 @@
                     
                     <button type="submit" style="margin-top: 15px;">Confirmar Agendamento</button>
                 </form>
-                <p id="mensagem" style="text-align: center; margin-top: 10px; font-weight: bold;"></p>
+                <div id="mensagem" style="text-align: center; margin-top: 10px; font-weight: bold;"></div>
             </div>
         </section>
     </div>
@@ -172,15 +190,15 @@
     <h2>Galeria de Estilo</h2>
     <div class="galeria-grid">
         <div class="corte-card">
-            <img src="imagemum.jpg.jpg" alt="Freestyle">
+            <img src="https://i.ibb.co/bRB817kj/imagemum-jpg.jpg" alt="Freestyle">
             <div class="corte-info"><h3>FREESTYLE LATERAL</h3><p>Personalidade em cada traço.</p></div>
         </div>
         <div class="corte-card">
-            <img src="imagemdois.jpg.jpg" alt="Arte">
+            <img src="https://i.ibb.co/MyqdSqwf/imagemdois-jpg.jpg" alt="Arte">
             <div class="corte-info"><h3>ARTE NA NAVALHA</h3><p>Design exclusivo.</p></div>
         </div>
         <div class="corte-card">
-            <img src="imagemtres.jpg.jpg" alt="Nudred">
+            <img src="https://i.ibb.co/sGhJh9M/imagemtres-jpg.jpg" alt="Nudred">
             <div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div>
         </div>
     </div>
@@ -225,7 +243,26 @@
 </footer>
 
 <script>
-    const API_URL = 'http://localhost:3001';
+    const API_URL = 'http://127.0.0.1:3001'; 
+    let intervaloVerificacao = null;
+
+    function fecharMenuMobile() {
+        document.getElementById('menu-toggle').checked = false;
+    }
+
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#1e1e1e', 
+        color: '#fff',         
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
 
     async function carregarHorariosDisponiveis() {
         const inputData = document.getElementById('data').value;
@@ -259,12 +296,9 @@
                 for (let tempo = inicio; tempo <= fim; tempo += intervalo) {
                     const horas = Math.floor(tempo / 60);
                     const minutos = tempo % 60;
-                    
                     const horarioFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
 
-                    if (horariosOcupados.includes(horarioFormatado)) {
-                        continue; 
-                    }
+                    if (horariosOcupados.includes(horarioFormatado)) continue; 
 
                     const btn = document.createElement('div');
                     btn.className = 'time-btn';
@@ -282,7 +316,6 @@
                 aviso.style.display = 'block';
                 aviso.style.color = '#e62e2e';
             }
-
         } catch (error) {
             console.error(error);
             aviso.innerText = "Erro ao buscar agenda.";
@@ -318,42 +351,94 @@
             const nome = document.getElementById('nome').value;
             const email = document.getElementById('email').value;
             
+            let preco = 0;
+            if(servico.includes("Corte Masculino")) preco = 1.00;
+            else if(servico.includes("Barba Completa")) preco = 20.00;
+            else if(servico.includes("Corte + Barba")) preco = 60.00;
+            else if(servico.includes("Sobrancelha")) preco = 10.00;
+
             if(!servico || !hora || !data) {
-                mensagem.innerText = "⚠️ Preencha data, serviço e horário.";
-                mensagem.style.color = "orange";
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Faltam dados!',
+                    text: 'Preencha data, serviço e horário.',
+                    background: '#1e1e1e',
+                    color: '#fff',
+                    confirmButtonColor: '#e62e2e'
+                });
                 return;
             }
 
             const botao = form.querySelector("button");
             botao.disabled = true;
-            botao.innerText = "Agendando...";
+            botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirmando...'; 
 
             try {
                 const response = await fetch(`${API_URL}/agendar`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, email, data, hora, servico })
+                    body: JSON.stringify({ nome, email, data, hora, servico, preco })
                 });
                 const result = await response.json();
                 
                 if (response.ok) {
-                    mensagem.innerText = "Agendamento confirmado! ✅";
-                    mensagem.style.color = "lightgreen";
+                    botao.style.display = 'none';
+                    const pixCode = result.pixCopiaCola;
+                    const idPagamento = result.idPagamento;
+                    const imagemBase64 = result.qrCodeBase64; 
+                    const textoPix = pixCode ? pixCode : "Erro ao gerar PIX. Verifique com a barbearia.";
+
+                    mensagem.innerHTML = `
+                        <div class="success-container">
+                            <i class="fas fa-check-circle success-icon" style="color: #25d366; font-size: 3rem;"></i>
+                            <h3 style="color: #fff; margin: 10px 0;">Agendado!</h3>
+                            <p style="color: #aaa; font-size: 0.9em;">${data} às ${hora}</p>
+                            
+                            <div class="btn-choice-container" id="area-escolha">
+                                <button type="button" class="btn-pay-now" onclick="mostrarAreaPix('${idPagamento}')">
+                                    <i class="fa-brands fa-pix"></i> Pagar Agora (R$ ${preco},00)
+                                </button>
+                                
+                                <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">
+                                    Pagar Depois
+                                </button>
+                            </div>
+
+                            <div id="area-pix-oculta" style="display: none;" class="pix-container">
+                                <div class="pix-title">
+                                    <i class="fa-brands fa-pix" style="color:#32bcad;"></i> Pagamento PIX
+                                </div>
+                                <div id="status-pagamento-texto" style="margin-bottom:10px; color: #aaa; font-size: 0.9rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Aguardando pagamento...
+                                </div>
+
+                                <div style="text-align: center; margin: 10px 0;">
+                                    <img src="data:image/jpeg;base64,${imagemBase64}" 
+                                         style="width: 200px; max-width: 100%; border-radius: 8px; border: 2px solid #fff;">
+                                </div>
+
+                                <p class="pix-subtitle" style="margin-top: 5px;">Ou copie o código:</p>
+                                
+                                <textarea id="pix-code" class="pix-code-area" rows="3" readonly>${textoPix}</textarea>
+                                
+                                <button type="button" class="btn-copy" onclick="copiarPix()">
+                                    <i class="fas fa-copy"></i> COPIAR CÓDIGO
+                                </button>
+                                <br><br>
+                                <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    `;
                     
                     await carregarHorariosDisponiveis();
-                    document.getElementById('hora-selecionada').value = "";
-                    
-                    setTimeout(() => { 
-                        mensagem.innerText = ""; 
-                        botao.disabled = false; 
-                        botao.innerText = "Confirmar Agendamento"; 
-                    }, 3000);
+
                 } else {
                     mensagem.innerText = result.mensagem;
                     mensagem.style.color = "#ff6b6b";
                     botao.disabled = false;
                     botao.innerText = "Confirmar Agendamento";
-                    if(result.mensagem.includes("reservado")) carregarHorariosDisponiveis();
                 }
             } catch (error) {
                 mensagem.innerText = "Erro de conexão ❌";
@@ -361,6 +446,83 @@
                 botao.disabled = false;
                 botao.innerText = "Confirmar Agendamento";
             }
+        });
+    }
+
+    function mostrarAreaPix(idPagamento) {
+        document.getElementById('area-escolha').style.display = 'none';
+        const areaPix = document.getElementById('area-pix-oculta');
+        areaPix.style.display = 'block';
+        areaPix.style.animation = 'fadeIn 0.5s ease';
+
+        if (idPagamento) {
+            iniciarVerificacaoPagamento(idPagamento);
+        }
+    }
+
+    function iniciarVerificacaoPagamento(id) {
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+
+        intervaloVerificacao = setInterval(async () => {
+            try {
+                const res = await fetch(`${API_URL}/status-pagamento/${id}`);
+                const data = await res.json();
+
+                if (data.status === 'approved') {
+                    clearInterval(intervaloVerificacao);
+                    
+                    document.getElementById('area-pix-oculta').innerHTML = `
+                        <div style="text-align: center; animation: fadeIn 0.5s ease;">
+                            <i class="fas fa-check-circle" style="color: #25d366; font-size: 4rem; margin-bottom: 15px;"></i>
+                            <h3 style="color: #fff;">Pagamento Confirmado! 🎉</h3>
+                            <p style="color: #ccc;">Obrigado! Seu horário está garantido.</p>
+                            <br>
+                            <button type="button" class="btn-pay-now" onclick="window.location.reload()" style="background: #25d366; border:none; width:100%;">
+                                OK, Tudo Certo
+                            </button>
+                        </div>
+                    `;
+                    
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+                        background: '#25d366', color: '#fff'
+                    });
+                    Toast.fire({ icon: 'success', title: 'Pagamento Recebido!' });
+                }
+            } catch (error) {
+                console.log("Erro ao verificar pagamento", error);
+            }
+        }, 3000);
+    }
+
+    function finalizarAgendamento() {
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+        Swal.fire({
+            icon: 'success',
+            title: 'Tudo Certo!',
+            text: 'Te esperamos no horário marcado.',
+            background: '#1e1e1e',
+            color: '#fff',
+            confirmButtonColor: '#25d366'
+        }).then(() => {
+            window.location.reload();
+        });
+    }
+
+    function copiarPix() {
+        const codigo = document.getElementById("pix-code");
+        codigo.select();
+        codigo.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(codigo.value);
+        
+        const btn = document.querySelector('.btn-copy');
+        btn.innerHTML = '<i class="fas fa-check-double"></i> COPIADO!';
+        btn.style.background = '#1e1e1e';
+        btn.style.border = '1px solid #25d366';
+        
+        Toast.fire({
+            icon: 'success',
+            title: 'Código PIX copiado!'
         });
     }
 
@@ -394,6 +556,7 @@
             document.getElementById('area-formulario').style.display = 'none';
         }
     };
+
     function fazerLogout() { localStorage.clear(); window.location.href = 'login.html'; }
 </script>
 </body>

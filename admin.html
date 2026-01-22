@@ -142,7 +142,7 @@
 <div class="admin-container">
     <div class="header-admin">
         <div class="logo-admin">ROD<span>BARBER</span> <span style="font-size: 0.5em; background: #e62e2e; padding: 2px 5px; border-radius: 3px; vertical-align: middle; margin-left: 5px;">ADMIN</span></div>
-        <a href="Rod.html" class="btn-voltar"><i class="fas fa-home"></i> Voltar ao Site</a>
+        <a href="index.html" class="btn-voltar"><i class="fas fa-home"></i> Voltar ao Site</a>
     </div>
 
     <div class="resumo-cards">
@@ -195,14 +195,15 @@
 </div>
 
 <script>
-    // URL OFICIAL DO SEU BACKEND NO RENDER
-    const API_URL = 'https://rod-barber.onrender.com';
+    // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
+    // Link novo do Render que já está Live
+    const API_URL = 'https://rod-projeto.onrender.com';
     let todosAgendamentos = [];
 
     // --- SEGURANÇA BÁSICA ---
     function verificarPermissao() {
         const email = localStorage.getItem('usuarioEmail');
-        // Se não for o email do dono, bloqueia o acesso
+        // Bloqueia acesso se não for o administrador
         if (email !== "rdbarbercontato@gmail.com") {
             document.body.innerHTML = `
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e;">
@@ -211,7 +212,7 @@
                     <p style="color:#666; margin-top:10px;">Você não tem permissão para acessar este painel.</p>
                 </div>
             `;
-            setTimeout(() => window.location.href = 'Rod.html', 3000);
+            setTimeout(() => window.location.href = 'index.html', 3000);
             return false;
         }
         return true;
@@ -225,7 +226,7 @@
             const res = await fetch(`${API_URL}/agendamentos`);
             todosAgendamentos = await res.json();
             
-            todosAgendamentos.reverse(); // Mostra os mais novos primeiro
+            todosAgendamentos.reverse(); 
             
             renderizarTabela(todosAgendamentos);
             calcularResumo(todosAgendamentos);
@@ -278,12 +279,10 @@
     function calcularResumo(lista) {
         document.getElementById('total-geral').innerText = lista.length;
 
-        // Calcula agendamentos do dia atual
         const hojeISO = new Date().toISOString().split('T')[0];
         const qtdHoje = lista.filter(item => item.data === hojeISO).length;
         document.getElementById('total-hoje').innerText = qtdHoje;
 
-        // Faturamento real baseado em pagamentos aprovados no Mercado Pago
         const totalGrana = lista
             .filter(item => item.statusPagamento === 'approved')
             .reduce((acc, item) => acc + (item.valor || 0), 0);
@@ -322,7 +321,7 @@
 
         if (confirm.isConfirmed) {
             try {
-                // Remove o registro diretamente do MongoDB através do backend no Render
+                // Remove do banco de dados no novo servidor
                 await fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#1e1e1e', color: '#fff' });
                 Toast.fire({ icon: 'success', title: 'Removido com sucesso!' });

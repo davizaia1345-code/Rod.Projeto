@@ -51,8 +51,9 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO DO SERVIDOR ---
-        const API_URL = 'https://rod-barber.onrender.com';
+        // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
+        // Agora apontando para o servidor que está LIVE
+        const API_URL = 'https://rod-projeto.onrender.com';
 
         async function enviarEmail() {
             const email = document.getElementById('email').value;
@@ -66,7 +67,7 @@
             msg.innerText = "";
 
             try {
-                // Chamada para a rota de esqueci-senha no Render
+                // Chamada para a rota de esqueci-senha no novo servidor
                 const response = await fetch(`${API_URL}/esqueci-senha`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

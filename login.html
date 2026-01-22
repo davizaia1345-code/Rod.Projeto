@@ -137,7 +137,7 @@
 <body>
 
     <div class="login-container">
-        <a href="Rod.html" class="logo"><span>/</span> RodBarber</a>
+        <a href="index.html" class="logo"><span>/</span> RodBarber</a>
         
         <h2>Acesse sua conta</h2>
 
@@ -162,7 +162,7 @@
         <div class="footer-links">
             <p>Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
             <br>
-            <a href="Rod.html" style="color: #666; font-size: 0.8rem;">← Voltar ao site</a>
+            <a href="index.html" style="color: #666; font-size: 0.8rem;">← Voltar ao site</a>
         </div>
     </div>
 
@@ -170,9 +170,9 @@
         const form = document.getElementById('form-login');
         const mensagem = document.getElementById('mensagem');
 
-        // --- CONFIGURAÇÃO DO SERVIDOR ---
+        // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
         // Agora apontando para o seu servidor real no Render
-        const API_URL = 'https://rod-barber.onrender.com';
+        const API_URL = 'https://rod-projeto.onrender.com';
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -186,7 +186,6 @@
             mensagem.innerText = "";
 
             try {
-                // Chamada para o servidor na internet
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -196,18 +195,17 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    mensagem.style.color = '#25d366'; // Verde
+                    mensagem.style.color = '#25d366'; 
                     mensagem.innerText = "Login realizado! Redirecionando...";
                     
-                    // Salva os dados do usuário no navegador
                     localStorage.setItem('usuarioNome', data.usuario.nome);
                     localStorage.setItem('usuarioEmail', data.usuario.email);
 
                     setTimeout(() => {
-                        window.location.href = 'Rod.html';
+                        window.location.href = 'index.html';
                     }, 1500);
                 } else {
-                    mensagem.style.color = '#ff4d4d'; // Vermelho
+                    mensagem.style.color = '#ff4d4d'; 
                     mensagem.innerText = data.erro || "Erro ao entrar.";
                     btn.disabled = false;
                     btn.innerText = "ENTRAR";

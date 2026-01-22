@@ -92,7 +92,7 @@
 <div class="dashboard-container">
     <div class="page-header">
         <div class="page-title"><i class="fas fa-calendar-check"></i> Meus Cortes</div>
-        <a href="Rod.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
+        <a href="index.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
     </div>
     <div id="lista-agendamentos">
         <div class="loading-state"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando seus horários...</div>
@@ -111,8 +111,9 @@
 </div>
 
 <script>
-    // URL OFICIAL DO SEU BACKEND NO RENDER
-    const API_URL = 'https://rod-barber.onrender.com';
+    // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
+    // Agora apontando para o servidor rod-projeto que está LIVE
+    const API_URL = 'https://rod-projeto.onrender.com';
     let intervaloVerificacao = null;
 
     function formatarData(dataISO) {
@@ -127,6 +128,7 @@
         const container = document.getElementById('lista-agendamentos');
         
         try {
+            // Busca os agendamentos no novo servidor
             const res = await fetch(`${API_URL}/meus-agendamentos?email=${email}`);
             const lista = await res.json();
             
@@ -137,7 +139,6 @@
                 return;
             }
             
-            // Ordena para os mais recentes aparecerem primeiro
             lista.reverse().forEach(item => {
                 const pago = item.statusPagamento === 'approved';
                 const card = document.createElement('div');
@@ -211,7 +212,7 @@
             } catch (e) {
                 console.log("Verificando status...");
             }
-        }, 3000); // Verifica a cada 3 segundos
+        }, 3000); 
     }
 
     async function cancelar(id) {

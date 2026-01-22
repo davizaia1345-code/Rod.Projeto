@@ -125,7 +125,7 @@
 <body>
 
     <div class="register-container">
-        <a href="Rod.html" class="logo"><span>/</span> RodBarber</a>
+        <a href="index.html" class="logo"><span>/</span> RodBarber</a>
         
         <h2>Crie sua conta</h2>
 
@@ -159,9 +159,9 @@
         const form = document.getElementById('form-cadastro');
         const mensagem = document.getElementById('mensagem');
 
-        // --- CONFIGURAÇÃO DO SERVIDOR ---
-        // Agora apontando para o seu servidor real no Render
-        const API_URL = 'https://rod-barber.onrender.com';
+        // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
+        // Link novo do Render que já está Live
+        const API_URL = 'https://rod-projeto.onrender.com';
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -176,7 +176,6 @@
             mensagem.innerText = "";
 
             try {
-                // Envio dos dados para a API na internet
                 const response = await fetch(`${API_URL}/cadastro`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

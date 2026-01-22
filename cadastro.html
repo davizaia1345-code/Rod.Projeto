@@ -7,12 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         
         body {
             background-color: #000;
-            
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
             background-size: cover;
             background-position: center;
@@ -23,7 +21,6 @@
             color: #fff;
         }
 
-        
         .register-container {
             background: #121212; 
             padding: 40px;
@@ -37,7 +34,6 @@
             overflow: hidden;
         }
 
-        
         .register-container::before {
             content: '';
             position: absolute;
@@ -60,7 +56,6 @@
 
         h2 { margin-bottom: 20px; font-size: 1.2rem; color: #ccc; font-weight: 400; }
 
-        
         .input-group { margin-bottom: 15px; text-align: left; }
         
         label { 
@@ -89,7 +84,6 @@
             background: #222;
         }
 
-        
         button {
             width: 100%;
             padding: 12px;
@@ -111,7 +105,6 @@
             box-shadow: 0 5px 15px rgba(230, 46, 46, 0.3);
         }
 
-        
         .footer-links {
             margin-top: 20px;
             font-size: 0.9rem;
@@ -166,6 +159,10 @@
         const form = document.getElementById('form-cadastro');
         const mensagem = document.getElementById('mensagem');
 
+        // --- CONFIGURAÇÃO DO SERVIDOR ---
+        // Agora apontando para o seu servidor real no Render
+        const API_URL = 'https://rod-barber.onrender.com';
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -179,8 +176,8 @@
             mensagem.innerText = "";
 
             try {
-                
-                const response = await fetch('http://localhost:3001/cadastro', {
+                // Envio dos dados para a API na internet
+                const response = await fetch(`${API_URL}/cadastro`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome, email, senha })
@@ -192,7 +189,6 @@
                     mensagem.style.color = '#25d366'; 
                     mensagem.innerText = "Cadastro realizado! Indo para o login...";
                     
-                    
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 2000);
@@ -203,6 +199,7 @@
                     btn.innerText = "CADASTRAR";
                 }
             } catch (error) {
+                console.error("Erro de conexão:", error);
                 mensagem.style.color = '#ff4d4d';
                 mensagem.innerText = "Erro de conexão com o servidor.";
                 btn.disabled = false;

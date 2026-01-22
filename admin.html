@@ -111,12 +111,10 @@
         tbody tr:hover { background: #252525; }
         tbody tr:last-child td { border-bottom: none; }
 
-        /* DETALHES DA TABELA */
         .info-principal { display: block; font-weight: bold; color: #fff; font-size: 1em; }
         .info-secundaria { display: block; font-size: 0.8em; color: #777; margin-top: 3px; }
         .info-destaque { color: #d4af37; font-weight: bold; }
 
-        /* BADGES STATUS */
         .badge {
             padding: 6px 12px; border-radius: 20px; font-size: 0.75em; 
             font-weight: 800; text-transform: uppercase; display: inline-block;
@@ -124,7 +122,6 @@
         .bg-pendente { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid #ffc107; }
         .bg-pago { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid #2ecc71; }
 
-        /* BOTÃO AÇÃO */
         .btn-lixeira {
             background: transparent; border: 1px solid #444; color: #666;
             width: 35px; height: 35px; border-radius: 5px; cursor: pointer; transition: 0.2s;
@@ -132,61 +129,17 @@
         }
         .btn-lixeira:hover { border-color: #e62e2e; color: #e62e2e; background: rgba(230, 46, 46, 0.1); }
 
-      
-@media (max-width: 768px) {
-    
-    .header-admin {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-
-   
-    .resumo-cards {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-   
-    .controles-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filtro-group {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    input[type="date"], .btn-atualizar, .btn-voltar {
-        width: 100% !important;
-        justify-content: center;
-    }
-
-   
-    .tabela-wrapper {
-        overflow-x: auto; 
-        -webkit-overflow-scrolling: touch; 
-        margin-top: 10px;
-    }
-
-    table {
-        min-width: 600px; 
-    }
-
-
-    tbody td {
-        padding: 10px;
-        font-size: 0.85em;
-    }
-}
-
+        @media (max-width: 768px) {
+            .header-admin { flex-direction: column; gap: 15px; text-align: center; }
+            .resumo-cards { grid-template-columns: 1fr; gap: 10px; }
+            .controles-bar { flex-direction: column; align-items: stretch; }
+            input[type="date"], .btn-atualizar, .btn-voltar { width: 100% !important; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
 <div class="admin-container">
-    
     <div class="header-admin">
         <div class="logo-admin">ROD<span>BARBER</span> <span style="font-size: 0.5em; background: #e62e2e; padding: 2px 5px; border-radius: 3px; vertical-align: middle; margin-left: 5px;">ADMIN</span></div>
         <a href="Rod.html" class="btn-voltar"><i class="fas fa-home"></i> Voltar ao Site</a>
@@ -239,17 +192,17 @@
             </tbody>
         </table>
     </div>
-
 </div>
 
 <script>
-    const API_URL = 'http://127.0.0.1:3001';
+    // URL OFICIAL DO SEU BACKEND NO RENDER
+    const API_URL = 'https://rod-barber.onrender.com';
     let todosAgendamentos = [];
 
     // --- SEGURANÇA BÁSICA ---
     function verificarPermissao() {
         const email = localStorage.getItem('usuarioEmail');
-        // Se não for o email do dono, chuta pra fora
+        // Se não for o email do dono, bloqueia o acesso
         if (email !== "rdbarbercontato@gmail.com") {
             document.body.innerHTML = `
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e;">
@@ -268,11 +221,11 @@
         if (!verificarPermissao()) return;
 
         try {
+            // Busca todos os agendamentos registrados no MongoDB
             const res = await fetch(`${API_URL}/agendamentos`);
             todosAgendamentos = await res.json();
             
-            
-            todosAgendamentos.reverse();
+            todosAgendamentos.reverse(); // Mostra os mais novos primeiro
             
             renderizarTabela(todosAgendamentos);
             calcularResumo(todosAgendamentos);
@@ -323,15 +276,14 @@
     }
 
     function calcularResumo(lista) {
-        // Total Geral
         document.getElementById('total-geral').innerText = lista.length;
 
-        // Total Hoje
+        // Calcula agendamentos do dia atual
         const hojeISO = new Date().toISOString().split('T')[0];
         const qtdHoje = lista.filter(item => item.data === hojeISO).length;
         document.getElementById('total-hoje').innerText = qtdHoje;
 
-        // Faturamento (Apenas o que foi CONFIRMADO/PAGO)
+        // Faturamento real baseado em pagamentos aprovados no Mercado Pago
         const totalGrana = lista
             .filter(item => item.statusPagamento === 'approved')
             .reduce((acc, item) => acc + (item.valor || 0), 0);
@@ -358,7 +310,7 @@
     async function deletarAgendamento(id) {
         const confirm = await Swal.fire({
             title: 'Excluir?', 
-            text: "Essa ação não pode ser desfeita.",
+            text: "Essa ação removerá o agendamento permanentemente do banco de dados.",
             icon: 'warning', 
             showCancelButton: true, 
             confirmButtonColor: '#e62e2e', 
@@ -370,18 +322,18 @@
 
         if (confirm.isConfirmed) {
             try {
+                // Remove o registro diretamente do MongoDB através do backend no Render
                 await fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#1e1e1e', color: '#fff' });
                 Toast.fire({ icon: 'success', title: 'Removido com sucesso!' });
                 
-                carregarDados(); // Recarrega a tabela
+                carregarDados(); 
             } catch (error) { 
                 Swal.fire('Erro', 'Falha ao deletar.', 'error'); 
             }
         }
     }
 
-    // Inicializar
     window.onload = carregarDados;
 </script>
 

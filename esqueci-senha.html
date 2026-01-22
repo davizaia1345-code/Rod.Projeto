@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Senha | RodBarber</title>
     <style>
-        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body {
             background-color: #000;
@@ -52,6 +51,9 @@
     </div>
 
     <script>
+        // --- CONFIGURAÇÃO DO SERVIDOR ---
+        const API_URL = 'https://rod-barber.onrender.com';
+
         async function enviarEmail() {
             const email = document.getElementById('email').value;
             const msg = document.getElementById('mensagem');
@@ -59,12 +61,13 @@
 
             if(!email) return alert("Digite o e-mail");
 
-            btn.disabled = true; btn.innerText = "Enviando...";
+            btn.disabled = true; 
+            btn.innerText = "Enviando...";
             msg.innerText = "";
 
             try {
-                
-                const response = await fetch('http://localhost:3001/esqueci-senha', {
+                // Chamada para a rota de esqueci-senha no Render
+                const response = await fetch(`${API_URL}/esqueci-senha`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -74,10 +77,12 @@
                 msg.innerText = data.mensagem || data.erro;
                 msg.style.color = response.ok ? '#25d366' : '#ff4d4d';
             } catch (e) {
+                console.error("Erro de conexão:", e);
                 msg.innerText = "Erro ao conectar com o servidor.";
                 msg.style.color = '#ff4d4d';
             }
-            btn.disabled = false; btn.innerText = "ENVIAR LINK";
+            btn.disabled = false; 
+            btn.innerText = "ENVIAR LINK";
         }
     </script>
 </body>

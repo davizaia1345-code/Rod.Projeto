@@ -48,7 +48,7 @@
             font-size: 1rem;
             width: 100%;
             max-width: 300px;
-            text-decoration: none; /* Importante pois é um link <a> */
+            text-decoration: none;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -71,7 +71,6 @@
         }
         .btn-pay-later:hover { border-color: #fff; color: #fff; }
 
-        /* Estilos do PIX */
         .pix-code-area {
             width: 100%;
             background: #000;
@@ -118,9 +117,7 @@
     
     <input type="checkbox" id="menu-toggle" class="menu-toggle">
     <label for="menu-toggle" class="menu-icon">
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
     </label>
 
     <nav>
@@ -133,15 +130,10 @@
             <li id="btn-admin" style="display: none;">
                 <a href="admin.html" style="color: #d4af37; font-weight: bold;">👑 ADMIN</a>
             </li>
-            <li class="mobile-only" style="display: none;"> 
-                <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20entrar%20em%20contato." target="_blank" class="btn-book" style="background-color: #25d366; display: block; text-align: center;">
-                    <i class="fab fa-whatsapp"></i> Fale Conosco
-                </a>
-            </li>
         </ul>
     </nav>
     
-    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20entrar%20em%20contato." target="_blank" class="btn-book desktop-only" style="background-color: #25d366;">
+    <a href="https://api.whatsapp.com/send?phone=5511949411527" target="_blank" class="btn-book desktop-only" style="background-color: #25d366;">
         <i class="fab fa-whatsapp"></i> Fale Conosco
     </a>
 </header>
@@ -167,7 +159,6 @@
 
             <div id="area-formulario" style="display: none;">
                 <form id="form-agendamento">
-                    
                     <input type="hidden" id="servico-selecionado">
                     <input type="hidden" id="hora-selecionada">
 
@@ -180,7 +171,6 @@
 
                     <label><i class="fas fa-cut"></i> Escolha o Serviço:</label>
                     <div class="services-grid">
-                        
                         <div class="service-card" onclick="selecionarServico('Corte Masculino', this)">
                             <div class="service-info">
                                 <span class="service-name">Corte Masculino</span>
@@ -188,7 +178,6 @@
                             </div>
                             <i class="fas fa-check-circle" style="display: none;"></i>
                         </div>
-
                         <div class="service-card" onclick="selecionarServico('Barba Completa', this)">
                             <div class="service-info">
                                 <span class="service-name">Barba Completa</span>
@@ -196,22 +185,18 @@
                             </div>
                             <i class="fas fa-check-circle" style="display: none;"></i>
                         </div>
-
                         <div class="service-card" onclick="selecionarServico('Corte + Barba', this)">
                             <div class="service-info">
                                 <span class="service-name">Corte + Barba</span>
-                                <span class="service-time">⏱ 1h (60 min)</span>
+                                <span class="service-time">⏱ 1h</span>
                             </div>
                             <i class="fas fa-check-circle" style="display: none;"></i>
                         </div>
-
                     </div>
 
                     <label><i class="fas fa-clock"></i> Horários Disponíveis:</label>
                     <p id="aviso-horario" style="font-size: 12px; color: #888; margin-bottom: 5px;">Selecione uma data para ver os horários.</p>
-                    
                     <div class="time-grid" id="container-horarios"></div>
-                    
                     <button type="submit" style="margin-top: 15px;">Confirmar Agendamento</button>
                 </form>
                 <div id="mensagem" style="text-align: center; margin-top: 10px; font-weight: bold;"></div>
@@ -219,453 +204,156 @@
         </section>
     </div>
 </main>
-<br><br><br>
 
 <section class="about-section hidden" id="sobre">
     <div class="about-container">
         <div class="about-content">
-            <div class="about-header">
-                <h2 class="about-title">SOBRE NÓS</h2>
-                <div class="about-separator"></div>
-            </div>
-            <p class="about-text">
-               <i class="fas fa-quote-left about-quote-icon"></i>
-               A trajetória de <strong class="highlight-red">Rodney Abrão</strong> no mercado começou em 2022. O que iniciou como um desafio na barbearia de um grande amigo de infância, rapidamente se transformou em uma <strong class="highlight-white">carreira de excelência</strong>.
-               <br><br>
-               Hoje, Rodney não é apenas um barbeiro, mas um <strong class="highlight-white">especialista</strong> que busca constantemente a perfeição em cada corte e detalhe.
-            </p>
+            <h2 class="about-title">SOBRE NÓS</h2>
+            <div class="about-separator"></div>
+            <p class="about-text">A trajetória de Rodney Abrão começou em 2022, transformando-se em uma carreira de excelência em Cidade Tiradentes.</p>
         </div>
         <div class="about-image-wrapper">
-            <div class="image-frame">
-                <img src="rodimagem.jpg.jpg" alt="Foto de Rodney Abrão" class="about-img">
-            </div>
+            <img src="rodimagem.jpg" alt="Rodney Abrão" class="about-img">
         </div>
     </div>
 </section>
-
-<section class="container hidden" id="precos">
-    <h2>Tabela de Preços</h2>
-    <div class="precos-grid">
-        <div class="preco-item">
-            <span class="nome-servico"><i class="fas fa-cut"></i> Corte Masculino</span> 
-            <span class="preco-valor">R$ 40,00</span>
-        </div>
-        <div class="preco-item">
-            <span class="nome-servico"><i class="fas fa-user-tie"></i> Barba Completa</span> 
-            <span class="preco-valor">R$ 20,00</span>
-        </div>
-        <div class="preco-item">
-            <span class="nome-servico"><i class="fas fa-star"></i> Corte + Barba</span> 
-            <span class="preco-valor">R$ 60,00</span>
-        </div>
-        <div class="preco-item">
-            <span class="nome-servico"><i class="fas fa-magic"></i> Sobrancelha</span> 
-            <span class="preco-valor">R$ 10,00</span>
-        </div>
-    </div>
-</section>
-
-<section class="container hidden">
-    <h2>Galeria de Estilo</h2>
-    <div class="galeria-grid">
-        <div class="corte-card">
-            <img src="https://i.ibb.co/bRB817kj/imagemum-jpg.jpg" alt="Freestyle">
-            <div class="corte-info"><h3>FREESTYLE LATERAL</h3><p>Personalidade em cada traço.</p></div>
-        </div>
-        <div class="corte-card">
-            <img src="https://i.ibb.co/MyqdSqwf/imagemdois-jpg.jpg" alt="Arte">
-            <div class="corte-info"><h3>ARTE NA NAVALHA</h3><p>Design exclusivo.</p></div>
-        </div>
-        <div class="corte-card">
-            <img src="https://i.ibb.co/sGhJh9M/imagemtres-jpg.jpg" alt="Nudred">
-            <div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div>
-        </div>
-          <div class="corte-card">
-            <img src="https://i.ibb.co/p65kNzFq/Whats-App-Image-2026-01-21-at-22-53-19-1.jpg" alt="Nudred">
-            <div class="corte-info"><h3>SOCIAL & FADE</h3><p>Imponência fio a fio.</p></div>
-        </div>
-              <div class="corte-card">
-            <img src="https://i.ibb.co/zT9vRwrM/Whats-App-Image-2026-01-21-at-22-53-19.jpg" alt="Nudred">
-            <div class="corte-info"><h3>MILITAR CUT KID</h3><p>degradê impecável.</p></div>
-        </div>
-    </div>
-</section>
-
-<section class="container hidden" id="depoimentos">
-    <h2>O Que Dizem Nossos Clientes</h2>
-    <div class="depoimentos-grid">
-        <div class="depoimento-card">
-            <i class="fas fa-quote-left quote-icon"></i>
-            <p>"O melhor degradê da região. O Rod é fera demais! Ambiente top e atendimento de primeira."</p>
-            <h4>- Davi</h4>
-            <div class="stars">★★★★★</div>
-        </div>
-        <div class="depoimento-card">
-            <i class="fas fa-quote-left quote-icon"></i>
-            <p>"Profissionalismo puro. Cheguei e fui atendido na hora com muita qualidade. Recomendo muito!"</p>
-            <h4>- Marcelo</h4>
-            <div class="stars">★★★★★</div>
-        </div>
-        <div class="depoimento-card">
-            <i class="fas fa-quote-left quote-icon"></i>
-            <p>"Papo reto, atendimento excelente, o melhor da região."</p>
-            <h4>- Rafael</h4>
-            <div class="stars">★★★★★</div>
-        </div>
-        <div class="depoimento-card">
-            <i class="fas fa-quote-left quote-icon"></i>
-            <p>"Corto a anos com o rod, otimo profissional e boa pessoa."</p>
-            <h4>- Daniel</h4>
-            <div class="stars">★★★★★</div>
-        </div>
-    </div>
-</section>
-
-<div class="social-floating">
-    <a href="https://www.instagram.com/souzard_barber/" target="_blank" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
-    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20entrar%20em%20contato." target="_blank" class="btn-float whatsapp"><i class="fab fa-whatsapp"></i></a>
-</div>
 
 <footer id="contatos" class="footer-premium hidden">
-    <div class="footer-content">
-        <i class="fas fa-map-marker-alt footer-icon"></i>
-        <div class="mapa-wrapper">
-             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.924765627252!2d-46.40879132375631!3d-23.57114247879434!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce657c7293b749%3A0x8e8334887372338!2sR.%20M%C3%A1rio%20Ferraz%20de%20Souza%2C%20889%20-%20Cidade%20Tiradentes%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2008474-320!5e0!3m2!1spt-BR!2sbr!4v1706030000000!5m2!1spt-BR!2sbr" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-        </div>
-        <p class="footer-text">
-            Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, SP<br>
-            <span style="color: #bbb; font-size: 0.9em; margin-top: 5px; display: inline-block;">📧 rdbarbercontato@gmail.com</span>
-        </p>
-    </div>
-    <div class="footer-separator"></div>
     <p class="copyright">© 2026 <strong>Barbearia do Rod</strong>.</p>
 </footer>
 
 <script>
-    const API_URL = 'http://127.0.0.1:3001'; 
+    // URL DO SEU SERVIDOR NO RENDER
+    const API_URL = 'https://rod-bar-ber.onrender.com'; 
     let intervaloVerificacao = null;
 
-    function fecharMenuMobile() {
-        document.getElementById('menu-toggle').checked = false;
-    }
+    function fecharMenuMobile() { document.getElementById('menu-toggle').checked = false; }
 
     const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: '#1e1e1e', 
-        color: '#fff',         
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer)
-            toast.addEventListener('mouseleave', Swal.resumeTimer)
-        }
+        toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+        background: '#1e1e1e', color: '#fff'
     });
 
     async function carregarHorariosDisponiveis() {
         const inputData = document.getElementById('data').value;
         const container = document.getElementById('container-horarios');
         const aviso = document.getElementById('aviso-horario');
-        
         container.innerHTML = '';
-        
-        if (!inputData) {
-            aviso.innerText = "Selecione uma data para ver os horários.";
-            aviso.style.display = 'block';
-            return;
-        }
-
+        if (!inputData) return;
         aviso.innerText = "Carregando horários...";
-        aviso.style.display = 'block';
-
         try {
             const response = await fetch(`${API_URL}/agendamentos/ocupados?data=${inputData}`);
             const horariosOcupados = await response.json(); 
-
             aviso.style.display = 'none';
-
-            const inicioManha = 9 * 60;
-            const fimManha = 11 * 60 + 30;
-            const inicioTarde = 13 * 60;
-            const fimTarde = 21 * 60 + 30;
-            const intervalo = 35;
-
-            function criarBotoes(inicio, fim) {
-                for (let tempo = inicio; tempo <= fim; tempo += intervalo) {
-                    const horas = Math.floor(tempo / 60);
-                    const minutos = tempo % 60;
-                    const horarioFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
-
-                    if (horariosOcupados.includes(horarioFormatado)) continue; 
-
+            const horarios = ["09:00", "09:40", "10:20", "11:00", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20", "19:00", "19:40", "20:20"];
+            horarios.forEach(h => {
+                if (!horariosOcupados.includes(h)) {
                     const btn = document.createElement('div');
                     btn.className = 'time-btn';
-                    btn.innerText = horarioFormatado;
-                    btn.onclick = function() { selecionarHora(horarioFormatado, this) };
+                    btn.innerText = h;
+                    btn.onclick = function() { selecionarHora(h, this) };
                     container.appendChild(btn);
                 }
-            }
-
-            criarBotoes(inicioManha, fimManha);
-            criarBotoes(inicioTarde, fimTarde);
-
-            if (container.children.length === 0) {
-                aviso.innerText = "🚫 Agenda lotada para este dia!";
-                aviso.style.display = 'block';
-                aviso.style.color = '#e62e2e';
-            }
-        } catch (error) {
-            console.error(error);
-            aviso.innerText = "Erro ao buscar agenda.";
-            aviso.style.color = 'red';
-        }
+            });
+        } catch (e) { aviso.innerText = "Erro ao carregar agenda."; }
     }
 
-    function selecionarServico(nomeServico, elementoClicado) {
-        document.getElementById('servico-selecionado').value = nomeServico;
-        document.querySelectorAll('.service-card').forEach(card => {
-            card.classList.remove('selected');
-            card.querySelector('.fa-check-circle').style.display = 'none';
-        });
-        elementoClicado.classList.add('selected');
-        elementoClicado.querySelector('.fa-check-circle').style.display = 'block';
+    function selecionarServico(nome, el) {
+        document.getElementById('servico-selecionado').value = nome;
+        document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
     }
 
-    function selecionarHora(horario, elementoClicado) {
-        document.getElementById('hora-selecionada').value = horario;
-        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('selected'));
-        elementoClicado.classList.add('selected');
+    function selecionarHora(h, el) {
+        document.getElementById('hora-selecionada').value = h;
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
     }
 
-    const form = document.getElementById("form-agendamento");
-    const mensagem = document.getElementById("mensagem");
+    document.getElementById("form-agendamento").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const servico = document.getElementById('servico-selecionado').value;
+        const hora = document.getElementById('hora-selecionada').value;
+        const data = document.getElementById('data').value;
+        const nome = document.getElementById('nome').value;
+        const email = document.getElementById('email').value;
 
-    if(form) {
-        form.addEventListener("submit", async (event) => {
-            event.preventDefault();
-            const servico = document.getElementById('servico-selecionado').value;
-            const hora = document.getElementById('hora-selecionada').value;
-            const data = document.getElementById('data').value;
-            const nome = document.getElementById('nome').value;
-            const email = document.getElementById('email').value;
-            
-            let preco = 0;
-            if(servico.includes("Corte Masculino")) preco = 40.00;
-            else if(servico.includes("Barba Completa")) preco = 20.00;
-            else if(servico.includes("Corte + Barba")) preco = 60.00;
-            else if(servico.includes("Sobrancelha")) preco = 10.00;
+        let preco = servico.includes("Corte + Barba") ? 60 : (servico.includes("Barba") ? 20 : 40);
 
-            if(!servico || !hora || !data) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Faltam dados!',
-                    text: 'Preencha data, serviço e horário.',
-                    background: '#1e1e1e',
-                    color: '#fff',
-                    confirmButtonColor: '#e62e2e'
-                });
-                return;
-            }
+        if(!servico || !hora || !data) return Toast.fire({ icon: 'warning', title: 'Preencha tudo!' });
 
-            const botao = form.querySelector("button");
-            botao.disabled = true;
-            botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirmando...'; 
+        const btn = e.target.querySelector("button");
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
 
-            try {
-                const response = await fetch(`${API_URL}/agendar`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, email, data, hora, servico, preco })
-                });
-                const result = await response.json();
-                
-                if (response.ok) {
-                    botao.style.display = 'none';
-                    const pixCode = result.pixCopiaCola;
-                    const idPagamento = result.idPagamento;
-                    const imagemBase64 = result.qrCodeBase64; 
-                    const textoPix = pixCode ? pixCode : "Erro ao gerar PIX. Verifique com a barbearia.";
-                    
-                    // --- NOVO: PEGA O LINK DO CARTÃO ---
-                    const linkCartao = result.urlPagamentoCartao;
-                    let btnCartaoHTML = '';
-                    if(linkCartao) {
-                        btnCartaoHTML = `
-                            <a href="${linkCartao}" target="_blank" class="btn-pay-card">
-                                <i class="far fa-credit-card"></i> Pagar c/ Cartão
-                            </a>
-                        `;
-                    }
-
-                    mensagem.innerHTML = `
-                        <div class="success-container">
-                            <i class="fas fa-check-circle success-icon" style="color: #25d366; font-size: 3rem;"></i>
-                            <h3 style="color: #fff; margin: 10px 0;">Agendado!</h3>
-                            <p style="color: #aaa; font-size: 0.9em;">${data} às ${hora}</p>
-                            
-                            <div class="btn-choice-container" id="area-escolha">
-                                <button type="button" class="btn-pay-now" onclick="mostrarAreaPix('${idPagamento}')">
-                                    <i class="fa-brands fa-pix"></i> Pagar com PIX
-                                </button>
-                                
-                                ${btnCartaoHTML}
-
-                                <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">
-                                    Pagar Depois
-                                </button>
-                            </div>
-
-                            <div id="area-pix-oculta" style="display: none;" class="pix-container">
-                                <div class="pix-title">
-                                    <i class="fa-brands fa-pix" style="color:#32bcad;"></i> Pagamento PIX
-                                </div>
-                                <div id="status-pagamento-texto" style="margin-bottom:10px; color: #aaa; font-size: 0.9rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Aguardando pagamento...
-                                </div>
-
-                                <div style="text-align: center; margin: 10px 0;">
-                                    <img src="data:image/jpeg;base64,${imagemBase64}" 
-                                         style="width: 200px; max-width: 100%; border-radius: 8px; border: 2px solid #fff;">
-                                </div>
-
-                                <p class="pix-subtitle" style="margin-top: 5px;">Ou copie o código:</p>
-                                
-                                <textarea id="pix-code" class="pix-code-area" rows="3" readonly>${textoPix}</textarea>
-                                
-                                <button type="button" class="btn-copy" onclick="copiarPix()">
-                                    <i class="fas fa-copy"></i> COPIAR CÓDIGO
-                                </button>
-                                <br><br>
-                                <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">
-                                    Fechar
-                                </button>
-                            </div>
+        try {
+            const res = await fetch(`${API_URL}/agendar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, email, data, hora, servico, preco })
+            });
+            const result = await res.json();
+            if (res.ok) {
+                btn.style.display = 'none';
+                document.getElementById("mensagem").innerHTML = `
+                    <div class="success-container">
+                        <i class="fas fa-check-circle" style="color:#25d366; font-size:3rem;"></i>
+                        <h3>Agendado com Sucesso!</h3>
+                        <div class="btn-choice-container" id="area-escolha">
+                            <button class="btn-pay-now" onclick="mostrarAreaPix('${result.idPagamento}', '${result.qrCodeBase64}', '${result.pixCopiaCola}')">Pagar com PIX</button>
+                            ${result.urlPagamentoCartao ? `<a href="${result.urlPagamentoCartao}" target="_blank" class="btn-pay-card">Pagar com Cartão</a>` : ''}
+                            <button class="btn-pay-later" onclick="finalizarAgendamento()">Pagar na Hora</button>
                         </div>
-                    `;
-                    
-                    await carregarHorariosDisponiveis();
-
-                } else {
-                    mensagem.innerText = result.mensagem;
-                    mensagem.style.color = "#ff6b6b";
-                    botao.disabled = false;
-                    botao.innerText = "Confirmar Agendamento";
-                }
-            } catch (error) {
-                mensagem.innerText = "Erro de conexão ❌";
-                mensagem.style.color = "#ff6b6b";
-                botao.disabled = false;
-                botao.innerText = "Confirmar Agendamento";
+                        <div id="area-pix-oculta" style="display:none; margin-top:20px;"></div>
+                    </div>`;
             }
-        });
-    }
+        } catch (err) { btn.disabled = false; btn.innerText = "Tentar Novamente"; }
+    });
 
-    function mostrarAreaPix(idPagamento) {
+    function mostrarAreaPix(id, img, cod) {
         document.getElementById('area-escolha').style.display = 'none';
-        const areaPix = document.getElementById('area-pix-oculta');
-        areaPix.style.display = 'block';
-        areaPix.style.animation = 'fadeIn 0.5s ease';
-
-        if (idPagamento) {
-            iniciarVerificacaoPagamento(idPagamento);
-        }
+        const area = document.getElementById('area-pix-oculta');
+        area.style.display = 'block';
+        area.innerHTML = `
+            <p>Escaneie o QR Code:</p>
+            <img src="data:image/jpeg;base64,${img}" style="width:200px; border:5px solid #fff; border-radius:10px;">
+            <p>Ou copie o código:</p>
+            <textarea id="pix-code" class="pix-code-area" readonly>${cod}</textarea>
+            <button class="btn-copy" onclick="copiarPix()">COPIAR CÓDIGO</button>
+            <p id="status-pix"><i class="fas fa-sync fa-spin"></i> Aguardando pagamento...</p>
+        `;
+        iniciarVerificacaoPagamento(id);
     }
 
     function iniciarVerificacaoPagamento(id) {
-        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
-
         intervaloVerificacao = setInterval(async () => {
-            try {
-                const res = await fetch(`${API_URL}/status-pagamento/${id}`);
-                const data = await res.json();
-
-                if (data.status === 'approved') {
-                    clearInterval(intervaloVerificacao);
-                    
-                    document.getElementById('area-pix-oculta').innerHTML = `
-                        <div style="text-align: center; animation: fadeIn 0.5s ease;">
-                            <i class="fas fa-check-circle" style="color: #25d366; font-size: 4rem; margin-bottom: 15px;"></i>
-                            <h3 style="color: #fff;">Pagamento Confirmado! 🎉</h3>
-                            <p style="color: #ccc;">Obrigado! Seu horário está garantido.</p>
-                            <br>
-                            <button type="button" class="btn-pay-now" onclick="window.location.reload()" style="background: #25d366; border:none; width:100%;">
-                                OK, Tudo Certo
-                            </button>
-                        </div>
-                    `;
-                    
-                    const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
-                        background: '#25d366', color: '#fff'
-                    });
-                    Toast.fire({ icon: 'success', title: 'Pagamento Recebido!' });
-                }
-            } catch (error) {
-                console.log("Erro ao verificar pagamento", error);
+            const res = await fetch(`${API_URL}/status-pagamento/${id}`);
+            const data = await res.json();
+            if (data.status === 'approved') {
+                clearInterval(intervaloVerificacao);
+                Swal.fire({ icon: 'success', title: 'Pagamento Confirmado!', background: '#1e1e1e', color: '#fff' }).then(() => window.location.reload());
             }
-        }, 3000);
-    }
-
-    function finalizarAgendamento() {
-        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
-        Swal.fire({
-            icon: 'success',
-            title: 'Tudo Certo!',
-            text: 'Te esperamos no horário marcado.',
-            background: '#1e1e1e',
-            color: '#fff',
-            confirmButtonColor: '#25d366'
-        }).then(() => {
-            window.location.reload();
-        });
+        }, 4000);
     }
 
     function copiarPix() {
-        const codigo = document.getElementById("pix-code");
-        codigo.select();
-        codigo.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(codigo.value);
-        
-        const btn = document.querySelector('.btn-copy');
-        btn.innerHTML = '<i class="fas fa-check-double"></i> COPIADO!';
-        btn.style.background = '#1e1e1e';
-        btn.style.border = '1px solid #25d366';
-        
-        Toast.fire({
-            icon: 'success',
-            title: 'Código PIX copiado!'
-        });
+        const c = document.getElementById("pix-code"); c.select(); navigator.clipboard.writeText(c.value);
+        Toast.fire({ icon: 'success', title: 'Código Copiado!' });
     }
 
-    const observer = new IntersectionObserver((entries) => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('show') }));
-    document.querySelectorAll('.hidden').forEach((el) => observer.observe(el));
+    function finalizarAgendamento() { window.location.reload(); }
 
     window.onload = function() {
-        const hoje = new Date().toISOString().split('T')[0];
-        const inputData = document.getElementById('data');
-        if(inputData) inputData.setAttribute('min', hoje);
-
-        const nomeUsuario = localStorage.getItem('usuarioNome');
-        const emailUsuario = localStorage.getItem('usuarioEmail');
-        
-        if (nomeUsuario && emailUsuario) {
-            document.getElementById('area-usuario').style.display = 'block'; 
+        const nome = localStorage.getItem('usuarioNome');
+        const email = localStorage.getItem('usuarioEmail');
+        if (nome && email) {
+            document.getElementById('area-usuario').style.display = 'block';
             document.getElementById('logado').style.display = 'flex';
-            document.getElementById('boas-vindas').innerText = "Olá, " + nomeUsuario + "!";
-            document.getElementById('aviso-bloqueio').style.display = 'none'; 
+            document.getElementById('boas-vindas').innerText = "Olá, " + nome;
+            document.getElementById('aviso-bloqueio').style.display = 'none';
             document.getElementById('area-formulario').style.display = 'block';
-            document.getElementById('nome').value = nomeUsuario;
-            document.getElementById('email').value = emailUsuario;
-
-            if (emailUsuario === "rdbarbercontato@gmail.com") {
-                document.getElementById('btn-admin').style.display = 'block';
-                document.getElementById('btn-painel-dono').style.display = 'inline-block';
-            }
-        } else {
-            document.getElementById('area-usuario').style.display = 'none';
-            document.getElementById('aviso-bloqueio').style.display = 'block'; 
-            document.getElementById('area-formulario').style.display = 'none';
+            document.getElementById('nome').value = nome;
+            document.getElementById('email').value = email;
+            if (email === "rdbarbercontato@gmail.com") document.getElementById('btn-admin').style.display = 'block';
         }
     };
 

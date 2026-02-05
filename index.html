@@ -8,104 +8,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
+    
     <style>
-        /* ESTILOS EXTRAS PARA OS BOTÕES DE PAGAMENTO */
-        .btn-choice-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
-            align-items: center;
+        .social-floating a.btn-float {
+            width: 60px !important; height: 60px !important; border-radius: 50% !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            font-size: 0 !important; padding: 0 !important;
         }
+        .social-floating a.btn-float i { font-size: 32px !important; display: block !important; }
 
-        .btn-pay-now {
-            background-color: #25d366;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1rem;
-            width: 100%;
-            max-width: 300px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            transition: 0.3s;
+        @media (min-width: 769px) {
+            .mobile-logged-item { display: none !important; }
         }
-        .btn-pay-now:hover { background-color: #1ebc57; transform: scale(1.02); }
-
-        .btn-pay-card {
-            background-color: #009ee3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1rem;
-            width: 100%;
-            max-width: 300px;
-            text-decoration: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            transition: 0.3s;
-        }
-        .btn-pay-card:hover { background-color: #007eb5; transform: scale(1.02); }
-
-        .btn-pay-later {
-            background-color: transparent;
-            color: #ccc;
-            border: 1px solid #555;
-            padding: 8px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            width: 100%;
-            max-width: 300px;
-            transition: 0.3s;
-        }
-        .btn-pay-later:hover { border-color: #fff; color: #fff; }
-
-        .pix-code-area {
-            width: 100%;
-            background: #000;
-            color: #0f0;
-            border: 1px solid #333;
-            padding: 10px;
-            font-family: monospace;
-            border-radius: 5px;
-            resize: none;
-            margin-bottom: 10px;
-        }
-        .btn-copy {
-            background: #333; color: #fff; border: 1px solid #555;
-            padding: 8px 15px; border-radius: 5px; cursor: pointer;
-            font-size: 0.9em; width: 100%; transition: 0.3s;
-        }
-        .btn-copy:hover { border-color: #25d366; color: #25d366; }
     </style>
 </head>
 <body>
 
-<div id="area-usuario" style="display: none;">
-    <div id="logado" style="display: none; align-items: center;">
-        <span id="boas-vindas" style="margin-right: 15px;"></span>
-        <a href="admin.html" id="btn-painel-dono" class="btn-painel" style="display: none;">
-            <i class="fas fa-user-cog"></i> Painel
-        </a>
-        <a href="meus-agendamentos.html" style="background-color: #333; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9em; margin-right: 10px;">
-            <i class="far fa-calendar-alt"></i> Meus Cortes
-        </a>
-        <button onclick="fazerLogout()" class="btn-sair">Sair</button>
-    </div>
-    <div id="deslogado" style="display: none;">
-         <span>Ainda não tem conta? </span>
-         <a href="login.html" class="link-entrar">Entrar / Cadastrar</a>
+<div id="area-usuario">
+    <div id="logado" style="display: none;">
+        <span id="boas-vindas"></span>
+        <a href="admin.html" id="btn-painel-dono" class="btn-painel"><i class="fas fa-crown"></i> Painel</a>
+        <a href="meus-agendamentos.html" id="btn-meus-cortes" class="user-link"><i class="fas fa-history"></i> Meus Cortes</a>
+        <button onclick="fazerLogout()" class="btn-sair"><i class="fas fa-sign-out-alt"></i> Sair</button>
     </div>
 </div>
 
@@ -114,12 +38,8 @@
         <img src="https://i.ibb.co/0jFF6FcM/IMG-5529.png" alt="Logo" style="width: 70px; vertical-align: middle; filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));">
         RODBARBER
     </div>
-    
     <input type="checkbox" id="menu-toggle" class="menu-toggle">
-    <label for="menu-toggle" class="menu-icon">
-        <span></span><span></span><span></span>
-    </label>
-
+    <label for="menu-toggle" class="menu-icon"><span></span><span></span><span></span></label>
     <nav>
         <ul class="nav-links">
             <li><a href="#agendamento" onclick="fecharMenuMobile()">Agendamento</a></li>
@@ -127,73 +47,49 @@
             <li><a href="#precos" onclick="fecharMenuMobile()">Preços</a></li>
             <li><a href="#depoimentos" onclick="fecharMenuMobile()">Depoimentos</a></li>
             <li><a href="#contatos" onclick="fecharMenuMobile()">Contatos</a></li>
-            <li id="btn-admin" style="display: none;">
-                <a href="admin.html" style="color: #d4af37; font-weight: bold;">👑 ADMIN</a>
-            </li>
+            
+            <li id="menu-login-item"><a href="login.html" style="color: #e62e2e; font-weight: bold;"><i class="fas fa-user"></i> Área do Cliente</a></li>
+            
+            <li class="mobile-logged-item" style="display: none;"><a href="meus-agendamentos.html" style="color:#ffd700;"><i class="fas fa-history"></i> Meus Cortes</a></li>
+            <li class="mobile-logged-item" style="display: none;"><a href="#" onclick="fazerLogout()" style="color:#e62e2e;"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
         </ul>
     </nav>
-    
-    <a href="https://api.whatsapp.com/send?phone=5511949411527" target="_blank" class="btn-book desktop-only" style="background-color: #25d366;">
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" class="btn-book desktop-only">
         <i class="fab fa-whatsapp"></i> Fale Conosco
     </a>
 </header>
-<br><br><br><br>
 
 <main class="hero">
     <div class="hero-wrapper">
         <div class="hero-content">
             <h1>Muito Além de um Corte, Uma Experiência de Cuidado Masculino.</h1>
-            <div class="address">
-                <p>O Melhor Lugar</p>
-                <p>Para Agendar seu Corte.</p>
-            </div>
+            <div class="address"><p>O Melhor Lugar</p><p>Para Agendar seu Corte.</p></div>
         </div>
 
         <section class="container" id="agendamento">
-            <div id="aviso-bloqueio" style="text-align: center; padding: 30px; display: block;">
-                <p style="margin-bottom: 20px; font-size: 1.2em;">Você precisa estar logado para agendar.</p>
-                <a href="login.html" style="background-color: #e62e2e; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                    Fazer Login
-                </a>
+            <div id="aviso-bloqueio" style="text-align: center; padding: 40px 10px; display: block;">
+                <i class="fas fa-lock" style="font-size: 2.5rem; color: #333; margin-bottom: 20px;"></i>
+                <p style="margin-bottom: 25px; font-size: 1.1em; color: #ccc; font-weight: 500;">Você precisa estar logado para agendar.</p>
+                <a href="login.html" style="background-color: #e62e2e; color: white; padding: 12px 40px; text-decoration: none; border-radius: 50px; font-weight: 800; font-size: 0.9em; display: inline-block; transition: 0.3s; box-shadow: 0 4px 15px rgba(230, 46, 46, 0.3); text-transform: uppercase;">ACESSAR CONTA</a>
             </div>
 
             <div id="area-formulario" style="display: none;">
                 <form id="form-agendamento">
                     <input type="hidden" id="servico-selecionado">
                     <input type="hidden" id="hora-selecionada">
-
                     <label><i class="fas fa-user"></i> Seus Dados:</label>
                     <input type="text" id="nome" required readonly placeholder="Nome" style="cursor: not-allowed; opacity: 0.7;">
                     <input type="email" id="email" required readonly placeholder="E-mail" style="cursor: not-allowed; opacity: 0.7;">
-                    
                     <label><i class="fas fa-calendar-alt"></i> Data:</label>
                     <input type="date" id="data" required onchange="carregarHorariosDisponiveis()">
-
                     <label><i class="fas fa-cut"></i> Escolha o Serviço:</label>
                     <div class="services-grid">
-                        <div class="service-card" onclick="selecionarServico('Corte Masculino', this)">
-                            <div class="service-info">
-                                <span class="service-name">Corte Masculino</span>
-                                <span class="service-time">⏱ 40 min</span>
-                            </div>
-                            <i class="fas fa-check-circle" style="display: none;"></i>
-                        </div>
-                        <div class="service-card" onclick="selecionarServico('Barba Completa', this)">
-                            <div class="service-info">
-                                <span class="service-name">Barba Completa</span>
-                                <span class="service-time">⏱ 20 min</span>
-                            </div>
-                            <i class="fas fa-check-circle" style="display: none;"></i>
-                        </div>
-                        <div class="service-card" onclick="selecionarServico('Corte + Barba', this)">
-                            <div class="service-info">
-                                <span class="service-name">Corte + Barba</span>
-                                <span class="service-time">⏱ 1h</span>
-                            </div>
-                            <i class="fas fa-check-circle" style="display: none;"></i>
-                        </div>
+                        <div class="service-card" onclick="selecionarServico('Corte Masculino', this)"><div class="service-info"><span class="service-name">Corte Masculino</span><span class="service-time">⏱ 40 min</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Barba Completa', this)"><div class="service-info"><span class="service-name">Barba Completa</span><span class="service-time">⏱ 20 min</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Corte + Barba', this)"><div class="service-info"><span class="service-name">Corte + Barba</span><span class="service-time">⏱ 1h (60 min)</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Progressiva + Corte', this)"><div class="service-info"><span class="service-name">Progressiva + Corte</span><span class="service-time">⏱ 2h</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Luzes + Corte', this)"><div class="service-info"><span class="service-name">Luzes + Corte</span><span class="service-time">⏱ 1h 30m</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
                     </div>
-
                     <label><i class="fas fa-clock"></i> Horários Disponíveis:</label>
                     <p id="aviso-horario" style="font-size: 12px; color: #888; margin-bottom: 5px;">Selecione uma data para ver os horários.</p>
                     <div class="time-grid" id="container-horarios"></div>
@@ -205,156 +101,261 @@
     </div>
 </main>
 
+<br><br><br>
+
 <section class="about-section hidden" id="sobre">
     <div class="about-container">
         <div class="about-content">
-            <h2 class="about-title">SOBRE NÓS</h2>
-            <div class="about-separator"></div>
-            <p class="about-text">A trajetória de Rodney Abrão começou em 2022, transformando-se em uma carreira de excelência em Cidade Tiradentes.</p>
+            <div class="about-header"><h2 class="about-title">SOBRE NÓS</h2><div class="about-separator"></div></div>
+            <p class="about-text"><i class="fas fa-quote-left about-quote-icon"></i> A trajetória de <strong class="highlight-red">Rodney Abrão</strong> no mercado começou em 2022. O que iniciou como um desafio na barbearia de um grande amigo de infância, rapidamente se transformou em uma <strong class="highlight-white">carreira de excelência</strong>.<br><br>Hoje, Rodney não é apenas um barbeiro, mas um <strong class="highlight-white">especialista</strong> que busca constantemente a perfeição em cada corte e detalhe.</p>
         </div>
-        <div class="about-image-wrapper">
-            <img src="rodimagem.jpg" alt="Rodney Abrão" class="about-img">
+        <div class="about-image-wrapper"><div class="image-frame"><img src="rodimagem.jpg.jpg" alt="Foto de Rodney Abrão" class="about-img"></div></div>
+    </div>
+</section>
+
+<section class="container hidden" id="precos">
+    <h2>Tabela de Preços</h2>
+    
+    <div id="bloqueio-precos" style="text-align: center; padding: 40px; background: #0f0f0f; border-radius: 15px; border: 1px solid #333; max-width: 800px; margin: 0 auto; display: block;">
+        <i class="fas fa-lock" style="font-size: 2.5rem; color: #555; margin-bottom: 20px;"></i>
+        <p style="margin-bottom: 25px; font-size: 1.1em; color: #ccc;">Faça login para visualizar nossos valores exclusivos.</p>
+        <a href="login.html" style="background-color: #e62e2e; color: white; padding: 10px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 0.9em; text-transform: uppercase;">VER PREÇOS</a>
+    </div>
+
+    <div id="conteudo-precos" style="display: none;">
+        <div class="precos-grid">
+            <div class="preco-item"><span class="nome-servico"><i class="fas fa-cut"></i> Corte Masculino</span> <span class="preco-valor">R$ 40,00</span></div>
+            <div class="preco-item"><span class="nome-servico"><i class="fas fa-user-tie"></i> Barba Completa</span> <span class="preco-valor">R$ 20,00</span></div>
+            <div class="preco-item"><span class="nome-servico"><i class="fas fa-star"></i> Corte + Barba</span> <span class="preco-valor">R$ 60,00</span></div>
+            <div class="preco-item"><span class="nome-servico"><i class="fas fa-magic"></i> Sobrancelha</span> <span class="preco-valor">R$ 10,00</span></div>
+            <div class="preco-item"><span class="nome-servico"><i class="fas fa-wind"></i> Progressiva + Corte</span> <span class="preco-valor">R$ 120,00</span></div>
+            <div class="preco-item"><span class="nome-servico"><i class="fas fa-bolt"></i> Luzes + Corte</span> <span class="preco-valor">R$ 100,00</span></div>
         </div>
     </div>
 </section>
 
+<section class="container hidden">
+    <h2>Galeria de Estilo</h2>
+    <div class="galeria-grid">
+        <div class="corte-card"><img src="https://i.ibb.co/bRB817kj/imagemum-jpg.jpg" alt="Freestyle"><div class="corte-info"><h3>FREESTYLE LATERAL</h3><p>Personalidade em cada traço.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/MyqdSqwf/imagemdois-jpg.jpg" alt="Arte"><div class="corte-info"><h3>ARTE NA NAVALHA</h3><p>Design exclusivo.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/sGhJh9M/imagemtres-jpg.jpg" alt="Nudred"><div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/p65kNzFq/Whats-App-Image-2026-01-21-at-22-53-19-1.jpg" alt="Social"><div class="corte-info"><h3>SOCIAL & FADE</h3><p>Imponência fio a fio.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/zT9vRwrM/Whats-App-Image-2026-01-21-at-22-53-19.jpg" alt="Kids"><div class="corte-info"><h3>MILITAR CUT KID</h3><p>Degradê impecável.</p></div></div>
+    </div>
+</section>
+
+<section class="container hidden" id="depoimentos">
+    <h2>O QUE DIZEM NOSSOS CLIENTES</h2>
+    <div class="depoimentos-grid">
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"O melhor degradê da região. O Rod é fera demais! Ambiente top e atendimento de primeira."</p><h4>- Davi</h4><div class="stars">★★★★★</div></div>
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Profissionalismo puro. Cheguei e fui atendido na hora com muita qualidade. Recomendo muito!"</p><h4>- Marcelo</h4><div class="stars">★★★★★</div></div>
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Papo reto, atendimento excelente, o melhor da região."</p><h4>- Rafael</h4><div class="stars">★★★★★</div></div>
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Corto há anos com o rod, ótimo profissional e boa pessoa."</p><h4>- Daniel</h4><div class="stars">★★★★★</div></div>
+    </div>
+</section>
+
+<div class="social-floating">
+    <a href="https://www.instagram.com/souzard_barber/" target="_blank" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" class="btn-float whatsapp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+</div>
+
 <footer id="contatos" class="footer-premium hidden">
+    <div class="footer-content">
+        <i class="fas fa-map-marker-alt footer-icon"></i>
+        <div class="mapa-wrapper"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.924765627252!2d-46.40879132375631!3d-23.57114247879434!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce657c7293b749%3A0x8e8334887372338!2sR.%20M%C3%A1rio%20Ferraz%20de%20Souza%2C%20889%20-%20Cidade%20Tiradentes%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2008474-320!5e0!3m2!1spt-BR!2sbr!4v1706030000000!5m2!1spt-BR!2sbr" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
+        <p class="footer-text">Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, SP<br><span style="color: #bbb; font-size: 0.9em; margin-top: 5px; display: inline-block;">📧 rdbarbercontato@gmail.com</span></p>
+    </div>
+    <div class="footer-separator"></div>
     <p class="copyright">© 2026 <strong>Barbearia do Rod</strong>.</p>
 </footer>
 
 <script>
-    // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
-    // Link novo do Render que já está Live
-    const API_URL = 'https://rod-projeto.onrender.com'; 
+    const API_URL = 'http://localhost:3001'; 
     let intervaloVerificacao = null;
 
     function fecharMenuMobile() { document.getElementById('menu-toggle').checked = false; }
-
-    const Toast = Swal.mixin({
-        toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
-        background: '#1e1e1e', color: '#fff'
-    });
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true, background: '#1e1e1e', color: '#fff' });
 
     async function carregarHorariosDisponiveis() {
         const inputData = document.getElementById('data').value;
         const container = document.getElementById('container-horarios');
         const aviso = document.getElementById('aviso-horario');
         container.innerHTML = '';
-        if (!inputData) return;
-        aviso.innerText = "Carregando horários...";
+        if (!inputData) { aviso.innerText = "Selecione uma data."; aviso.style.display = 'block'; return; }
+        aviso.innerText = "Carregando horários..."; aviso.style.display = 'block';
         try {
             const response = await fetch(`${API_URL}/agendamentos/ocupados?data=${inputData}`);
             const horariosOcupados = await response.json(); 
             aviso.style.display = 'none';
-            const horarios = ["09:00", "09:40", "10:20", "11:00", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20", "19:00", "19:40", "20:20"];
-            horarios.forEach(h => {
-                if (!horariosOcupados.includes(h)) {
-                    const btn = document.createElement('div');
-                    btn.className = 'time-btn';
-                    btn.innerText = h;
-                    btn.onclick = function() { selecionarHora(h, this) };
-                    container.appendChild(btn);
+            const inicioManha = 9 * 60; const fimManha = 11 * 60 + 30; const inicioTarde = 13 * 60; const fimTarde = 21 * 60 + 30; const intervalo = 35;
+            function criarBotoes(inicio, fim) {
+                for (let tempo = inicio; tempo <= fim; tempo += intervalo) {
+                    const horas = Math.floor(tempo / 60); const minutos = tempo % 60;
+                    const horarioFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+                    if (horariosOcupados.includes(horarioFormatado)) continue; 
+                    const btn = document.createElement('div'); btn.className = 'time-btn'; btn.innerText = horarioFormatado;
+                    btn.onclick = function() { selecionarHora(horarioFormatado, this) }; container.appendChild(btn);
                 }
-            });
-        } catch (e) { aviso.innerText = "Erro ao carregar agenda."; }
-    }
-
-    function selecionarServico(nome, el) {
-        document.getElementById('servico-selecionado').value = nome;
-        document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-    }
-
-    function selecionarHora(h, el) {
-        document.getElementById('hora-selecionada').value = h;
-        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
-        el.classList.add('selected');
-    }
-
-    document.getElementById("form-agendamento").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const servico = document.getElementById('servico-selecionado').value;
-        const hora = document.getElementById('hora-selecionada').value;
-        const data = document.getElementById('data').value;
-        const nome = document.getElementById('nome').value;
-        const email = document.getElementById('email').value;
-
-        let preco = servico.includes("Corte + Barba") ? 60 : (servico.includes("Barba") ? 20 : 40);
-
-        if(!servico || !hora || !data) return Toast.fire({ icon: 'warning', title: 'Preencha tudo!' });
-
-        const btn = e.target.querySelector("button");
-        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
-
-        try {
-            const res = await fetch(`${API_URL}/agendar`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, email, data, hora, servico, preco })
-            });
-            const result = await res.json();
-            if (res.ok) {
-                btn.style.display = 'none';
-                document.getElementById("mensagem").innerHTML = `
-                    <div class="success-container">
-                        <i class="fas fa-check-circle" style="color:#25d366; font-size:3rem;"></i>
-                        <h3>Agendado com Sucesso!</h3>
-                        <div class="btn-choice-container" id="area-escolha">
-                            <button class="btn-pay-now" onclick="mostrarAreaPix('${result.idPagamento}', '${result.qrCodeBase64}', '${result.pixCopiaCola}')">Pagar com PIX</button>
-                            ${result.urlPagamentoCartao ? `<a href="${result.urlPagamentoCartao}" target="_blank" class="btn-pay-card">Pagar com Cartão</a>` : ''}
-                            <button class="btn-pay-later" onclick="finalizarAgendamento()">Pagar na Hora</button>
-                        </div>
-                        <div id="area-pix-oculta" style="display:none; margin-top:20px;"></div>
-                    </div>`;
             }
-        } catch (err) { btn.disabled = false; btn.innerText = "Tentar Novamente"; }
-    });
+            criarBotoes(inicioManha, fimManha); criarBotoes(inicioTarde, fimTarde);
+            if (container.children.length === 0) { aviso.innerText = "🚫 Agenda lotada!"; aviso.style.display = 'block'; aviso.style.color = '#e62e2e'; }
+        } catch (error) { aviso.innerText = "Erro ao buscar agenda."; aviso.style.color = 'red'; }
+    }
 
-    function mostrarAreaPix(id, img, cod) {
+    function selecionarServico(nomeServico, elementoClicado) {
+        document.getElementById('servico-selecionado').value = nomeServico;
+        document.querySelectorAll('.service-card').forEach(card => { card.classList.remove('selected'); card.querySelector('.fa-check-circle').style.display = 'none'; });
+        elementoClicado.classList.add('selected'); elementoClicado.querySelector('.fa-check-circle').style.display = 'block';
+    }
+
+    function selecionarHora(horario, elementoClicado) {
+        document.getElementById('hora-selecionada').value = horario;
+        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('selected'));
+        elementoClicado.classList.add('selected');
+    }
+
+    const form = document.getElementById("form-agendamento");
+    const mensagem = document.getElementById("mensagem");
+
+    if(form) {
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const servico = document.getElementById('servico-selecionado').value;
+            const hora = document.getElementById('hora-selecionada').value;
+            const data = document.getElementById('data').value;
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            let preco = 0;
+            if(servico.includes("Corte Masculino")) preco = 40.00; 
+            else if(servico.includes("Barba")) preco = 20.00;
+            else if(servico.includes("Corte + Barba")) preco = 60.00;
+            else if(servico.includes("Progressiva")) preco = 120.00;
+            else if(servico.includes("Luzes")) preco = 100.00;
+            else preco = 10.00;
+            if(!servico || !hora || !data) { Swal.fire({ icon: 'warning', title: 'Faltam dados!', background: '#1e1e1e', color: '#fff', confirmButtonColor: '#e62e2e' }); return; }
+            const botao = form.querySelector("button"); botao.disabled = true; botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirmando...'; 
+            try {
+                const response = await fetch(`${API_URL}/agendar`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, email, data, hora, servico, preco })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    botao.style.display = 'none';
+                    mensagem.innerHTML = `
+                        <div class="success-container"><i class="fas fa-check-circle success-icon" style="color: #25d366; font-size: 3rem;"></i>
+                            <h3 style="color: #fff; margin: 10px 0;">Agendado!</h3><p style="color: #aaa; font-size: 0.9em;">${data} às ${hora}</p>
+                            <div class="btn-choice-container" id="area-escolha">
+                                <button type="button" class="btn-pay-now" onclick="mostrarAreaPix('${result.idPagamento}')"><i class="fa-brands fa-pix"></i> Pagar com PIX</button>
+                                ${result.urlPagamentoCartao ? `<a href="${result.urlPagamentoCartao}" target="_blank" class="btn-pay-card"><i class="far fa-credit-card"></i> Pagar c/ Cartão</a>` : ''}
+                                <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">Pagar Depois</button>
+                            </div>
+                            <div id="area-pix-oculta" style="display: none;" class="pix-container">
+                                <div class="pix-title"><i class="fa-brands fa-pix" style="color:#32bcad;"></i> Pagamento PIX</div>
+                                <div style="text-align: center; margin: 10px 0;"><img src="data:image/jpeg;base64,${result.qrCodeBase64}" style="width: 200px; border-radius: 8px; border: 2px solid #fff;"></div>
+                                <textarea id="pix-code" class="pix-code-area" rows="3" readonly>${result.pixCopiaCola}</textarea>
+                                <button type="button" class="btn-copy" onclick="copiarPix()"><i class="fas fa-copy"></i> COPIAR CÓDIGO</button><br><br>
+                                <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">Fechar</button>
+                            </div>
+                        </div>`;
+                    await carregarHorariosDisponiveis();
+                } else { mensagem.innerText = result.mensagem; mensagem.style.color = "#ff6b6b"; botao.disabled = false; botao.innerText = "Confirmar Agendamento"; }
+            } catch (error) { mensagem.innerText = "Erro de conexão ❌"; mensagem.style.color = "#ff6b6b"; botao.disabled = false; botao.innerText = "Confirmar Agendamento"; }
+        });
+    }
+
+    function mostrarAreaPix(id) {
         document.getElementById('area-escolha').style.display = 'none';
-        const area = document.getElementById('area-pix-oculta');
-        area.style.display = 'block';
-        area.innerHTML = `
-            <p>Escaneie o QR Code:</p>
-            <img src="data:image/jpeg;base64,${img}" style="width:200px; border:5px solid #fff; border-radius:10px;">
-            <p>Ou copie o código:</p>
-            <textarea id="pix-code" class="pix-code-area" readonly>${cod}</textarea>
-            <button class="btn-copy" onclick="copiarPix()">COPIAR CÓDIGO</button>
-            <p id="status-pix"><i class="fas fa-sync fa-spin"></i> Aguardando pagamento...</p>
-        `;
-        iniciarVerificacaoPagamento(id);
+        document.getElementById('area-pix-oculta').style.display = 'block';
+        if (id) iniciarVerificacaoPagamento(id);
     }
 
     function iniciarVerificacaoPagamento(id) {
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
         intervaloVerificacao = setInterval(async () => {
-            const res = await fetch(`${API_URL}/status-pagamento/${id}`);
-            const data = await res.json();
-            if (data.status === 'approved') {
-                clearInterval(intervaloVerificacao);
-                Swal.fire({ icon: 'success', title: 'Pagamento Confirmado!', background: '#1e1e1e', color: '#fff' }).then(() => window.location.reload());
-            }
-        }, 4000);
+            try {
+                const res = await fetch(`${API_URL}/status-pagamento/${id}`); const data = await res.json();
+                if (data.status === 'approved') {
+                    clearInterval(intervaloVerificacao);
+                    Swal.fire({ icon: 'success', title: 'Pagamento Recebido!', background: '#25d366', color: '#fff' }).then(() => window.location.reload());
+                }
+            } catch (error) { console.log("Erro ao verificar pagamento", error); }
+        }, 3000);
+    }
+
+    function finalizarAgendamento() {
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+        Swal.fire({ icon: 'success', title: 'Tudo Certo!', text: 'Te esperamos no horário marcado.', background: '#1e1e1e', color: '#fff', confirmButtonColor: '#25d366' }).then(() => { window.location.reload(); });
     }
 
     function copiarPix() {
-        const c = document.getElementById("pix-code"); c.select(); navigator.clipboard.writeText(c.value);
-        Toast.fire({ icon: 'success', title: 'Código Copiado!' });
+        const codigo = document.getElementById("pix-code"); codigo.select(); navigator.clipboard.writeText(codigo.value);
+        Toast.fire({ icon: 'success', title: 'Código PIX copiado!' });
     }
 
-    function finalizarAgendamento() { window.location.reload(); }
+    const observer = new IntersectionObserver((entries) => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('show') }));
+    document.querySelectorAll('.hidden').forEach((el) => observer.observe(el));
 
     window.onload = function() {
-        const nome = localStorage.getItem('usuarioNome');
-        const email = localStorage.getItem('usuarioEmail');
-        if (nome && email) {
-            document.getElementById('area-usuario').style.display = 'block';
-            document.getElementById('logado').style.display = 'flex';
-            document.getElementById('boas-vindas').innerText = "Olá, " + nome;
-            document.getElementById('aviso-bloqueio').style.display = 'none';
+        const hoje = new Date().toISOString().split('T')[0];
+        const inputData = document.getElementById('data');
+        if(inputData) inputData.setAttribute('min', hoje);
+
+        const nomeUsuario = localStorage.getItem('usuarioNome');
+        const emailUsuario = localStorage.getItem('usuarioEmail');
+        
+        const areaUsuario = document.getElementById('area-usuario');
+        const divLogado = document.getElementById('logado');
+        const menuLoginItem = document.getElementById('menu-login-item');
+        const mobileLoggedItems = document.querySelectorAll('.mobile-logged-item');
+        
+        // Elementos da Tabela de Preços
+        const bloqueioPrecos = document.getElementById('bloqueio-precos');
+        const conteudoPrecos = document.getElementById('conteudo-precos');
+
+        if (nomeUsuario && emailUsuario) {
+            if(areaUsuario) areaUsuario.style.display = 'flex';
+            if(divLogado) divLogado.style.display = 'flex';
+            if(menuLoginItem) menuLoginItem.style.display = 'none';
+            
+            mobileLoggedItems.forEach(item => item.style.display = 'block');
+
+            // LIBERA OS PREÇOS
+            if(bloqueioPrecos) bloqueioPrecos.style.display = 'none';
+            if(conteudoPrecos) conteudoPrecos.style.display = 'block';
+
+            const boasVindas = document.getElementById('boas-vindas');
+            if(boasVindas) boasVindas.innerText = "Olá, " + nomeUsuario + "!";
+            
+            document.getElementById('aviso-bloqueio').style.display = 'none'; 
             document.getElementById('area-formulario').style.display = 'block';
-            document.getElementById('nome').value = nome;
-            document.getElementById('email').value = email;
-            if (email === "rdbarbercontato@gmail.com") document.getElementById('btn-admin').style.display = 'block';
+            document.getElementById('nome').value = nomeUsuario;
+            document.getElementById('email').value = emailUsuario;
+
+            const btnPainel = document.getElementById('btn-painel-dono');
+            const btnCortes = document.getElementById('btn-meus-cortes');
+            if (emailUsuario === "rdbarbercontato@gmail.com") {
+                if(btnPainel) btnPainel.style.display = 'inline-flex';
+                if(btnCortes) btnCortes.style.display = 'none';
+            } else {
+                if(btnPainel) btnPainel.style.display = 'none';
+                if(btnCortes) btnCortes.style.display = 'inline-flex';
+            }
+        } else {
+            if(areaUsuario) areaUsuario.style.display = 'none'; 
+            if(menuLoginItem) menuLoginItem.style.display = 'block'; 
+            
+            mobileLoggedItems.forEach(item => item.style.display = 'none');
+
+            // BLOQUEIA OS PREÇOS
+            if(bloqueioPrecos) bloqueioPrecos.style.display = 'block';
+            if(conteudoPrecos) conteudoPrecos.style.display = 'none';
+
+            document.getElementById('aviso-bloqueio').style.display = 'block'; 
+            document.getElementById('area-formulario').style.display = 'none';
         }
     };
 

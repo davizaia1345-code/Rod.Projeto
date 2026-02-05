@@ -1,42 +1,38 @@
 require('dotenv').config();
-const bcrypt = require('bcrypt');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
+const bcrypt = require('bcrypt');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 
 const app = express();
 
+const PORT = process.env.PORT || 3001;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5500";
+
 app.use(helmet());
 
-// --- CONFIGURAÇÃO DE CORS (Segurança) ---
-// Na produção, o FRONTEND_URL será o link do seu site na Vercel.
-// Enquanto não tem, ele aceita tudo (*) ou o localhost.
-const corsOptions = {
-    origin: process.env.FRONTEND_URL || "*", 
-    optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+app.use(cors({ 
+    origin: FRONTEND_URL, 
+    optionsSuccessStatus: 200 
+}));
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: "Muitas tentativas vindas deste IP, tente novamente mais tarde."
+    message: "Muitas requisições criadas a partir deste IP, tente novamente mais tarde."
 });
 app.use(limiter);
 
 app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
-
-// Define a URL do Frontend (Se não tiver no .env, usa localhost)
-let FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5500";
-if (FRONTEND_URL.endsWith('/')) {
-    FRONTEND_URL = FRONTEND_URL.slice(0, -1);
+if (!process.env.MP_ACCESS_TOKEN || !process.env.MONGO_URI) {
+    console.error("Erro: Variáveis de ambiente não configuradas.");
+    process.exit(1);
 }
 
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
@@ -44,24 +40,26 @@ const payment = new Payment(client);
 const preference = new Preference(client);
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Conectado ao Banco de dados com sucesso! ✅'))
-  .catch(err => console.error('Erro ao conectar no banco:', err));
+  .then(() => console.log('✅ Banco de Dados Conectado!'))
+  .catch(err => console.error('❌ Erro no Banco:', err));
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
+    host: 'smtp.gmail.com', port: 587, secure: false,
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }, 
     tls: { rejectUnauthorized: false }
 });
 
 const Agendamento = mongoose.model('Agendamento', {
-  nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
-  pagamentoId: String, statusPagamento: String,
-  pixCopiaCola: String, qrCodeBase64: String,
+  nome: String, 
+  email: String, 
+  data: String, 
+  hora: String,
+  servico: String, 
+  valor: Number, 
+  pagamentoId: String, 
+  statusPagamento: String,
+  pixCopiaCola: String,
+  qrCodeBase64: String,
   urlPagamentoCartao: String
 });
 
@@ -70,7 +68,9 @@ const Usuario = mongoose.model('Usuario', {
   resetPasswordToken: String, resetPasswordExpires: Date
 });
 
-// --- ROTAS DE USUÁRIO ---
+function gerarEmailBonito(titulo, subtitulo, detalhes, corDestaque = '#e62e2e') {
+    return `<div style="background-color: #121212; padding: 40px 20px; font-family: sans-serif;"><div style="max-width: 600px; margin: 0 auto; background-color: #1e1e1e; border-radius: 12px; border: 1px solid #333;"><div style="background-color: ${corDestaque}; padding: 20px; text-align: center;"><h1 style="color: #fff; margin: 0; font-size: 24px;">${titulo}</h1></div><div style="padding: 30px;"><p style="color: #ccc; text-align: center;">${subtitulo}</p><div style="background-color: #252525; border-radius: 8px; padding: 20px; margin-top: 20px;"><table style="width: 100%; color: #ddd;">${detalhes}</table></div><div style="text-align: center; margin-top: 30px;"><a href="${FRONTEND_URL}/meus-agendamentos.html" style="background-color: ${corDestaque}; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">VER NO SITE</a></div></div></div></div>`;
+}
 
 app.post('/cadastro', async (req, res) => {
   try {
@@ -78,8 +78,8 @@ app.post('/cadastro', async (req, res) => {
     const senhaCripto = await bcrypt.hash(senha, 10);
     const novoUsuario = new Usuario({ nome, email, senha: senhaCripto });
     await novoUsuario.save();
-    res.json({ mensagem: 'Usuário cadastrado com sucesso! 👤' });
-  } catch (error) { res.status(500).json({ erro: 'Erro ao cadastrar.' }); }
+    res.json({ mensagem: 'Usuário cadastrado!' });
+  } catch (error) { res.status(500).json({ erro: 'E-mail já cadastrado.' }); }
 });
 
 app.post('/login', async (req, res) => {
@@ -97,47 +97,31 @@ app.post('/esqueci-senha', async (req, res) => {
     const { email } = req.body;
     try {
         const usuario = await Usuario.findOne({ email });
-        if (!usuario) return res.status(400).json({ erro: 'E-mail não cadastrado.' });
-
+        if (!usuario) return res.status(400).json({ erro: 'E-mail não encontrado.' });
         const token = crypto.randomBytes(20).toString('hex');
-        const agora = new Date();
-        agora.setHours(agora.getHours() + 1);
-
-        usuario.resetPasswordToken = token;
-        usuario.resetPasswordExpires = agora;
+        const agora = new Date(); agora.setHours(agora.getHours() + 1);
+        usuario.resetPasswordToken = token; usuario.resetPasswordExpires = agora;
         await usuario.save();
-
         const linkReset = `${FRONTEND_URL}/resetar-senha.html?token=${token}`;
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Recuperação de Senha - RodBarber 🔒',
-            html: `<p>Clique para redefinir: <a href="${linkReset}">REDEFINIR SENHA</a></p>`
-        };
-        await transporter.sendMail(mailOptions);
-        res.json({ mensagem: 'E-mail de recuperação enviado!' });
-    } catch (err) { res.status(500).json({ erro: 'Erro ao processar.' }); }
+        transporter.sendMail({
+            from: `RodBarber <${process.env.EMAIL_USER}>`, to: email, subject: 'Recuperar Senha',
+            html: `<p>Clique: <a href="${linkReset}">REDEFINIR</a></p>`
+        }).catch(console.error);
+        res.json({ mensagem: 'E-mail enviado!' });
+    } catch (err) { res.status(500).json({ erro: 'Erro.' }); }
 });
 
 app.post('/resetar-senha', async (req, res) => {
     const { token, novaSenha } = req.body;
     try {
-        const usuario = await Usuario.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
+        const usuario = await Usuario.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } });
         if (!usuario) return res.status(400).json({ erro: 'Token inválido.' });
-
         usuario.senha = await bcrypt.hash(novaSenha, 10);
-        usuario.resetPasswordToken = undefined;
-        usuario.resetPasswordExpires = undefined;
+        usuario.resetPasswordToken = undefined; usuario.resetPasswordExpires = undefined;
         await usuario.save();
         res.json({ mensagem: 'Senha alterada!' });
-    } catch (err) { res.status(500).json({ erro: 'Erro ao redefinir.' }); }
+    } catch (err) { res.status(500).json({ erro: 'Erro.' }); }
 });
-
-// --- ROTAS DE AGENDAMENTO ---
 
 app.get('/agendamentos/ocupados', async (req, res) => {
     const { data } = req.query;
@@ -151,81 +135,77 @@ app.get('/agendamentos/ocupados', async (req, res) => {
 app.post('/agendar', async (req, res) => {
     try {
         const { nome, email, data, hora, servico, preco } = req.body;
+        
+        if (!nome || !email || !data || !hora || !servico || !preco) {
+            return res.status(400).json({ mensagem: "Faltam dados." });
+        }
 
-        const conflito = await Agendamento.findOne({ data: data, hora: hora });
-        if (conflito) return res.status(400).json({ mensagem: "Horário indisponível! ❌" });
+        const conflito = await Agendamento.findOne({ data, hora });
+        if (conflito) return res.status(400).json({ mensagem: "Horário já reservado!" });
 
-        // 1. PIX
         const paymentData = {
             transaction_amount: parseFloat(preco),
             description: `Corte ${servico} - ${data} ${hora}`,
             payment_method_id: 'pix',
             payer: { email: email, first_name: nome }
         };
-        const resultPix = await payment.create({ body: paymentData });
-        const codigoPix = resultPix.point_of_interaction.transaction_data.qr_code;
-        const qrCodeBase64 = resultPix.point_of_interaction.transaction_data.qr_code_base64;
-        const idPagamento = resultPix.id;
+        const pixResult = await payment.create({ body: paymentData });
+        const codigoPix = pixResult.point_of_interaction.transaction_data.qr_code;
+        const qrCodeBase64 = pixResult.point_of_interaction.transaction_data.qr_code_base64;
+        const idPagamento = pixResult.id;
 
-        // 2. CARTÃO (PREFERENCE) - COM AUTO RETURN ATIVADO PARA PRODUÇÃO
         const preferenceData = {
-            items: [{
-                title: `${servico} - RodBarber`,
-                quantity: 1,
-                currency_id: 'BRL',
-                unit_price: parseFloat(preco)
-            }],
-            payer: { email: email, name: nome },
-            back_urls: {
-                success: `${FRONTEND_URL}/meus-agendamentos.html`, // Redireciona para ver o corte
-                failure: `${FRONTEND_URL}/index.html`,
-                pending: `${FRONTEND_URL}/index.html`
-            },
-            auto_return: "approved" // <--- ATIVADO PARA O SITE NO AR
+            body: {
+                items: [
+                    {
+                        title: `Corte ${servico} - ${data} ${hora}`,
+                        quantity: 1,
+                        unit_price: parseFloat(preco),
+                        currency_id: 'BRL'
+                    }
+                ],
+                payer: { email: email, name: nome },
+                back_urls: {
+                    success: `${FRONTEND_URL}/meus-agendamentos.html`,
+                    failure: `${FRONTEND_URL}/`,
+                    pending: `${FRONTEND_URL}/`
+                }
+            }
         };
         
-        const resultPreference = await preference.create({ body: preferenceData });
-        const linkCartao = resultPreference.init_point;
+        const prefResult = await preference.create(preferenceData);
+        const linkCartao = prefResult.init_point; 
 
         const novoAgendamento = new Agendamento({ 
-            nome, email, data, hora, servico, 
-            valor: preco,
-            pagamentoId: idPagamento,
+            nome, email, data, hora, servico, valor: preco,
+            pagamentoId: idPagamento.toString(),
             statusPagamento: 'pendente',
             pixCopiaCola: codigoPix,
             qrCodeBase64: qrCodeBase64,
-            urlPagamentoCartao: linkCartao
+            urlPagamentoCartao: linkCartao 
         });
         await novoAgendamento.save();
 
-        // Emails
-        const mailOptionsBarbeiro = {
-            from: `"Sistema RodBarber" <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER,
-            subject: `📅 NOVO AGENDAMENTO: ${nome}`,
-            html: `<p>Novo cliente: ${nome} - ${data} às ${hora}</p>`
-        };
-        transporter.sendMail(mailOptionsBarbeiro).catch(err => console.log(err));
-
-        const mailOptionsCliente = {
-            from: `"Barbearia do Rod" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Agendamento Confirmado - Barbearia do Rod ✅',
-            html: `<p>Olá ${nome}, seu horário está reservado: ${data} às ${hora}.</p>`
-        };
-        transporter.sendMail(mailOptionsCliente).catch(err => console.log(err));
-
         res.status(201).json({ 
-            mensagem: "Agendamento criado!", 
-            pixCopiaCola: codigoPix,
-            qrCodeBase64: qrCodeBase64,
-            idPagamento: idPagamento,
-            urlPagamentoCartao: linkCartao
+            mensagem: "Criado!", pixCopiaCola: codigoPix, qrCodeBase64: qrCodeBase64, 
+            idPagamento: idPagamento, urlPagamentoCartao: linkCartao 
         });
 
-    } catch (err) {
-        console.error("Erro:", err);
-        res.status(500).json({ mensagem: "Erro ao agendar." });
+        const linhasTabela = `
+            <tr><td style="padding:8px;color:#888;">Cliente:</td><td style="padding:8px;color:#fff;">${nome}</td></tr>
+            <tr><td style="padding:8px;color:#888;">Data:</td><td style="padding:8px;color:#fff;">${data} às ${hora}</td></tr>
+            <tr><td style="padding:8px;color:#888;">Serviço:</td><td style="padding:8px;color:#fff;">${servico}</td></tr>
+            <tr><td style="padding:8px;color:#888;">Valor:</td><td style="padding:8px;color:#25d366;">R$ ${preco},00</td></tr>
+        `;
+        const htmlBarbeiro = gerarEmailBonito("✂️ Novo Agendamento", "Novo cliente na área!", linhasTabela + `<tr><td>Status:</td><td style="color:orange">Aguardando Pagamento</td></tr>`);
+        const htmlCliente = gerarEmailBonito("📅 Agendamento Recebido", "Recebemos seu pedido. Pague para confirmar.", linhasTabela);
+
+        transporter.sendMail({ from: `RodBarber <${process.env.EMAIL_USER}>`, to: process.env.EMAIL_USER, subject: `🔔 NOVO: ${nome}`, html: htmlBarbeiro }).catch(console.error);
+        transporter.sendMail({ from: `RodBarber <${process.env.EMAIL_USER}>`, to: email, subject: 'Agendamento Recebido', html: htmlCliente }).catch(console.error);
+
+    } catch (err) { 
+        console.error("ERRO NO AGENDAMENTO:", err);
+        if(!res.headersSent) res.status(500).json({ mensagem: "Erro no servidor ao criar pagamento." }); 
     }
 });
 
@@ -234,45 +214,29 @@ app.get('/status-pagamento/:id', async (req, res) => {
         const id = req.params.id;
         const response = await payment.get({ id: id });
         const status = response.status; 
-
         if(status === 'approved') {
             const agendamento = await Agendamento.findOne({ pagamentoId: id });
-            
             if (agendamento && agendamento.statusPagamento !== 'approved') {
                 await Agendamento.findOneAndUpdate({ pagamentoId: id }, { statusPagamento: 'approved' });
-
-                const mailOptionsPagamento = {
-                    from: `"Sistema RodBarber" <${process.env.EMAIL_USER}>`,
-                    to: process.env.EMAIL_USER,
-                    subject: `💸 PAGOU! - ${agendamento.nome}`,
-                    html: `<p>O cliente ${agendamento.nome} pagou R$ ${agendamento.valor}.</p>`
-                };
-                transporter.sendMail(mailOptionsPagamento).catch(err => console.log(err));
+                
+                const htmlSucesso = gerarEmailBonito("✅ Pagamento Confirmado", "Seu horário está garantido!", `<tr><td style="color:#fff">${agendamento.data} às ${agendamento.hora}</td></tr>`, "#25d366");
+                transporter.sendMail({ from: `RodBarber <${process.env.EMAIL_USER}>`, to: agendamento.email, subject: 'Confirmado ✅', html: htmlSucesso }).catch(console.error);
             }
         }
         res.json({ status: status });
-    } catch (error) {
-        res.status(500).json({ status: 'error' });
-    }
+    } catch (error) { res.status(500).json({ status: 'error' }); }
 });
 
 app.get('/agendamentos', async (req, res) => {
-  try { const lista = await Agendamento.find(); res.json(lista); } catch (error) { res.status(500).json({ erro: 'Erro' }); }
+  try { const lista = await Agendamento.find(); res.json(lista); } catch (e) { res.status(500).json({ erro: 'Erro' }); }
 });
 
 app.get('/meus-agendamentos', async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) return res.status(400).json({ erro: 'Email?' });
-    const lista = await Agendamento.find({ email: email });
-    res.json(lista);
-  } catch (error) { res.status(500).json({ erro: 'Erro' }); }
+  try { const { email } = req.query; const lista = await Agendamento.find({ email }); res.json(lista); } catch (e) { res.status(500).json({ erro: 'Erro' }); }
 });
 
 app.delete('/agendamentos/:id', async (req, res) => {
-  try { await Agendamento.findByIdAndDelete(req.params.id); res.json({ mensagem: 'Ok' }); } catch (error) { res.status(500).json({ erro: 'Erro' }); }
+  try { await Agendamento.findByIdAndDelete(req.params.id); res.json({ mensagem: 'Ok' }); } catch (e) { res.status(500).json({ erro: 'Erro' }); }
 });
-
-app.get('/', (req, res) => res.send('API RodBarber Online 🚀'));
 
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));

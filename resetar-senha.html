@@ -48,9 +48,9 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
-        // Agora apontando para o servidor correto que está LIVE
-        const API_URL = 'https://rod-projeto.onrender.com';
+        // --- CONFIGURAÇÃO DO SERVIDOR LOCAL ---
+        
+        const API_URL = 'http://localhost:3001';
 
         async function mudarSenha() {
             // Pega o token que veio no link do e-mail
@@ -72,7 +72,7 @@
             btn.innerText = "Salvando...";
 
             try {
-                // Envia a nova senha para o servidor correto no Render
+                // Envia a nova senha para o servidor local
                 const response = await fetch(`${API_URL}/resetar-senha`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

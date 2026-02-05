@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | RodBarber</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         
         body {
-            background-color: #000;
+            background-color: #050505;
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
             background-size: cover;
             background-position: center;
@@ -35,14 +38,13 @@
         }
 
         .login-container::before {
-            content: '';
-            position: absolute;
+            content: ''; position: absolute;
             top: 0; left: 0; width: 100%; height: 4px;
             background: #e62e2e;
         }
 
         .logo {
-            font-size: 24px;
+            font-size: 1.5rem;
             font-weight: 800;
             letter-spacing: 2px;
             margin-bottom: 30px;
@@ -167,12 +169,10 @@
     </div>
 
     <script>
+        const API_URL = 'http://localhost:3001';
+        
         const form = document.getElementById('form-login');
         const mensagem = document.getElementById('mensagem');
-
-        // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
-        // Agora apontando para o seu servidor real no Render
-        const API_URL = 'https://rod-projeto.onrender.com';
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -195,23 +195,26 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    mensagem.style.color = '#25d366'; 
+                    mensagem.style.color = '#25d366'; // Verde
                     mensagem.innerText = "Login realizado! Redirecionando...";
                     
+                    // Salva os dados
                     localStorage.setItem('usuarioNome', data.usuario.nome);
                     localStorage.setItem('usuarioEmail', data.usuario.email);
 
+                    // Redireciona TODO MUNDO para o index.html
+                    
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 1500);
+
                 } else {
-                    mensagem.style.color = '#ff4d4d'; 
+                    mensagem.style.color = '#ff4d4d'; // Vermelho
                     mensagem.innerText = data.erro || "Erro ao entrar.";
                     btn.disabled = false;
                     btn.innerText = "ENTRAR";
                 }
             } catch (error) {
-                console.error("Erro de conexão:", error);
                 mensagem.style.color = '#ff4d4d';
                 mensagem.innerText = "Erro de conexão com o servidor.";
                 btn.disabled = false;

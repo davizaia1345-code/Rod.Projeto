@@ -4,18 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meus Cortes - RodBarber</title>
+    
     <link rel="stylesheet" href="rod.css">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
+    
     <style>
         body {
-            background-color: #1a1a1a; 
+            background-color: #050505; 
             color: #fff;
             padding: 20px;
             text-align: center;
             min-height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
         .dashboard-container {
             max-width: 800px;
@@ -26,12 +31,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #e62e2e;
+            border-bottom: 3px solid #e62e2e;
             padding-bottom: 15px;
             margin-bottom: 30px;
         }
         .page-title {
-            color: #d4af37;
+            color: #fff;
             font-size: 1.8rem;
             text-transform: uppercase;
             font-weight: 800;
@@ -39,52 +44,69 @@
             align-items: center;
             gap: 10px;
         }
+        .page-title i { color: #e62e2e; }
+
         .btn-voltar {
             background: transparent;
-            border: 1px solid #d4af37;
-            color: #d4af37;
-            padding: 8px 15px;
+            border: 1px solid #666;
+            color: #ccc;
+            padding: 8px 20px;
             border-radius: 5px;
             text-decoration: none;
             font-weight: bold;
             transition: 0.3s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            font-size: 0.9rem;
         }
-        .btn-voltar:hover { background: #d4af37; color: #000; }
+        .btn-voltar:hover { border-color: #e62e2e; color: #e62e2e; }
+
         .agendamento-card {
-            background: #0f0f0f;
+            background: #121212;
             border: 1px solid #333;
             border-radius: 10px;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 20px;
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            transition: 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
         }
-        .agendamento-card:hover { border-color: #e62e2e; transform: translateY(-2px); }
+        .agendamento-card:hover { border-color: #e62e2e; transform: translateY(-3px); }
+        .agendamento-card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: #e62e2e; }
+
         .card-info { text-align: left; flex: 1; min-width: 250px; }
         .card-date { color: #e62e2e; font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
-        .card-service { color: #fff; font-size: 1.2rem; font-weight: 700; display: block; }
-        .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; justify-content: flex-end; flex: 1; }
-        .status-badge { padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
-        .status-pendente { background: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid #ffc107; }
-        .status-pago { background: rgba(40, 167, 69, 0.15); color: #2ecc71; border: 1px solid #2ecc71; }
-        .btn-pagar { background: #25d366; color: #fff; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .btn-card { background: #009ee3; color: #fff; padding: 8px 16px; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-        .btn-cancelar { background: #222; color: #888; border: 1px solid #444; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-        .btn-cancelar:hover { border-color: #e62e2e; color: #e62e2e; }
-        .loading-state { padding: 60px; color: #666; font-style: italic; }
+        .card-service { color: #fff; font-size: 1.3rem; font-weight: 700; display: block; margin-bottom: 5px; }
+        
+        .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; justify-content: flex-end; flex: 1; flex-wrap: wrap; }
+        
+        .status-badge { padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .status-pendente { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid #ffc107; }
+        .status-pago { background: rgba(37, 211, 102, 0.1); color: #25d366; border: 1px solid #25d366; }
+        
+        /* BOTÕES DE PAGAMENTO */
+        .btn-pagar { background: #25d366; color: #fff; border: none; padding: 10px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.3s; font-size: 0.85rem; text-decoration: none; }
+        .btn-pagar:hover { background: #1ebc57; transform: scale(1.05); }
+
+        .btn-card { background: #009ee3; color: #fff; padding: 10px 16px; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.3s; }
+        .btn-card:hover { background: #007eb5; transform: scale(1.05); }
+
+        .btn-cancelar { background: #222; color: #888; border: 1px solid #444; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        .btn-cancelar:hover { border-color: #e62e2e; color: #e62e2e; background: rgba(230, 46, 46, 0.1); }
+        
+        .loading-state { padding: 80px; color: #666; font-style: italic; }
         
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 15px; border: 2px solid #e62e2e; max-width: 400px; width: 90%; text-align: center; }
-        .pix-img { width: 200px; border: 4px solid #fff; margin: 20px auto; display: block; border-radius: 8px; }
-        .pix-textarea { width: 100%; background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 0.8rem; border-radius: 5px; resize: none; margin-bottom: 10px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 15px; border: 1px solid #333; max-width: 400px; width: 90%; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .pix-img { width: 220px; border: 4px solid #fff; margin: 20px auto; display: block; border-radius: 10px; }
+        .pix-textarea { width: 100%; background: #000; color: #25d366; padding: 15px; font-family: monospace; font-size: 0.85rem; border-radius: 5px; resize: none; margin-bottom: 15px; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -92,28 +114,38 @@
 <div class="dashboard-container">
     <div class="page-header">
         <div class="page-title"><i class="fas fa-calendar-check"></i> Meus Cortes</div>
-        <a href="index.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
+        <a href="index.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
     </div>
     <div id="lista-agendamentos">
-        <div class="loading-state"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando seus horários...</div>
+        <div class="loading-state">
+            <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando seus horários...
+        </div>
     </div>
 </div>
 
 <div id="modal-pix" class="modal-overlay">
     <div class="modal-content">
-        <span style="cursor:pointer; float:right; color:#888;" onclick="fecharModal()">&times;</span>
-        <h3 style="color:#fff;">Pagamento PIX</h3>
+        <span style="cursor:pointer; float:right; color:#888; font-size: 1.5rem;" onclick="fecharModal()">&times;</span>
+        <h3 style="color:#fff; text-transform: uppercase;">Pagamento PIX</h3>
+        <p style="color:#888; font-size: 0.9rem;">Escaneie ou copie o código abaixo</p>
+        
         <img id="qr-image" src="" class="pix-img">
+        
         <textarea id="pix-text" class="pix-textarea" readonly></textarea>
-        <button onclick="copiarPix()" class="btn-pagar" style="width:100%; justify-content:center; margin-bottom:10px;"><i class="fas fa-copy"></i> COPIAR CÓDIGO</button>
-        <div id="status-verificacao" style="color:#d4af37; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Aguardando confirmação...</div>
+        
+        <button onclick="copiarPix()" class="btn-pagar" style="width:100%; justify-content:center; margin-bottom:15px;">
+            <i class="fas fa-copy"></i> COPIAR CÓDIGO
+        </button>
+        
+        <div id="status-verificacao" style="color:#d4af37; font-size:0.9rem; font-weight: bold;">
+            <i class="fas fa-spinner fa-spin"></i> Aguardando confirmação...
+        </div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
-    // Agora apontando para o servidor rod-projeto que está LIVE
-    const API_URL = 'https://rod-projeto.onrender.com';
+    // --- CONFIGURAÇÃO LOCAL ---
+    const API_URL = 'http://localhost:3001';
     let intervaloVerificacao = null;
 
     function formatarData(dataISO) {
@@ -128,14 +160,17 @@
         const container = document.getElementById('lista-agendamentos');
         
         try {
-            // Busca os agendamentos no novo servidor
             const res = await fetch(`${API_URL}/meus-agendamentos?email=${email}`);
             const lista = await res.json();
             
             container.innerHTML = '';
             
             if (lista.length === 0) {
-                container.innerHTML = '<div class="loading-state">Nenhum agendamento encontrado.</div>';
+                container.innerHTML = `
+                    <div class="loading-state">
+                        <i class="far fa-calendar-times fa-3x" style="margin-bottom:15px; opacity:0.5;"></i>
+                        <br>Nenhum agendamento encontrado.
+                    </div>`;
                 return;
             }
             
@@ -143,26 +178,42 @@
                 const pago = item.statusPagamento === 'approved';
                 const card = document.createElement('div');
                 card.className = 'agendamento-card';
+                
+                // HTML DO CARD
                 card.innerHTML = `
                     <div class="card-info">
                         <span class="card-date"><i class="far fa-calendar-alt"></i> ${formatarData(item.data)} às ${item.hora}</span>
                         <span class="card-service">${item.servico}</span>
-                        <span style="color:#888; font-size:0.9rem;">R$ ${item.valor},00</span>
+                        <span style="color:#888; font-size:0.95rem;">Valor: R$ ${item.valor},00</span>
                     </div>
                     <div class="card-actions">
                         <span class="status-badge ${pago ? 'status-pago' : 'status-pendente'}">${pago ? 'PAGO' : 'PENDENTE'}</span>
-                        ${!pago && item.pixCopiaCola ? `<button class="btn-pagar" onclick='abrirModal("${item.qrCodeBase64}", "${item.pixCopiaCola}", "${item.pagamentoId}")'><i class="fa-brands fa-pix"></i> PIX</button>` : ''}
-                        ${!pago && item.urlPagamentoCartao ? `<a href="${item.urlPagamentoCartao}" target="_blank" class="btn-card"><i class="far fa-credit-card"></i> CARTÃO</a>` : ''}
-                        <button class="btn-cancelar" onclick="cancelar('${item._id}')"><i class="fas fa-trash"></i></button>
+                        
+                        ${!pago && item.pixCopiaCola ? `
+                            <button class="btn-pagar" onclick='abrirModal("${item.qrCodeBase64}", "${item.pixCopiaCola}", "${item.pagamentoId}")'>
+                                <i class="fa-brands fa-pix"></i> PIX
+                            </button>` : ''
+                        }
+                        
+                        ${!pago && item.urlPagamentoCartao ? `
+                            <a href="${item.urlPagamentoCartao}" target="_blank" class="btn-card">
+                                <i class="far fa-credit-card"></i> CARTÃO
+                            </a>` : ''
+                        }
+                        
+                        <button class="btn-cancelar" onclick="cancelar('${item._id}')" title="Cancelar Agendamento">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>`;
                 container.appendChild(card);
             });
         } catch (e) { 
             console.error(e);
-            container.innerHTML = '<p style="color:red">Erro ao conectar com o servidor.</p>'; 
+            container.innerHTML = '<p style="color:#e62e2e">Erro ao conectar com o servidor.</p>'; 
         }
     }
 
+    // --- FUNÇÕES DO MODAL DE PAGAMENTO ---
     function abrirModal(base64, copiaCola, id) {
         document.getElementById('qr-image').src = `data:image/jpeg;base64,${base64}`;
         document.getElementById('pix-text').value = copiaCola;
@@ -180,14 +231,9 @@
         t.select(); 
         navigator.clipboard.writeText(t.value);
         Swal.fire({ 
-            toast: true, 
-            position: 'top', 
-            icon: 'success', 
-            title: 'Copiado!', 
-            showConfirmButton: false, 
-            timer: 1500, 
-            background: '#333', 
-            color: '#fff' 
+            toast: true, position: 'top', icon: 'success', 
+            title: 'Código Copiado!', showConfirmButton: false, 
+            timer: 1500, background: '#333', color: '#fff' 
         });
     }
 
@@ -200,18 +246,14 @@
                 if (data.status === 'approved') {
                     clearInterval(intervaloVerificacao);
                     Swal.fire({ 
-                        icon: 'success', 
-                        title: 'Pago!', 
-                        text: 'Seu horário está garantido.',
-                        background: '#1a1a1a', 
-                        color: '#fff' 
+                        icon: 'success', title: 'Pagamento Confirmado!', 
+                        text: 'Seu horário está garantido.', 
+                        background: '#1a1a1a', color: '#fff', confirmButtonColor: '#25d366'
                     });
                     fecharModal(); 
-                    carregarAgendamentos();
+                    carregarAgendamentos(); // Recarrega a lista para mostrar "PAGO"
                 }
-            } catch (e) {
-                console.log("Verificando status...");
-            }
+            } catch (e) {}
         }, 3000); 
     }
 
@@ -224,7 +266,6 @@
             confirmButtonColor: '#e62e2e',
             cancelButtonColor: '#333',
             confirmButtonText: 'Sim, cancelar',
-            cancelButtonText: 'Não',
             background: '#1a1a1a',
             color: '#fff'
         });
@@ -233,12 +274,9 @@
             try {
                 await fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
                 Swal.fire({ 
-                    title: 'Cancelado!', 
-                    icon: 'success', 
-                    background: '#1a1a1a', 
-                    color: '#fff', 
-                    timer: 1500, 
-                    showConfirmButton: false 
+                    title: 'Cancelado!', icon: 'success', 
+                    background: '#1a1a1a', color: '#fff', 
+                    timer: 1500, showConfirmButton: false 
                 });
                 carregarAgendamentos();
             } catch (e) { 

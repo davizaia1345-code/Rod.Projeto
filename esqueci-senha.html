@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Senha | RodBarber</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
         body {
-            background-color: #000;
+            background-color: #050505;
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
             background-size: cover;
             background-position: center;
@@ -19,29 +24,36 @@
         }
         .container {
             background: #121212; padding: 40px; width: 100%; max-width: 400px; border-radius: 15px;
-            border: 1px solid #333; text-align: center; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            border: 1px solid #333; text-align: center; position: relative; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
         }
         .container::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #e62e2e; }
-        h2 { margin-bottom: 20px; color: #ccc; }
+        
+        h2 { margin-bottom: 10px; color: #fff; text-transform: uppercase; font-weight: 800; }
+        
         input {
-            width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333;
-            border-radius: 6px; color: #fff; margin-bottom: 15px; outline: none;
+            width: 100%; padding: 12px 15px; background: #1a1a1a; border: 1px solid #333;
+            border-radius: 6px; color: #fff; margin-bottom: 15px; outline: none; font-size: 0.9rem;
         }
-        input:focus { border-color: #e62e2e; }
+        input:focus { border-color: #e62e2e; background: #222; }
+        
         button {
             width: 100%; padding: 12px; background: #e62e2e; color: white; border: none;
             border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;
         }
-        button:hover { background: #ff4d4d; }
-        #mensagem { margin-top: 15px; font-size: 0.9rem; }
-        a { color: #888; text-decoration: none; font-size: 0.9rem; margin-top: 10px; display: block; }
-        a:hover { color: #fff; }
+        button:hover { background: #ff4d4d; transform: translateY(-2px); }
+        
+        #mensagem { margin-top: 15px; font-size: 0.85rem; min-height: 20px; }
+        
+        a { color: #888; text-decoration: none; font-size: 0.85rem; margin-top: 15px; display: block; transition: 0.3s; }
+        a:hover { color: #e62e2e; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Recuperar Senha</h2>
-        <p style="color:#777; margin-bottom:20px; font-size:0.9em;">Digite seu e-mail para receber o link.</p>
+        <p style="color:#888; margin-bottom:25px; font-size:0.9em;">Digite seu e-mail para receber o link de redefinição.</p>
         
         <input type="email" id="email" placeholder="Seu e-mail cadastrado">
         <button onclick="enviarEmail()">ENVIAR LINK</button>
@@ -51,23 +63,24 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
-        // Agora apontando para o servidor que está LIVE
-        const API_URL = 'https://rod-projeto.onrender.com';
+        // Configuração Local
+        const API_URL = 'http://localhost:3001';
 
         async function enviarEmail() {
             const email = document.getElementById('email').value;
             const msg = document.getElementById('mensagem');
             const btn = document.querySelector('button');
 
-            if(!email) return alert("Digite o e-mail");
+            if(!email) {
+                msg.innerText = "Por favor, digite seu e-mail.";
+                msg.style.color = '#ff4d4d';
+                return;
+            }
 
-            btn.disabled = true; 
-            btn.innerText = "Enviando...";
+            btn.disabled = true; btn.innerText = "Enviando...";
             msg.innerText = "";
 
             try {
-                // Chamada para a rota de esqueci-senha no novo servidor
                 const response = await fetch(`${API_URL}/esqueci-senha`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -75,15 +88,18 @@
                 });
                 const data = await response.json();
                 
-                msg.innerText = data.mensagem || data.erro;
-                msg.style.color = response.ok ? '#25d366' : '#ff4d4d';
+                if (response.ok) {
+                    msg.innerText = "E-mail enviado! Verifique sua caixa de entrada.";
+                    msg.style.color = '#25d366';
+                } else {
+                    msg.innerText = data.erro || "Erro ao enviar.";
+                    msg.style.color = '#ff4d4d';
+                }
             } catch (e) {
-                console.error("Erro de conexão:", e);
                 msg.innerText = "Erro ao conectar com o servidor.";
                 msg.style.color = '#ff4d4d';
             }
-            btn.disabled = false; 
-            btn.innerText = "ENVIAR LINK";
+            btn.disabled = false; btn.innerText = "ENVIAR LINK";
         }
     </script>
 </body>

@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin - RodBarber</title>
+    <title>Painel do Dono | RodBarber</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
     
     <style>
-        /* RESET E FONTE */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         
         body { 
-            background-color: #121212; 
+            background-color: #050505; 
             color: #fff; 
             padding: 30px 20px;
             min-height: 100vh;
@@ -22,21 +22,24 @@
         
         .admin-container { max-width: 1200px; margin: 0 auto; }
         
-        /* HEADER */
+        /* HEADER DO DONO */
         .header-admin {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 3px solid #e62e2e; padding-bottom: 20px; margin-bottom: 40px;
+            border-bottom: 3px solid #d4af37; /* Dourado */
+            padding-bottom: 20px; margin-bottom: 40px;
         }
         
         .logo-admin {
-            font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; color: #fff; text-transform: uppercase;
+            font-size: 2rem; font-weight: 800; letter-spacing: 1px; color: #fff; text-transform: uppercase;
+            display: flex; align-items: center; gap: 15px;
         }
+        .logo-admin i { color: #d4af37; font-size: 1.2em; filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5)); }
         .logo-admin span { color: #d4af37; } 
 
         .btn-voltar {
-            text-decoration: none; color: #fff; border: 1px solid #444;
-            padding: 10px 20px; border-radius: 5px; font-weight: 600;
-            transition: 0.3s; display: flex; align-items: center; gap: 8px; background: #1e1e1e;
+            text-decoration: none; color: #ccc; border: 1px solid #444;
+            padding: 10px 25px; border-radius: 5px; font-weight: 600;
+            transition: 0.3s; display: flex; align-items: center; gap: 8px; background: #121212;
         }
         .btn-voltar:hover { border-color: #d4af37; color: #d4af37; }
 
@@ -47,90 +50,91 @@
         }
         
         .card-resumo {
-            background: #1e1e1e; padding: 25px; border-radius: 12px;
+            background: #121212; padding: 30px; border-radius: 12px;
             border: 1px solid #333; position: relative; overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6); transition: transform 0.3s;
         }
-        .card-resumo:hover { transform: translateY(-5px); border-color: #444; }
+        .card-resumo:hover { transform: translateY(-5px); border-color: #d4af37; }
         
         .card-resumo::before {
-            content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px;
-            background: #e62e2e;
+            content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 5px;
+            background: #d4af37;
         }
         .card-resumo.money::before { background: #2ecc71; } 
-        .card-resumo.total::before { background: #d4af37; }
+        .card-resumo.total::before { background: #e62e2e; }
 
         .card-resumo h3 { color: #888; font-size: 0.9em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .card-resumo p { font-size: 2.2em; font-weight: 800; color: #fff; margin: 0; }
+        .card-resumo p { font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0; }
         .card-resumo.money p { color: #2ecc71; }
         
         .card-icon {
-            position: absolute; top: 20px; right: 20px; font-size: 2.5em; 
-            color: rgba(255,255,255,0.05);
+            position: absolute; top: 25px; right: 25px; font-size: 3rem; 
+            color: rgba(255,255,255,0.03);
         }
 
-        /* BARRA DE CONTROLES */
+        /* CONTROLES */
         .controles-bar {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
-            background: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #333;
+            background: #121212; padding: 20px; border-radius: 10px; border: 1px solid #333;
         }
 
         .filtro-group { display: flex; align-items: center; gap: 10px; }
         
         input[type="date"] {
-            padding: 10px; background: #121212; color: #fff; 
+            padding: 10px; background: #000; color: #fff; 
             border: 1px solid #444; border-radius: 5px; outline: none;
         }
         
         .btn-atualizar {
-            padding: 10px 20px; background: #d4af37; color: #000; border: none;
+            padding: 12px 25px; background: #d4af37; color: #000; border: none;
             border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; gap: 5px;
+            display: flex; align-items: center; gap: 8px; text-transform: uppercase;
         }
-        .btn-atualizar:hover { background: #c4a030; transform: scale(1.02); }
+        .btn-atualizar:hover { background: #bfa130; transform: scale(1.02); box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
 
         /* TABELA */
         .tabela-wrapper {
             overflow-x: auto; border-radius: 10px; border: 1px solid #333;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
         
-        table { width: 100%; border-collapse: collapse; min-width: 900px; background: #1e1e1e; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; background: #121212; }
         
         thead th {
             background: #000; color: #d4af37; padding: 20px; text-align: left;
-            font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #333;
+            font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #333;
         }
         
         tbody td {
-            padding: 18px 20px; border-bottom: 1px solid #2a2a2a; 
+            padding: 20px; border-bottom: 1px solid #222; 
             font-size: 0.95em; color: #ddd; vertical-align: middle;
         }
         
-        tbody tr:hover { background: #252525; }
+        tbody tr:hover { background: #1a1a1a; }
         tbody tr:last-child td { border-bottom: none; }
 
-        .info-principal { display: block; font-weight: bold; color: #fff; font-size: 1em; }
-        .info-secundaria { display: block; font-size: 0.8em; color: #777; margin-top: 3px; }
+        .info-principal { display: block; font-weight: bold; color: #fff; font-size: 1.1em; }
+        .info-secundaria { display: block; font-size: 0.85em; color: #777; margin-top: 4px; }
         .info-destaque { color: #d4af37; font-weight: bold; }
 
         .badge {
-            padding: 6px 12px; border-radius: 20px; font-size: 0.75em; 
-            font-weight: 800; text-transform: uppercase; display: inline-block;
+            padding: 8px 15px; border-radius: 5px; font-size: 0.75em; 
+            font-weight: 800; text-transform: uppercase; display: inline-block; letter-spacing: 1px;
         }
         .bg-pendente { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid #ffc107; }
         .bg-pago { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid #2ecc71; }
 
         .btn-lixeira {
             background: transparent; border: 1px solid #444; color: #666;
-            width: 35px; height: 35px; border-radius: 5px; cursor: pointer; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 5px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1em;
         }
         .btn-lixeira:hover { border-color: #e62e2e; color: #e62e2e; background: rgba(230, 46, 46, 0.1); }
 
         @media (max-width: 768px) {
             .header-admin { flex-direction: column; gap: 15px; text-align: center; }
+            .logo-admin { font-size: 1.5rem; }
             .resumo-cards { grid-template-columns: 1fr; gap: 10px; }
             .controles-bar { flex-direction: column; align-items: stretch; }
             input[type="date"], .btn-atualizar, .btn-voltar { width: 100% !important; justify-content: center; }
@@ -141,13 +145,15 @@
 
 <div class="admin-container">
     <div class="header-admin">
-        <div class="logo-admin">ROD<span>BARBER</span> <span style="font-size: 0.5em; background: #e62e2e; padding: 2px 5px; border-radius: 3px; vertical-align: middle; margin-left: 5px;">ADMIN</span></div>
-        <a href="index.html" class="btn-voltar"><i class="fas fa-home"></i> Voltar ao Site</a>
+        <div class="logo-admin">
+            <i class="fas fa-crown"></i> PAINEL DO <span>ROD</span>
+        </div>
+        <a href="index.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Site</a>
     </div>
 
     <div class="resumo-cards">
         <div class="card-resumo">
-            <h3>Hoje</h3>
+            <h3>Agendamentos Hoje</h3>
             <p id="total-hoje">0</p>
             <i class="fas fa-calendar-day card-icon"></i>
         </div>
@@ -157,7 +163,7 @@
             <i class="fas fa-users card-icon"></i>
         </div>
         <div class="card-resumo money">
-            <h3>Caixa Confirmado (PIX)</h3>
+            <h3>Faturamento (PIX)</h3>
             <p id="total-faturamento">R$ 0,00</p>
             <i class="fas fa-wallet card-icon"></i>
         </div>
@@ -165,11 +171,11 @@
 
     <div class="controles-bar">
         <div class="filtro-group">
-            <label style="color:#aaa; font-size:0.9em;"><i class="fas fa-filter"></i> Filtrar Data:</label>
+            <label style="color:#aaa; font-size:0.9em;"><i class="fas fa-filter"></i> Data Específica:</label>
             <input type="date" id="filtro-data" onchange="filtrarTabela()">
         </div>
         <button onclick="carregarDados()" class="btn-atualizar">
-            <i class="fas fa-sync-alt"></i> Atualizar Dados
+            <i class="fas fa-sync-alt"></i> Atualizar Painel
         </button>
     </div>
 
@@ -187,7 +193,7 @@
             </thead>
             <tbody id="lista-admin">
                 <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">
-                    <i class="fas fa-spinner fa-spin"></i> Carregando sistema...
+                    <i class="fas fa-spinner fa-spin"></i> Conectando ao sistema...
                 </td></tr>
             </tbody>
         </table>
@@ -195,21 +201,21 @@
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO DO SERVIDOR ATUALIZADA ---
-    // Link novo do Render que já está Live
-    const API_URL = 'https://rod-projeto.onrender.com';
+    const API_URL = 'http://localhost:3001';
     let todosAgendamentos = [];
 
-    // --- SEGURANÇA BÁSICA ---
+    // --- VERIFICAÇÃO DE SEGURANÇA (COROA) ---
     function verificarPermissao() {
         const email = localStorage.getItem('usuarioEmail');
-        // Bloqueia acesso se não for o administrador
+        
+        // Se NÃO for o email do Rod, chuta pra fora
         if (email !== "rdbarbercontato@gmail.com") {
             document.body.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e;">
-                    <i class="fas fa-lock" style="font-size: 4em; margin-bottom: 20px;"></i>
-                    <h1 style="text-transform:uppercase;">Acesso Restrito</h1>
-                    <p style="color:#666; margin-top:10px;">Você não tem permissão para acessar este painel.</p>
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e; text-align:center;">
+                    <i class="fas fa-ban" style="font-size: 5em; margin-bottom: 20px;"></i>
+                    <h1 style="text-transform:uppercase; font-size:2em;">Acesso Negado</h1>
+                    <p style="color:#666; margin-top:10px;">Esta área é restrita apenas ao proprietário.</p>
+                    <a href="index.html" style="color:#fff; margin-top:20px; text-decoration:underline;">Voltar ao início</a>
                 </div>
             `;
             setTimeout(() => window.location.href = 'index.html', 3000);
@@ -222,18 +228,14 @@
         if (!verificarPermissao()) return;
 
         try {
-            // Busca todos os agendamentos registrados no MongoDB
             const res = await fetch(`${API_URL}/agendamentos`);
             todosAgendamentos = await res.json();
-            
             todosAgendamentos.reverse(); 
             
             renderizarTabela(todosAgendamentos);
             calcularResumo(todosAgendamentos);
-
         } catch (error) {
-            console.error(error);
-            Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha na conexão com o servidor.', background: '#1e1e1e', color: '#fff' });
+            Swal.fire({ icon: 'error', title: 'Erro', text: 'Servidor offline.', background: '#1e1e1e', color: '#fff' });
         }
     }
 
@@ -242,13 +244,12 @@
         tbody.innerHTML = '';
 
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#555;"><i class="fas fa-folder-open" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum agendamento encontrado.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#555;"><i class="fas fa-box-open" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum agendamento encontrado.</td></tr>';
             return;
         }
 
         lista.forEach(ag => {
             const isPago = ag.statusPagamento === 'approved';
-            
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -260,14 +261,14 @@
                     <span class="info-secundaria">${ag.email}</span>
                 </td>
                 <td>${ag.servico}</td>
-                <td style="font-weight:bold; color: #fff;">R$ ${ag.valor},00</td>
+                <td style="font-weight:bold; color: #2ecc71;">R$ ${ag.valor},00</td>
                 <td>
                     <span class="badge ${isPago ? 'bg-pago' : 'bg-pendente'}">
                         ${isPago ? '<i class="fas fa-check"></i> PAGO' : '<i class="fas fa-clock"></i> PENDENTE'}
                     </span>
                 </td>
                 <td style="text-align: center;">
-                    <button class="btn-lixeira" onclick="deletarAgendamento('${ag._id}')" title="Excluir Agendamento">
+                    <button class="btn-lixeira" onclick="deletarAgendamento('${ag._id}')" title="Excluir">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
@@ -278,15 +279,10 @@
 
     function calcularResumo(lista) {
         document.getElementById('total-geral').innerText = lista.length;
-
         const hojeISO = new Date().toISOString().split('T')[0];
         const qtdHoje = lista.filter(item => item.data === hojeISO).length;
         document.getElementById('total-hoje').innerText = qtdHoje;
-
-        const totalGrana = lista
-            .filter(item => item.statusPagamento === 'approved')
-            .reduce((acc, item) => acc + (item.valor || 0), 0);
-        
+        const totalGrana = lista.filter(item => item.statusPagamento === 'approved').reduce((acc, item) => acc + (item.valor || 0), 0);
         document.getElementById('total-faturamento').innerText = `R$ ${totalGrana.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     }
 
@@ -298,43 +294,29 @@
 
     function filtrarTabela() {
         const dataFiltro = document.getElementById('filtro-data').value;
-        if (!dataFiltro) {
-            renderizarTabela(todosAgendamentos);
-            return;
-        }
+        if (!dataFiltro) { renderizarTabela(todosAgendamentos); return; }
         const filtrados = todosAgendamentos.filter(ag => ag.data === dataFiltro);
         renderizarTabela(filtrados);
     }
 
     async function deletarAgendamento(id) {
         const confirm = await Swal.fire({
-            title: 'Excluir?', 
-            text: "Essa ação removerá o agendamento permanentemente do banco de dados.",
-            icon: 'warning', 
-            showCancelButton: true, 
-            confirmButtonColor: '#e62e2e', 
-            cancelButtonColor: '#333',
-            confirmButtonText: 'Sim, excluir', 
-            background: '#1e1e1e', 
-            color: '#fff'
+            title: 'Excluir registro?', text: "Isso apaga o agendamento para sempre.", icon: 'warning', 
+            showCancelButton: true, confirmButtonColor: '#e62e2e', cancelButtonColor: '#333', 
+            confirmButtonText: 'Sim, excluir', background: '#1e1e1e', color: '#fff'
         });
 
         if (confirm.isConfirmed) {
             try {
-                // Remove do banco de dados no novo servidor
                 await fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#1e1e1e', color: '#fff' });
-                Toast.fire({ icon: 'success', title: 'Removido com sucesso!' });
-                
+                Toast.fire({ icon: 'success', title: 'Excluído!' });
                 carregarDados(); 
-            } catch (error) { 
-                Swal.fire('Erro', 'Falha ao deletar.', 'error'); 
-            }
+            } catch (error) { Swal.fire('Erro', 'Falha ao deletar.', 'error'); }
         }
     }
 
     window.onload = carregarDados;
 </script>
-
 </body>
 </html>

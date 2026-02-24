@@ -188,7 +188,8 @@
         aviso.innerText = "Carregando horários..."; aviso.style.display = 'block';
         try {
             const response = await fetch(`${API_URL}/agendamentos/ocupados?data=${inputData}`);
-            const horariosOcupados = await response.json(); 
+            const horariosOcupados = await response.json();
+            container.innerHTML = '';
             aviso.style.display = 'none';
             const inicioManha = 9 * 60; const fimManha = 11 * 60 + 30; const inicioTarde = 13 * 60; const fimTarde = 21 * 60 + 30; const intervalo = 35;
             function criarBotoes(inicio, fim) {

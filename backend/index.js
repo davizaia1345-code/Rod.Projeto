@@ -12,7 +12,7 @@ const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 const app = express();
 
 const PORT = process.env.PORT || 3001;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5500";
+const FRONTEND_URL = (process.env.FRONTEND_URL || "http://127.0.0.1:5500").replace(/\/$/, '');
 
 app.use(helmet());
 

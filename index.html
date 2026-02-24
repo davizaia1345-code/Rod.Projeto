@@ -28,7 +28,7 @@
     <div id="logado" style="display: none;">
         <span id="boas-vindas"></span>
         <a href="admin.html" id="btn-painel-dono" class="btn-painel"><i class="fas fa-crown"></i> Painel</a>
-        <a href="meus-agendamentos.html" id="btn-meus-cortes" class="user-link"><i class="fas fa-history"></i> Meus Cortes</a>
+        <a href="meus-agendamentos.html" id="btn-meus-cortes" class="btn-cortes"><i class="fas fa-history"></i> Meus Cortes</a>
         <button onclick="fazerLogout()" class="btn-sair"><i class="fas fa-sign-out-alt"></i> Sair</button>
     </div>
 </div>
@@ -195,9 +195,14 @@
                 for (let tempo = inicio; tempo <= fim; tempo += intervalo) {
                     const horas = Math.floor(tempo / 60); const minutos = tempo % 60;
                     const horarioFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
-                    if (horariosOcupados.includes(horarioFormatado)) continue; 
-                    const btn = document.createElement('div'); btn.className = 'time-btn'; btn.innerText = horarioFormatado;
-                    btn.onclick = function() { selecionarHora(horarioFormatado, this) }; container.appendChild(btn);
+                    const btn = document.createElement('div'); btn.innerText = horarioFormatado;
+                    if (horariosOcupados.includes(horarioFormatado)) {
+                        btn.className = 'time-btn ocupado';
+                    } else {
+                        btn.className = 'time-btn';
+                        btn.onclick = function() { selecionarHora(horarioFormatado, this) };
+                    }
+                    container.appendChild(btn);
                 }
             }
             criarBotoes(inicioManha, fimManha); criarBotoes(inicioTarde, fimTarde);

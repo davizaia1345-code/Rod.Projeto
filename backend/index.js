@@ -14,11 +14,25 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = (process.env.FRONTEND_URL || "http://127.0.0.1:5500").replace(/\/$/, '');
 
+const allowedOrigins = [
+    FRONTEND_URL,
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:3000',
+];
+
 app.use(helmet());
 
-app.use(cors({ 
-    origin: FRONTEND_URL, 
-    optionsSuccessStatus: 200 
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    optionsSuccessStatus: 200
 }));
 
 const limiter = rateLimit({

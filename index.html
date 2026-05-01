@@ -50,7 +50,8 @@
             
             <li id="menu-login-item"><a href="login.html" style="color: #e62e2e; font-weight: bold;"><i class="fas fa-user"></i> Área do Cliente</a></li>
             
-            <li class="mobile-logged-item" style="display: none;"><a href="meus-agendamentos.html" style="color:#ffd700;"><i class="fas fa-history"></i> Meus Cortes</a></li>
+            <li id="mobile-painel-item" class="mobile-logged-item" style="display: none;"><a href="admin.html" style="color:#d4af37;"><i class="fas fa-crown"></i> Painel</a></li>
+            <li id="mobile-cortes-item" class="mobile-logged-item" style="display: none;"><a href="meus-agendamentos.html" style="color:#ffd700;"><i class="fas fa-history"></i> Meus Cortes</a></li>
             <li class="mobile-logged-item" style="display: none;"><a href="#" onclick="fazerLogout()" style="color:#e62e2e;"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
         </ul>
     </nav>
@@ -343,12 +344,18 @@
 
             const btnPainel = document.getElementById('btn-painel-dono');
             const btnCortes = document.getElementById('btn-meus-cortes');
+            const mobilePainelItem = document.getElementById('mobile-painel-item');
+            const mobileCortesItem = document.getElementById('mobile-cortes-item');
             if (emailUsuario === "rdbarbercontato@gmail.com") {
                 if(btnPainel) btnPainel.style.display = 'inline-flex';
                 if(btnCortes) btnCortes.style.display = 'none';
+                if(mobilePainelItem) mobilePainelItem.style.display = 'block';
+                if(mobileCortesItem) mobileCortesItem.style.display = 'none';
             } else {
                 if(btnPainel) btnPainel.style.display = 'none';
                 if(btnCortes) btnCortes.style.display = 'inline-flex';
+                if(mobilePainelItem) mobilePainelItem.style.display = 'none';
+                if(mobileCortesItem) mobileCortesItem.style.display = 'block';
             }
         } else {
             if(areaUsuario) areaUsuario.style.display = 'none'; 

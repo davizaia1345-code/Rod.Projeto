@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barbearia do Rod</title>
+    <meta name="description" content="Barbearia do Rod em Cidade Tiradentes, São Paulo. Agende corte, barba e combos online e pague com PIX ou cartão.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Barbearia do Rod">
+    <meta property="og:description" content="Muito além de um corte: agende seu horário online e pague com PIX ou cartão.">
+    <meta property="og:image" content="https://rod-projeto.vercel.app/rodimagem.jpg.jpg">
+    <meta property="og:url" content="https://rod-projeto.vercel.app/">
+    <meta property="og:locale" content="pt_BR">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,7 +46,7 @@
         RODBARBER
     </div>
     <input type="checkbox" id="menu-toggle" class="menu-toggle">
-    <label for="menu-toggle" class="menu-icon"><span></span><span></span><span></span></label>
+    <label for="menu-toggle" class="menu-icon" aria-label="Abrir menu" role="button"><span></span><span></span><span></span></label>
     <nav>
         <ul class="nav-links">
             <li><a href="#agendamento" onclick="fecharMenuMobile()">Agendamento</a></li>
@@ -141,11 +149,11 @@
     <span class="section-eyebrow">Portfólio</span>
     <h2>Galeria de Estilo</h2>
     <div class="galeria-grid">
-        <div class="corte-card"><img src="https://i.ibb.co/bRB817kj/imagemum-jpg.jpg" alt="Freestyle"><div class="corte-info"><h3>FREESTYLE LATERAL</h3><p>Personalidade em cada traço.</p></div></div>
-        <div class="corte-card"><img src="https://i.ibb.co/MyqdSqwf/imagemdois-jpg.jpg" alt="Arte"><div class="corte-info"><h3>ARTE NA NAVALHA</h3><p>Design exclusivo.</p></div></div>
-        <div class="corte-card"><img src="https://i.ibb.co/sGhJh9M/imagemtres-jpg.jpg" alt="Nudred"><div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div></div>
-        <div class="corte-card"><img src="https://i.ibb.co/p65kNzFq/Whats-App-Image-2026-01-21-at-22-53-19-1.jpg" alt="Social"><div class="corte-info"><h3>SOCIAL & FADE</h3><p>Imponência fio a fio.</p></div></div>
-        <div class="corte-card"><img src="https://i.ibb.co/zT9vRwrM/Whats-App-Image-2026-01-21-at-22-53-19.jpg" alt="Kids"><div class="corte-info"><h3>MILITAR CUT KID</h3><p>Degradê impecável.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/bRB817kj/imagemum-jpg.jpg" alt="Freestyle" loading="lazy"><div class="corte-info"><h3>FREESTYLE LATERAL</h3><p>Personalidade em cada traço.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/MyqdSqwf/imagemdois-jpg.jpg" alt="Arte" loading="lazy"><div class="corte-info"><h3>ARTE NA NAVALHA</h3><p>Design exclusivo.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/sGhJh9M/imagemtres-jpg.jpg" alt="Nudred" loading="lazy"><div class="corte-info"><h3>NUDRED & FADE</h3><p>O encaixe perfeito.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/p65kNzFq/Whats-App-Image-2026-01-21-at-22-53-19-1.jpg" alt="Social" loading="lazy"><div class="corte-info"><h3>SOCIAL & FADE</h3><p>Imponência fio a fio.</p></div></div>
+        <div class="corte-card"><img src="https://i.ibb.co/zT9vRwrM/Whats-App-Image-2026-01-21-at-22-53-19.jpg" alt="Kids" loading="lazy"><div class="corte-info"><h3>MILITAR CUT KID</h3><p>Degradê impecável.</p></div></div>
     </div>
 </section>
 
@@ -161,8 +169,8 @@
 </section>
 
 <div class="social-floating">
-    <a href="https://www.instagram.com/souzard_barber/" target="_blank" rel="noopener noreferrer" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
-    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" rel="noopener noreferrer" class="btn-float whatsapp">
+    <a href="https://www.instagram.com/souzard_barber/" target="_blank" rel="noopener noreferrer" class="btn-float instagram" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" rel="noopener noreferrer" class="btn-float whatsapp" aria-label="WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 </div>

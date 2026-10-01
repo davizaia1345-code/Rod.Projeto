@@ -30,7 +30,7 @@
 
 <div id="modal-pix" class="modal-overlay">
     <div class="modal-content">
-        <span style="cursor:pointer; float:right; color:#888; font-size: 1.5rem;" onclick="fecharModal()">&times;</span>
+        <span style="cursor:pointer; float:right; color:#888; font-size: 1.5rem;" onclick="fecharModal()" role="button" tabindex="0" aria-label="Fechar">&times;</span>
         <h3 style="color:#fff; text-transform: uppercase;">Pagamento PIX</h3>
         <p style="color:#888; font-size: 0.9rem;">Escaneie ou copie o código abaixo</p>
         
@@ -106,7 +106,7 @@
                             </a>` : ''
                         }
                         
-                        <button class="btn-cancelar" onclick="cancelar('${item._id}')" title="Cancelar Agendamento">
+                        <button class="btn-cancelar" onclick="cancelar('${item._id}')" title="Cancelar Agendamento" aria-label="Cancelar agendamento">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>`;

@@ -54,7 +54,7 @@
             <li class="mobile-logged-item" style="display: none;"><a href="#" onclick="fazerLogout()" style="color:var(--red-light);"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
         </ul>
     </nav>
-    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" class="btn-book desktop-only">
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" rel="noopener noreferrer" class="btn-book desktop-only">
         <i class="fab fa-whatsapp"></i> Fale Conosco
     </a>
 </header>
@@ -65,6 +65,7 @@
             <span class="hero-eyebrow">Barbearia &amp; Grooming</span>
             <h1>Muito Além de um Corte, Uma Experiência de Cuidado Masculino.</h1>
             <div class="address"><p>O Melhor Lugar</p><p>Para Agendar seu Corte.</p></div>
+            <div class="status-live" id="status-live"><span class="status-dot"></span><span id="status-live-text">Verificando agenda...</span></div>
         </div>
 
         <section class="container" id="agendamento">
@@ -160,8 +161,8 @@
 </section>
 
 <div class="social-floating">
-    <a href="https://www.instagram.com/souzard_barber/" target="_blank" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
-    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" class="btn-float whatsapp">
+    <a href="https://www.instagram.com/souzard_barber/" target="_blank" rel="noopener noreferrer" class="btn-float instagram"><i class="fab fa-instagram"></i></a>
+    <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" rel="noopener noreferrer" class="btn-float whatsapp">
         <i class="fab fa-whatsapp"></i>
     </a>
 </div>
@@ -177,7 +178,32 @@
 </footer>
 
 <script>
-    const API_URL = 'https://rodbarber-api-0jna.onrender.com'; 
+    (function(){
+        var MANHA_INICIO = 9 * 60, MANHA_FIM = 11 * 60 + 30;
+        var TARDE_INICIO = 13 * 60, TARDE_FIM = 21 * 60 + 30;
+        function agoraSaoPaulo(){
+            try{
+                var fmt = new Intl.DateTimeFormat('en-US', { timeZone:'America/Sao_Paulo', hour:'2-digit', minute:'2-digit', hour12:false });
+                var partes = {};
+                fmt.formatToParts(new Date()).forEach(function(p){ partes[p.type] = p.value; });
+                return parseInt(partes.hour,10) * 60 + parseInt(partes.minute,10);
+            }catch(e){ var d = new Date(); return d.getHours()*60 + d.getMinutes(); }
+        }
+        function atualizarStatus(){
+            var el = document.getElementById('status-live');
+            var texto = document.getElementById('status-live-text');
+            if(!el || !texto) return;
+            var min = agoraSaoPaulo();
+            var aberto = (min >= MANHA_INICIO && min <= MANHA_FIM) || (min >= TARDE_INICIO && min <= TARDE_FIM);
+            el.classList.toggle('is-open', aberto);
+            el.classList.toggle('is-closed', !aberto);
+            texto.textContent = aberto ? 'Agendamentos abertos agora' : 'Fora do horário de agendamento';
+        }
+        atualizarStatus();
+        setInterval(atualizarStatus, 60000);
+    })();
+
+    const API_URL = 'https://rodbarber-api-0jna.onrender.com';
     let intervaloVerificacao = null;
 
     function fecharMenuMobile() { document.getElementById('menu-toggle').checked = false; }
@@ -268,7 +294,7 @@
                             <h3 style="color: #fff; margin: 10px 0;">Agendado!</h3><p style="color: #aaa; font-size: 0.9em;">${data} às ${hora}</p>
                             <div class="btn-choice-container" id="area-escolha">
                                 <button type="button" class="btn-pay-now" onclick="mostrarAreaPix('${result.idPagamento}')"><i class="fa-brands fa-pix"></i> Pagar com PIX</button>
-                                ${result.urlPagamentoCartao ? `<a href="${result.urlPagamentoCartao}" target="_blank" class="btn-pay-card"><i class="far fa-credit-card"></i> Pagar c/ Cartão</a>` : ''}
+                                ${result.urlPagamentoCartao ? `<a href="${result.urlPagamentoCartao}" target="_blank" rel="noopener noreferrer" class="btn-pay-card"><i class="far fa-credit-card"></i> Pagar c/ Cartão</a>` : ''}
                                 <button type="button" class="btn-pay-later" onclick="finalizarAgendamento()">Pagar Depois</button>
                             </div>
                             <div id="area-pix-oculta" style="display: none;" class="pix-container">

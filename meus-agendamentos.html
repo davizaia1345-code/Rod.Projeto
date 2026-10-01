@@ -101,7 +101,7 @@
                         }
                         
                         ${!pago && item.urlPagamentoCartao ? `
-                            <a href="${item.urlPagamentoCartao}" target="_blank" class="btn-card">
+                            <a href="${item.urlPagamentoCartao}" target="_blank" rel="noopener noreferrer" class="btn-card">
                                 <i class="far fa-credit-card"></i> CARTÃO
                             </a>` : ''
                         }

@@ -315,8 +315,15 @@ h1, h2, h3, h4, .logo, .logo-admin {
     letter-spacing: 0.06em;
     color: var(--text);
     font-size: 1.15rem;
-    margin-bottom: 18px;
+    margin-bottom: 4px;
     text-align: left;
+}
+
+#agendamento .form-subtitle {
+    text-align: left;
+    color: var(--text-faint);
+    font-size: 0.82rem;
+    margin-bottom: 20px;
 }
 
 #area-formulario { width: 100%; display: flex; justify-content: center; margin-top: 4px; }
@@ -393,22 +400,42 @@ form button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; transfo
     cursor: pointer;
     transition: all 0.25s;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 13px;
 }
-.service-card:hover { border-color: var(--gold); background: var(--surface-2); }
+.service-card:hover { border-color: var(--gold); background: var(--surface-2); transform: translateX(2px); }
 .service-card.selected {
     background: linear-gradient(135deg, var(--red-light), var(--red));
     border-color: var(--red-light);
     color: white;
 }
 
+.service-icon {
+    width: 34px; height: 34px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--gold-dim); color: var(--gold-light);
+    border-radius: 9px; font-size: 14px;
+    transition: background .25s, color .25s;
+}
+.service-card.selected .service-icon { background: rgba(255,255,255,0.18); color: #fff; }
+
+.service-info { flex: 1; text-align: left; }
 .service-name { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
 .service-time { font-size: 11px; color: var(--text-faint); margin-top: 3px; letter-spacing: 0.03em; display: block; }
 .service-card.selected .service-time { color: rgba(255,255,255,0.75); }
-.service-card .fa-check-circle { color: #fff; }
+.service-card .fa-check-circle { color: #fff; flex-shrink: 0; }
 
-.time-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 5px; }
+.time-group { margin-bottom: 12px; }
+.time-group:last-child { margin-bottom: 0; }
+.time-group-label {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 700; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px;
+}
+.time-group-label i { color: var(--gold); }
+
+.time-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 0; }
 
 .time-btn {
     background: var(--bg-soft);

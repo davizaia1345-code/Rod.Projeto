@@ -78,11 +78,12 @@
                     localStorage.setItem('usuarioNome', data.usuario.nome);
                     localStorage.setItem('usuarioEmail', data.usuario.email);
 
-                    // Redireciona TODO MUNDO para o index.html
-                    
+                    // O dono vai direto para o painel dele; clientes vão para o site
+                    const destino = data.usuario.email === 'rdbarbercontato@gmail.com' ? 'admin.html' : 'index.html';
+
                     setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
+                        window.location.href = destino;
+                    }, 1200);
 
                 } else {
                     mensagem.style.color = '#ff4d4d'; // Vermelho

@@ -76,6 +76,7 @@
 
             <div id="area-formulario" style="display: none;">
                 <h3 class="form-title">Agende Seu Horário</h3>
+                <p class="form-subtitle">Escolha o serviço, a data e o horário em poucos cliques.</p>
                 <form id="form-agendamento">
                     <input type="hidden" id="servico-selecionado">
                     <input type="hidden" id="hora-selecionada">
@@ -86,15 +87,15 @@
                     <input type="date" id="data" required onchange="carregarHorariosDisponiveis()">
                     <label><i class="fas fa-cut"></i> Escolha o Serviço:</label>
                     <div class="services-grid">
-                        <div class="service-card" onclick="selecionarServico('Corte Masculino', this)"><div class="service-info"><span class="service-name">Corte Masculino</span><span class="service-time">⏱ 40 min</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
-                        <div class="service-card" onclick="selecionarServico('Barba Completa', this)"><div class="service-info"><span class="service-name">Barba Completa</span><span class="service-time">⏱ 20 min</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
-                        <div class="service-card" onclick="selecionarServico('Corte + Barba', this)"><div class="service-info"><span class="service-name">Corte + Barba</span><span class="service-time">⏱ 1h (60 min)</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
-                        <div class="service-card" onclick="selecionarServico('Progressiva + Corte', this)"><div class="service-info"><span class="service-name">Progressiva + Corte</span><span class="service-time">⏱ 2h</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
-                        <div class="service-card" onclick="selecionarServico('Luzes + Corte', this)"><div class="service-info"><span class="service-name">Luzes + Corte</span><span class="service-time">⏱ 1h 30m</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Corte Masculino', this)"><i class="fas fa-cut service-icon"></i><div class="service-info"><span class="service-name">Corte Masculino</span><span class="service-time">⏱ 40 min</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Barba Completa', this)"><i class="fas fa-user-tie service-icon"></i><div class="service-info"><span class="service-name">Barba Completa</span><span class="service-time">⏱ 20 min</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Corte + Barba', this)"><i class="fas fa-star service-icon"></i><div class="service-info"><span class="service-name">Corte + Barba</span><span class="service-time">⏱ 1h (60 min)</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Progressiva + Corte', this)"><i class="fas fa-wind service-icon"></i><div class="service-info"><span class="service-name">Progressiva + Corte</span><span class="service-time">⏱ 2h</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
+                        <div class="service-card" onclick="selecionarServico('Luzes + Corte', this)"><i class="fas fa-bolt service-icon"></i><div class="service-info"><span class="service-name">Luzes + Corte</span><span class="service-time">⏱ 1h 30m</span></div><i class="fas fa-check-circle" style="display: none;"></i></div>
                     </div>
                     <label><i class="fas fa-clock"></i> Horários Disponíveis:</label>
                     <p id="aviso-horario" style="font-size: 12px; color: #888; margin-bottom: 5px;">Selecione uma data para ver os horários.</p>
-                    <div class="time-grid" id="container-horarios"></div>
+                    <div id="container-horarios"></div>
                     <button type="submit" style="margin-top: 15px;">Confirmar Agendamento</button>
                 </form>
                 <div id="mensagem" style="text-align: center; margin-top: 10px; font-weight: bold;"></div>
@@ -195,7 +196,9 @@
             container.innerHTML = '';
             aviso.style.display = 'none';
             const inicioManha = 9 * 60; const fimManha = 11 * 60 + 30; const inicioTarde = 13 * 60; const fimTarde = 21 * 60 + 30; const intervalo = 35;
-            function criarBotoes(inicio, fim) {
+            let totalHorarios = 0;
+            function criarGrupo(titulo, icone, inicio, fim) {
+                const grid = document.createElement('div'); grid.className = 'time-grid';
                 for (let tempo = inicio; tempo <= fim; tempo += intervalo) {
                     const horas = Math.floor(tempo / 60); const minutos = tempo % 60;
                     const horarioFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
@@ -206,11 +209,17 @@
                         btn.className = 'time-btn';
                         btn.onclick = function() { selecionarHora(horarioFormatado, this) };
                     }
-                    container.appendChild(btn);
+                    grid.appendChild(btn);
+                    totalHorarios++;
                 }
+                const grupo = document.createElement('div'); grupo.className = 'time-group';
+                grupo.innerHTML = `<span class="time-group-label"><i class="fas ${icone}"></i> ${titulo}</span>`;
+                grupo.appendChild(grid);
+                container.appendChild(grupo);
             }
-            criarBotoes(inicioManha, fimManha); criarBotoes(inicioTarde, fimTarde);
-            if (container.children.length === 0) { aviso.innerText = "🚫 Agenda lotada!"; aviso.style.display = 'block'; aviso.style.color = '#e62e2e'; }
+            criarGrupo('Manhã', 'fa-sun', inicioManha, fimManha);
+            criarGrupo('Tarde', 'fa-cloud-sun', inicioTarde, fimTarde);
+            if (totalHorarios === 0) { aviso.innerText = "🚫 Agenda lotada!"; aviso.style.display = 'block'; aviso.style.color = '#e62e2e'; }
         } catch (error) { aviso.innerText = "Erro ao buscar agenda."; aviso.style.color = 'red'; }
     }
 

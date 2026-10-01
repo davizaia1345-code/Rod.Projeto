@@ -4,112 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meus Cortes - RodBarber</title>
-    
-    <link rel="stylesheet" href="rod.css">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="rod.css">
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
-    
-    <style>
-        body {
-            background-color: #050505; 
-            color: #fff;
-            padding: 20px;
-            text-align: center;
-            min-height: 100vh;
-            font-family: 'Poppins', sans-serif;
-        }
-        .dashboard-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #e62e2e;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-        }
-        .page-title {
-            color: #fff;
-            font-size: 1.8rem;
-            text-transform: uppercase;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .page-title i { color: #e62e2e; }
-
-        .btn-voltar {
-            background: transparent;
-            border: 1px solid #666;
-            color: #ccc;
-            padding: 8px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .btn-voltar:hover { border-color: #e62e2e; color: #e62e2e; }
-
-        .agendamento-card {
-            background: #121212;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
-        }
-        .agendamento-card:hover { border-color: #e62e2e; transform: translateY(-3px); }
-        .agendamento-card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: #e62e2e; }
-
-        .card-info { text-align: left; flex: 1; min-width: 250px; }
-        .card-date { color: #e62e2e; font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
-        .card-service { color: #fff; font-size: 1.3rem; font-weight: 700; display: block; margin-bottom: 5px; }
-        
-        .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; justify-content: flex-end; flex: 1; flex-wrap: wrap; }
-        
-        .status-badge { padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .status-pendente { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid #ffc107; }
-        .status-pago { background: rgba(37, 211, 102, 0.1); color: #25d366; border: 1px solid #25d366; }
-        
-        /* BOTÕES DE PAGAMENTO */
-        .btn-pagar { background: #25d366; color: #fff; border: none; padding: 10px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.3s; font-size: 0.85rem; text-decoration: none; }
-        .btn-pagar:hover { background: #1ebc57; transform: scale(1.05); }
-
-        .btn-card { background: #009ee3; color: #fff; padding: 10px 16px; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.3s; }
-        .btn-card:hover { background: #007eb5; transform: scale(1.05); }
-
-        .btn-cancelar { background: #222; color: #888; border: 1px solid #444; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        .btn-cancelar:hover { border-color: #e62e2e; color: #e62e2e; background: rgba(230, 46, 46, 0.1); }
-        
-        .loading-state { padding: 80px; color: #666; font-style: italic; }
-        
-        /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 15px; border: 1px solid #333; max-width: 400px; width: 90%; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        .pix-img { width: 220px; border: 4px solid #fff; margin: 20px auto; display: block; border-radius: 10px; }
-        .pix-textarea { width: 100%; background: #000; color: #25d366; padding: 15px; font-family: monospace; font-size: 0.85rem; border-radius: 5px; resize: none; margin-bottom: 15px; border: 1px solid #333; }
-    </style>
 </head>
-<body>
+<body class="dashboard-page">
 
 <div class="dashboard-container">
     <div class="page-header">
@@ -285,7 +190,7 @@
         }
     }
     
-    window.onload = carregarAgendamentos;
+    document.addEventListener('DOMContentLoaded', carregarAgendamentos);
 </script>
 </body>
 </html>

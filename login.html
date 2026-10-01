@@ -4,144 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | RodBarber</title>
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="rod.css">
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        
-        body {
-            background-color: #050505;
-            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('fundo-hero.jpg');
-            background-size: cover;
-            background-position: center;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-        }
-
-        .login-container {
-            background: #121212;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 15px;
-            border: 1px solid #333;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-container::before {
-            content: ''; position: absolute;
-            top: 0; left: 0; width: 100%; height: 4px;
-            background: #e62e2e;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            display: block;
-            text-transform: uppercase;
-            color: #fff;
-            text-decoration: none;
-        }
-
-        .logo span { color: #e62e2e; }
-
-        h2 { margin-bottom: 20px; font-size: 1.2rem; color: #ccc; font-weight: 400; }
-
-        .input-group { margin-bottom: 15px; text-align: left; }
-        
-        label { 
-            display: block; 
-            margin-bottom: 5px; 
-            font-size: 0.85rem; 
-            color: #888; 
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            border-color: #e62e2e;
-            background: #222;
-        }
-
-        .forgot-link {
-            display: block;
-            text-align: right;
-            font-size: 0.8rem;
-            color: #888;
-            text-decoration: none;
-            margin-bottom: 15px;
-            margin-top: -5px;
-            transition: 0.3s;
-        }
-
-        .forgot-link:hover { color: #e62e2e; text-decoration: underline; }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #e62e2e;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #ff4d4d;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(230, 46, 46, 0.3);
-        }
-
-        .footer-links {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #888;
-        }
-
-        .footer-links a {
-            color: #e62e2e;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .footer-links a:hover { text-decoration: underline; }
-
-        #mensagem { margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
-    </style>
 </head>
-<body>
+<body class="auth-page">
 
     <div class="login-container">
         <a href="index.html" class="logo"><span>/</span> RodBarber</a>
-        
+
         <h2>Acesse sua conta</h2>
+        <p class="auth-subtitle">Entre para agendar seu próximo horário.</p>
 
         <form id="form-login">
             <div class="input-group">
@@ -156,15 +33,14 @@
 
             <a href="esqueci-senha.html" class="forgot-link">Esqueci a senha</a>
 
-            <button type="submit">Entrar</button>
+            <button type="submit"><i class="fas fa-right-to-bracket"></i> Entrar</button>
         </form>
 
         <p id="mensagem"></p>
 
         <div class="footer-links">
             <p>Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
-            <br>
-            <a href="index.html" style="color: #666; font-size: 0.8rem;">← Voltar ao site</a>
+            <a href="index.html" class="back-link">← Voltar ao site</a>
         </div>
     </div>
 

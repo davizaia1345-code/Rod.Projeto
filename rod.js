@@ -1,5 +1,5 @@
 
-const API_URL = "https://rodbarber-api.onrender.com/agendar";
+const API_URL = "https://rodbarber-api-0jna.onrender.com/agendar";
 
 const form = document.getElementById("form-agendamento");
 const mensagem = document.getElementById("mensagem");

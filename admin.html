@@ -124,22 +124,22 @@
             const isPago = ag.statusPagamento === 'approved';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>
+                <td data-label="Data / Hora">
                     <span class="info-principal info-destaque">${formatarData(ag.data)}</span>
                     <span class="info-secundaria"><i class="far fa-clock"></i> ${ag.hora}</span>
                 </td>
-                <td>
+                <td data-label="Cliente">
                     <span class="info-principal">${ag.nome}</span>
                     <span class="info-secundaria">${ag.email}</span>
                 </td>
-                <td>${ag.servico}</td>
-                <td style="font-weight:bold; color: #2ecc71;">R$ ${ag.valor},00</td>
-                <td>
+                <td data-label="Serviço">${ag.servico}</td>
+                <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">R$ ${ag.valor},00</td>
+                <td data-label="Status">
                     <span class="badge ${isPago ? 'bg-pago' : 'bg-pendente'}">
                         ${isPago ? '<i class="fas fa-check"></i> PAGO' : '<i class="fas fa-clock"></i> PENDENTE'}
                     </span>
                 </td>
-                <td style="text-align: center;">
+                <td data-label="Ação" style="text-align: center;">
                     <button class="btn-lixeira" onclick="deletarAgendamento('${ag._id}')" title="Excluir">
                         <i class="fas fa-trash-alt"></i>
                     </button>

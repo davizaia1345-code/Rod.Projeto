@@ -244,6 +244,40 @@ h1, h2, h3, h4, .logo, .logo-admin {
     pointer-events: none;
 }
 
+.hero-deco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+
+.deco-dot {
+    position: absolute; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--gold-light); opacity: 0; animation: decoFloat 9s ease-in-out infinite;
+}
+.deco-dot.d1 { top: 22%; left: 58%; animation-delay: 0s; }
+.deco-dot.d2 { top: 68%; left: 50%; animation-delay: -3s; background: var(--red-light); }
+.deco-dot.d3 { top: 42%; left: 68%; animation-delay: -6s; }
+
+.deco-line {
+    position: absolute; width: 1px; height: 70px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    opacity: 0; animation: decoDrift 13s ease-in-out infinite;
+}
+.deco-line.l1 { top: 10%; left: 64%; animation-delay: -2s; }
+.deco-line.l2 { top: 55%; left: 60%; animation-delay: -8s; }
+
+@keyframes decoFloat {
+    0%, 100% { transform: translateY(0); opacity: 0; }
+    15%, 85% { opacity: 0.55; }
+    50% { transform: translateY(-26px); opacity: 0.9; }
+}
+@keyframes decoDrift {
+    0%, 100% { transform: translateY(0); opacity: 0; }
+    20%, 80% { opacity: 0.35; }
+    50% { transform: translateY(18px); opacity: 0.5; }
+}
+
+@media (max-width: 992px) { .hero-deco { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .deco-dot, .deco-line { animation: none; opacity: 0.3; }
+}
+
 .hero-wrapper {
     display: flex;
     justify-content: space-between;

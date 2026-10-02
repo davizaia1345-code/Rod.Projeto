@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const helmet = require('helmet');
@@ -12,78 +11,54 @@ const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 const app = express();
 
 const PORT = process.env.PORT || 3001;
-const FRONTEND_URL = (process.env.FRONTEND_URL || "http://127.0.0.1:5500").replace(/\/$/, '');
-
-const allowedOrigins = [
-    FRONTEND_URL,
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://127.0.0.1:3000',
-];
-
-app.set('trust proxy', 1);
-app.use(helmet());
-
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    optionsSuccessStatus: 200
-}));
-
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Muitas requisições criadas a partir deste IP, tente novamente mais tarde."
-});
-app.use(limiter);
-
-app.use(express.json());
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://127.0.0.1:5500').replace(/\/$/, '');
 
 if (!process.env.MP_ACCESS_TOKEN || !process.env.MONGO_URI) {
-    console.error("Erro: Variáveis de ambiente não configuradas.");
+    console.error('Erro: Variáveis de ambiente não configuradas.');
     process.exit(1);
 }
 
-const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
-const payment = new Payment(client);
-const preference = new Preference(client);
+const OWNER_EMAIL = (process.env.OWNER_EMAIL || process.env.EMAIL_USER || '').trim().toLowerCase();
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Banco de Dados Conectado!'))
-  .catch(err => console.error('❌ Erro no Banco:', err));
+// Defina JWT_SECRET no Render para um segredo próprio; sem ele, deriva-se um das outras variáveis secretas.
+if (!process.env.JWT_SECRET) console.warn('⚠️  JWT_SECRET não definido: usando segredo derivado das variáveis de ambiente.');
+const JWT_SECRET = process.env.JWT_SECRET ||
+    crypto.createHash('sha256').update(`rodbarber|${process.env.MONGO_URI}|${process.env.MP_ACCESS_TOKEN}`).digest('hex');
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com', port: 587, secure: false,
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000
+const COLLATION = { locale: 'en', strength: 2 };
+const BCRYPT_CUSTO = 12;
+const DUMMY_HASH = bcrypt.hashSync('rodbarber-dummy-password', BCRYPT_CUSTO);
+
+const PRECOS = {
+    'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60,
+    'Progressiva + Corte': 120, 'Luzes + Corte': 100, 'Sobrancelha': 10
+};
+
+const HORARIOS = new Set();
+[[9 * 60, 11 * 60 + 30], [13 * 60, 21 * 60 + 30]].forEach(([ini, fim]) => {
+    for (let t = ini; t <= fim; t += 35) {
+        HORARIOS.add(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
+    }
 });
 
-const OWNER_EMAIL = process.env.OWNER_EMAIL || process.env.EMAIL_USER;
+// ---------------------------------------------------------------------------
+// Utilidades
+// ---------------------------------------------------------------------------
 
-// Render (plano grátis) bloqueia SMTP; com BREVO_API_KEY o envio vai por HTTPS.
-async function enviarEmail({ to, subject, html }) {
-    if (process.env.BREVO_API_KEY) {
-        const r = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: { 'api-key': process.env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
-            body: JSON.stringify({ sender: { name: 'RodBarber', email: process.env.EMAIL_USER }, to: [{ email: to }], subject, htmlContent: html })
-        });
-        if (!r.ok) throw new Error(`Brevo ${r.status}: ${await r.text()}`);
-        console.log(`📧 [brevo] e-mail enviado para ${to} (${subject})`);
-        return;
-    }
-    const info = await transporter.sendMail({ from: `RodBarber <${process.env.EMAIL_USER}>`, to, subject, html });
-    console.log(`📧 [smtp] e-mail enviado para ${to} (${subject}): ${info.response}`);
+const str = (v, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+const normEmail = v => str(v, 254).toLowerCase();
+const emailValido = e => e.length <= 254 && /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/.test(e);
+const senhaValida = s => typeof s === 'string' && s.length >= 8 && Buffer.byteLength(s) <= 72;
+const sha256 = v => crypto.createHash('sha256').update(v).digest('hex');
+const erro = (res, status, msg) => res.status(status).json({ erro: msg, mensagem: msg });
+
+function mascarar(email) {
+    const [u = '', d = ''] = String(email).split('@');
+    return `${u.slice(0, 2)}***@${d}`;
 }
 
-function notificar(opcoes) {
-    enviarEmail(opcoes).catch(err => console.error(`❌ Falha ao enviar e-mail para ${opcoes.to}:`, err.code || '', err.message));
+function logSeg(evento, req, extra = {}) {
+    console.warn(JSON.stringify({ tipo: 'seguranca', evento, ip: req && req.ip, rota: req && `${req.method} ${req.path}`, ...extra }));
 }
 
 function escapeHtml(valor) {
@@ -96,29 +71,40 @@ function formatarData(iso) {
     return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso;
 }
 
-const PRECOS = {
-    'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60,
-    'Progressiva + Corte': 120, 'Luzes + Corte': 100, 'Sobrancelha': 10
-};
+function agoraSP() {
+    const p = {};
+    new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date()).forEach(x => { p[x.type] = x.value; });
+    return { data: `${p.year}-${p.month}-${p.day}`, minutos: (parseInt(p.hour, 10) % 24) * 60 + parseInt(p.minute, 10) };
+}
 
-const Agendamento = mongoose.model('Agendamento', {
-  nome: String, 
-  email: String, 
-  data: String, 
-  hora: String,
-  servico: String, 
-  valor: Number, 
-  pagamentoId: String, 
-  statusPagamento: String,
-  pixCopiaCola: String,
-  qrCodeBase64: String,
-  urlPagamentoCartao: String
-});
+function dataReal(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+    const d = new Date(`${iso}T00:00:00Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === iso;
+}
 
-const Usuario = mongoose.model('Usuario', {
-  nome: String, email: { type: String, unique: true }, senha: String,
-  resetPasswordToken: String, resetPasswordExpires: Date
-});
+// ---------------------------------------------------------------------------
+// E-mail (HTTPS via Brevo; o Render grátis bloqueia SMTP)
+// ---------------------------------------------------------------------------
+
+async function enviarEmail({ to, subject, html }) {
+    if (!process.env.BREVO_API_KEY) throw new Error('BREVO_API_KEY não configurada');
+    const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': process.env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ sender: { name: 'RodBarber', email: process.env.EMAIL_USER }, to: [{ email: to }], subject, htmlContent: html }),
+        signal: AbortSignal.timeout(10000)
+    });
+    if (!r.ok) throw new Error(`Brevo ${r.status}: ${await r.text()}`);
+    console.log(`📧 [brevo] e-mail enviado para ${mascarar(to)} (${subject})`);
+}
+
+function notificar(opcoes) {
+    enviarEmail(opcoes).catch(err => console.error(`❌ Falha ao enviar e-mail para ${mascarar(opcoes.to)}:`, err.message));
+}
 
 function linhaEmail(rotulo, valor, corValor = '#f4efe4') {
     // o Gmail transforma e-mails em links azuis; um <a> com estilo próprio mantém a cor da marca
@@ -141,130 +127,299 @@ function gerarEmailBonito(titulo, subtitulo, detalhes, corDestaque = '#c7a04a', 
 </div></div>`;
 }
 
-app.post('/cadastro', async (req, res) => {
-  try {
-    const { nome, email, senha } = req.body;
-    const senhaCripto = await bcrypt.hash(senha, 10);
-    const novoUsuario = new Usuario({ nome, email, senha: senhaCripto });
-    await novoUsuario.save();
-    res.json({ mensagem: 'Usuário cadastrado!' });
-  } catch (error) { res.status(500).json({ erro: 'E-mail já cadastrado.' }); }
+// ---------------------------------------------------------------------------
+// Configuração do Express (A02: headers, CORS restrito, limites)
+// ---------------------------------------------------------------------------
+
+app.set('trust proxy', 1);
+app.use(helmet());
+
+const allowedOrigins = [FRONTEND_URL];
+if (process.env.ALLOW_DEV_ORIGINS === 'true') {
+    allowedOrigins.push('http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', 'http://127.0.0.1:3000', 'http://localhost:8935');
+}
+
+app.use(cors({
+    origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)),
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200
+}));
+
+const limitadorGeral = rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false,
+    skip: req => req.path.startsWith('/status-pagamento'),
+    handler: (req, res) => { logSeg('rate_limit_geral', req); erro(res, 429, 'Muitas requisições. Tente novamente em alguns minutos.'); }
+});
+const limitadorAuth = rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false, skipSuccessfulRequests: true,
+    handler: (req, res) => { logSeg('rate_limit_auth', req); erro(res, 429, 'Muitas tentativas. Tente novamente em 15 minutos.'); }
+});
+const limitadorPagamento = rateLimit({
+    windowMs: 60 * 1000, limit: 60, standardHeaders: 'draft-7', legacyHeaders: false,
+    handler: (req, res) => erro(res, 429, 'Muitas consultas. Aguarde um instante.')
+});
+app.use(limitadorGeral);
+app.use(express.json({ limit: '10kb' }));
+
+// ---------------------------------------------------------------------------
+// Banco de dados
+// ---------------------------------------------------------------------------
+
+const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+const payment = new Payment(client);
+const preference = new Preference(client);
+
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ Banco de Dados Conectado!'))
+    .catch(err => console.error('❌ Erro no Banco:', err));
+
+const agendamentoSchema = new mongoose.Schema({
+    nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
+    pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String
+});
+agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
+const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
+Agendamento.init().catch(err => console.error('⚠️  Índice único de horários não criado:', err.message));
+
+const Usuario = mongoose.model('Usuario', {
+    nome: String, email: { type: String, unique: true }, senha: String,
+    resetPasswordToken: String, resetPasswordExpires: Date
 });
 
-app.post('/login', async (req, res) => {
-  try {
-    const { email, senha } = req.body;
-    const usuario = await Usuario.findOne({ email });
-    if (!usuario) return res.status(400).json({ erro: 'E-mail não encontrado' });
-    const senhaValida = await bcrypt.compare(senha, usuario.senha);
-    if (!senhaValida) return res.status(400).json({ erro: 'Senha incorreta' });
-    res.json({ mensagem: 'Login OK', usuario: { nome: usuario.nome, email: usuario.email } });
-  } catch (error) { res.status(500).json({ erro: 'Erro no login' }); }
-});
+// ---------------------------------------------------------------------------
+// Autenticação por token assinado (A01/A07)
+// ---------------------------------------------------------------------------
 
-app.post('/esqueci-senha', async (req, res) => {
-    const { email } = req.body;
+function assinarToken(payload) {
+    const corpo = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const assinatura = crypto.createHmac('sha256', JWT_SECRET).update(corpo).digest('base64url');
+    return `${corpo}.${assinatura}`;
+}
+
+function lerToken(token) {
+    if (typeof token !== 'string') return null;
+    const [corpo, assinatura, extra] = token.split('.');
+    if (!corpo || !assinatura || extra !== undefined) return null;
+    const esperado = crypto.createHmac('sha256', JWT_SECRET).update(corpo).digest();
+    const recebido = Buffer.from(assinatura, 'base64url');
+    if (recebido.length !== esperado.length || !crypto.timingSafeEqual(recebido, esperado)) return null;
     try {
-        const usuario = await Usuario.findOne({ email });
-        if (!usuario) return res.status(400).json({ erro: 'E-mail não encontrado.' });
-        const token = crypto.randomBytes(20).toString('hex');
-        const agora = new Date(); agora.setHours(agora.getHours() + 1);
-        usuario.resetPasswordToken = token; usuario.resetPasswordExpires = agora;
-        await usuario.save();
-        const linkReset = `${FRONTEND_URL}/resetar-senha?token=${token}`;
-        notificar({
-            to: email, subject: 'Recuperar senha - RodBarber',
-            html: gerarEmailBonito('Recuperar senha', 'Recebemos um pedido para redefinir sua senha. O link vale por 1 hora.',
-                linhaEmail('Conta', escapeHtml(email)), '#c7a04a', { texto: 'REDEFINIR SENHA', link: linkReset })
+        const p = JSON.parse(Buffer.from(corpo, 'base64url').toString());
+        return p && p.exp > Date.now() / 1000 ? p : null;
+    } catch { return null; }
+}
+
+function exigirLogin(req, res, next) {
+    const cab = req.headers.authorization || '';
+    const p = lerToken(cab.startsWith('Bearer ') ? cab.slice(7) : '');
+    if (!p) { logSeg('sem_token_valido', req); return erro(res, 401, 'Sessão expirada. Faça login novamente.'); }
+    req.usuario = { email: p.sub, nome: p.nome, dono: p.role === 'owner' };
+    next();
+}
+
+function exigirDono(req, res, next) {
+    if (!req.usuario.dono) { logSeg('acesso_negado_dono', req, { email: mascarar(req.usuario.email) }); return erro(res, 403, 'Acesso restrito ao proprietário.'); }
+    next();
+}
+
+const donoDoAgendamento = (req, ag) => req.usuario.dono || String(ag.email).toLowerCase() === req.usuario.email;
+
+// bloqueio por tentativas de login (por IP + e-mail, para não permitir travar a conta de terceiros)
+const falhasLogin = new Map();
+const JANELA_LOGIN = 15 * 60 * 1000, MAX_FALHAS = 5;
+const loginBloqueado = chave => {
+    const f = falhasLogin.get(chave);
+    if (!f) return false;
+    if (Date.now() - f.desde > JANELA_LOGIN) { falhasLogin.delete(chave); return false; }
+    return f.n >= MAX_FALHAS;
+};
+const registrarFalha = chave => {
+    const f = falhasLogin.get(chave);
+    if (!f || Date.now() - f.desde > JANELA_LOGIN) { falhasLogin.set(chave, { n: 1, desde: Date.now() }); return 1; }
+    return ++f.n;
+};
+setInterval(() => {
+    for (const [k, f] of falhasLogin) if (Date.now() - f.desde > JANELA_LOGIN) falhasLogin.delete(k);
+}, 10 * 60 * 1000).unref();
+
+// ---------------------------------------------------------------------------
+// Rotas
+// ---------------------------------------------------------------------------
+
+app.get('/health', (req, res) => res.json({ ok: true }));
+
+app.post('/cadastro', limitadorAuth, async (req, res) => {
+    try {
+        const nome = str(req.body && req.body.nome, 80).replace(/[\u0000-\u001f<>]/g, '');
+        const email = normEmail(req.body && req.body.email);
+        const senha = req.body && req.body.senha;
+        if (nome.length < 2) return erro(res, 400, 'Informe seu nome.');
+        if (!emailValido(email)) return erro(res, 400, 'Informe um e-mail válido.');
+        if (!senhaValida(senha)) return erro(res, 400, 'A senha precisa ter de 8 a 72 caracteres.');
+
+        if (await Usuario.findOne({ email }).collation(COLLATION)) return erro(res, 409, 'E-mail já cadastrado.');
+        await new Usuario({ nome, email, senha: await bcrypt.hash(senha, BCRYPT_CUSTO) }).save();
+        res.json({ mensagem: 'Usuário cadastrado!' });
+    } catch (err) {
+        if (err && err.code === 11000) return erro(res, 409, 'E-mail já cadastrado.');
+        console.error('ERRO NO CADASTRO:', err.message);
+        erro(res, 500, 'Erro ao cadastrar. Tente novamente.');
+    }
+});
+
+app.post('/login', limitadorAuth, async (req, res) => {
+    try {
+        const email = normEmail(req.body && req.body.email);
+        const senha = req.body && req.body.senha;
+        if (!email || typeof senha !== 'string' || !senha || senha.length > 72) return erro(res, 400, 'Informe e-mail e senha.');
+
+        const chave = `${req.ip}|${email}`;
+        if (loginBloqueado(chave)) { logSeg('login_bloqueado', req, { email: mascarar(email) }); return erro(res, 429, 'Muitas tentativas. Tente novamente em 15 minutos.'); }
+
+        const usuario = await Usuario.findOne({ email }).collation(COLLATION);
+        const senhaOk = await bcrypt.compare(senha, usuario ? usuario.senha : DUMMY_HASH);
+        if (!usuario || !senhaOk) {
+            const n = registrarFalha(chave);
+            logSeg('login_falhou', req, { email: mascarar(email), tentativas: n });
+            if (n === MAX_FALHAS && email === OWNER_EMAIL) {
+                notificar({
+                    to: OWNER_EMAIL, subject: 'Alerta de segurança - RodBarber',
+                    html: gerarEmailBonito('Tentativas de acesso suspeitas', 'Houve várias tentativas de login com senha errada na sua conta. Se não foi você, altere sua senha.',
+                        linhaEmail('Tentativas', String(n)) + linhaEmail('Origem (IP)', escapeHtml(req.ip)), '#cf4a40', { texto: 'ALTERAR SENHA', link: `${FRONTEND_URL}/esqueci-senha` })
+                });
+            }
+            return erro(res, 401, 'E-mail ou senha incorretos.');
+        }
+        falhasLogin.delete(chave);
+
+        const emailUsuario = usuario.email.toLowerCase();
+        const dono = emailUsuario === OWNER_EMAIL;
+        const token = assinarToken({
+            sub: emailUsuario, nome: usuario.nome, role: dono ? 'owner' : 'client',
+            exp: Math.floor(Date.now() / 1000) + (dono ? 8 * 3600 : 7 * 24 * 3600)
         });
-        res.json({ mensagem: 'E-mail enviado!' });
-    } catch (err) { res.status(500).json({ erro: 'Erro.' }); }
+        res.json({ mensagem: 'Login OK', token, usuario: { nome: usuario.nome, email: usuario.email, dono } });
+    } catch (err) {
+        console.error('ERRO NO LOGIN:', err.message);
+        erro(res, 500, 'Erro no login. Tente novamente.');
+    }
 });
 
-app.post('/resetar-senha', async (req, res) => {
-    const { token, novaSenha } = req.body;
+app.post('/esqueci-senha', limitadorAuth, async (req, res) => {
     try {
-        const usuario = await Usuario.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } });
-        if (!usuario) return res.status(400).json({ erro: 'Token inválido.' });
-        usuario.senha = await bcrypt.hash(novaSenha, 10);
-        usuario.resetPasswordToken = undefined; usuario.resetPasswordExpires = undefined;
+        const email = normEmail(req.body && req.body.email);
+        if (!emailValido(email)) return erro(res, 400, 'Informe um e-mail válido.');
+
+        const usuario = await Usuario.findOne({ email }).collation(COLLATION);
+        if (usuario) {
+            const token = crypto.randomBytes(32).toString('hex');
+            usuario.resetPasswordToken = sha256(token);
+            usuario.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+            await usuario.save();
+            notificar({
+                to: usuario.email, subject: 'Recuperar senha - RodBarber',
+                html: gerarEmailBonito('Recuperar senha', 'Recebemos um pedido para redefinir sua senha. O link vale por 1 hora.',
+                    linhaEmail('Conta', escapeHtml(usuario.email)), '#c7a04a', { texto: 'REDEFINIR SENHA', link: `${FRONTEND_URL}/resetar-senha?token=${token}` })
+            });
+        } else {
+            logSeg('reset_email_inexistente', req, { email: mascarar(email) });
+        }
+        // mesma resposta existindo ou não, para não revelar quais e-mails têm conta
+        res.json({ mensagem: 'Se este e-mail estiver cadastrado, enviamos o link de redefinição.' });
+    } catch (err) {
+        console.error('ERRO NO ESQUECI-SENHA:', err.message);
+        erro(res, 500, 'Erro ao processar. Tente novamente.');
+    }
+});
+
+app.post('/resetar-senha', limitadorAuth, async (req, res) => {
+    try {
+        const token = str(req.body && req.body.token, 128);
+        const novaSenha = req.body && req.body.novaSenha;
+        if (!token) return erro(res, 400, 'Link inválido ou expirado.');
+        if (!senhaValida(novaSenha)) return erro(res, 400, 'A senha precisa ter de 8 a 72 caracteres.');
+
+        const usuario = await Usuario.findOne({ resetPasswordToken: sha256(token), resetPasswordExpires: { $gt: new Date() } });
+        if (!usuario) { logSeg('reset_token_invalido', req); return erro(res, 400, 'Link inválido ou expirado.'); }
+
+        usuario.senha = await bcrypt.hash(novaSenha, BCRYPT_CUSTO);
+        usuario.resetPasswordToken = undefined;
+        usuario.resetPasswordExpires = undefined;
         await usuario.save();
+        logSeg('senha_redefinida', req, { email: mascarar(usuario.email) });
         res.json({ mensagem: 'Senha alterada!' });
-    } catch (err) { res.status(500).json({ erro: 'Erro.' }); }
+    } catch (err) {
+        console.error('ERRO NO RESETAR-SENHA:', err.message);
+        erro(res, 500, 'Erro ao alterar a senha. Tente novamente.');
+    }
 });
 
 app.get('/agendamentos/ocupados', async (req, res) => {
-    const { data } = req.query;
-    if (!data) return res.status(400).json({ mensagem: "Data obrigatória" });
     try {
-        const agendamentos = await Agendamento.find({ data: data });
-        res.json(agendamentos.map(ag => ag.hora));
-    } catch (error) { res.status(500).json({ mensagem: "Erro ao buscar." }); }
+        const data = req.query.data;
+        if (typeof data !== 'string' || !dataReal(data)) return erro(res, 400, 'Data inválida.');
+        const lista = await Agendamento.find({ data }).select('hora');
+        res.json(lista.map(ag => ag.hora));
+    } catch (err) {
+        console.error('ERRO AO BUSCAR HORÁRIOS:', err.message);
+        erro(res, 500, 'Erro ao buscar a agenda.');
+    }
 });
 
-app.post('/agendar', async (req, res) => {
+app.post('/agendar', exigirLogin, async (req, res) => {
     try {
-        const { nome, email, data, hora, servico } = req.body;
+        // nome e e-mail vêm do token: ninguém agenda em nome de outra pessoa nem usa o sistema para mandar e-mail a terceiros
+        const { nome, email } = req.usuario;
+        const servico = str(req.body && req.body.servico, 60);
+        const data = str(req.body && req.body.data, 10);
+        const hora = str(req.body && req.body.hora, 5);
 
-        if (!nome || !email || !data || !hora || !servico) {
-            return res.status(400).json({ mensagem: "Faltam dados." });
-        }
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !/^\d{2}:\d{2}$/.test(hora)) {
-            return res.status(400).json({ mensagem: "Data ou horário inválido." });
-        }
+        if (!servico || !data || !hora) return erro(res, 400, 'Faltam dados.');
+        if (!Object.prototype.hasOwnProperty.call(PRECOS, servico)) return erro(res, 400, 'Serviço inválido.');
+        if (!dataReal(data) || !HORARIOS.has(hora)) return erro(res, 400, 'Data ou horário inválido.');
+
+        const agora = agoraSP();
+        const limite = new Date(`${agora.data}T00:00:00Z`); limite.setUTCDate(limite.getUTCDate() + 90);
+        if (data < agora.data || data > limite.toISOString().slice(0, 10)) return erro(res, 400, 'Escolha uma data entre hoje e os próximos 90 dias.');
+        const [h, m] = hora.split(':').map(Number);
+        if (data === agora.data && h * 60 + m <= agora.minutos) return erro(res, 400, 'Esse horário já passou.');
+
+        const pendentes = await Agendamento.countDocuments({ email, statusPagamento: 'pendente', data: { $gte: agora.data } }).collation(COLLATION);
+        if (pendentes >= 3) return erro(res, 429, 'Você já tem 3 agendamentos aguardando pagamento. Pague ou cancele algum para marcar outro.');
+
+        if (await Agendamento.findOne({ data, hora })) return erro(res, 400, 'Horário já reservado!');
+
         const preco = PRECOS[servico];
-        if (!preco) return res.status(400).json({ mensagem: "Serviço inválido." });
-
-        const conflito = await Agendamento.findOne({ data, hora });
-        if (conflito) return res.status(400).json({ mensagem: "Horário já reservado!" });
-
-        const paymentData = {
-            transaction_amount: parseFloat(preco),
-            description: `Corte ${servico} - ${data} ${hora}`,
-            payment_method_id: 'pix',
-            payer: { email: email, first_name: nome }
-        };
-        const pixResult = await payment.create({ body: paymentData });
+        const descricao = `Corte ${servico} - ${data} ${hora}`;
+        const pixResult = await payment.create({
+            body: { transaction_amount: preco, description: descricao, payment_method_id: 'pix', payer: { email, first_name: nome } }
+        });
         const codigoPix = pixResult.point_of_interaction.transaction_data.qr_code;
         const qrCodeBase64 = pixResult.point_of_interaction.transaction_data.qr_code_base64;
         const idPagamento = pixResult.id;
 
-        const preferenceData = {
+        const prefResult = await preference.create({
             body: {
-                items: [
-                    {
-                        title: `Corte ${servico} - ${data} ${hora}`,
-                        quantity: 1,
-                        unit_price: parseFloat(preco),
-                        currency_id: 'BRL'
-                    }
-                ],
-                payer: { email: email, name: nome },
-                back_urls: {
-                    success: `${FRONTEND_URL}/meus-agendamentos`,
-                    failure: `${FRONTEND_URL}/`,
-                    pending: `${FRONTEND_URL}/`
-                }
+                items: [{ title: descricao, quantity: 1, unit_price: preco, currency_id: 'BRL' }],
+                payer: { email, name: nome },
+                back_urls: { success: `${FRONTEND_URL}/meus-agendamentos`, failure: `${FRONTEND_URL}/`, pending: `${FRONTEND_URL}/` }
             }
-        };
-        
-        const prefResult = await preference.create(preferenceData);
-        const linkCartao = prefResult.init_point; 
-
-        const novoAgendamento = new Agendamento({ 
-            nome, email, data, hora, servico, valor: preco,
-            pagamentoId: idPagamento.toString(),
-            statusPagamento: 'pendente',
-            pixCopiaCola: codigoPix,
-            qrCodeBase64: qrCodeBase64,
-            urlPagamentoCartao: linkCartao 
         });
-        await novoAgendamento.save();
+        const linkCartao = prefResult.init_point;
 
-        res.status(201).json({ 
-            mensagem: "Criado!", pixCopiaCola: codigoPix, qrCodeBase64: qrCodeBase64, 
-            idPagamento: idPagamento, urlPagamentoCartao: linkCartao 
-        });
+        try {
+            await new Agendamento({
+                nome, email, data, hora, servico, valor: preco,
+                pagamentoId: idPagamento.toString(), statusPagamento: 'pendente',
+                pixCopiaCola: codigoPix, qrCodeBase64, urlPagamentoCartao: linkCartao
+            }).save();
+        } catch (err) {
+            if (err && err.code === 11000) return erro(res, 400, 'Horário já reservado!');
+            throw err;
+        }
+
+        res.status(201).json({ mensagem: 'Criado!', pixCopiaCola: codigoPix, qrCodeBase64, idPagamento, urlPagamentoCartao: linkCartao });
 
         const nomeSeguro = escapeHtml(nome);
         const linhasTabela =
@@ -273,56 +428,102 @@ app.post('/agendar', async (req, res) => {
             linhaEmail('Data', formatarData(data)) +
             linhaEmail('Horário', escapeHtml(hora)) +
             linhaEmail('Valor', `R$ ${preco},00`, '#2fae6b');
-        const htmlBarbeiro = gerarEmailBonito('Novo agendamento', `${nomeSeguro} reservou um horário.`,
-            linhasTabela + linhaEmail('Contato', escapeHtml(email)) + linhaEmail('Pagamento', 'Aguardando', '#e8ca8c'),
-            '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` });
-        const htmlCliente = gerarEmailBonito('Agendamento recebido', 'Recebemos o seu pedido. Finalize o pagamento para confirmar o horário.', linhasTabela);
-
-        notificar({ to: OWNER_EMAIL, subject: `Novo agendamento: ${nome} - ${formatarData(data)} ${hora}`, html: htmlBarbeiro });
-        notificar({ to: email, subject: 'Agendamento recebido - RodBarber', html: htmlCliente });
-
-    } catch (err) { 
-        console.error("ERRO NO AGENDAMENTO:", err);
-        if(!res.headersSent) res.status(500).json({ mensagem: "Erro no servidor ao criar pagamento." }); 
+        notificar({
+            to: OWNER_EMAIL, subject: `Novo agendamento: ${nome} - ${formatarData(data)} ${hora}`,
+            html: gerarEmailBonito('Novo agendamento', `${nomeSeguro} reservou um horário.`,
+                linhasTabela + linhaEmail('Contato', escapeHtml(email)) + linhaEmail('Pagamento', 'Aguardando', '#e8ca8c'),
+                '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
+        });
+        notificar({
+            to: email, subject: 'Agendamento recebido - RodBarber',
+            html: gerarEmailBonito('Agendamento recebido', 'Recebemos o seu pedido. Finalize o pagamento para confirmar o horário.', linhasTabela)
+        });
+    } catch (err) {
+        console.error('ERRO NO AGENDAMENTO:', err.message);
+        if (!res.headersSent) erro(res, 500, 'Erro no servidor ao criar pagamento.');
     }
 });
 
-app.get('/status-pagamento/:id', async (req, res) => {
+app.get('/status-pagamento/:id', limitadorPagamento, exigirLogin, async (req, res) => {
     try {
         const id = req.params.id;
-        const response = await payment.get({ id: id });
-        const status = response.status; 
-        if(status === 'approved') {
-            const agendamento = await Agendamento.findOne({ pagamentoId: id });
-            if (agendamento && agendamento.statusPagamento !== 'approved') {
-                await Agendamento.findOneAndUpdate({ pagamentoId: id }, { statusPagamento: 'approved' });
-                
-                const detalhes =
-                    linhaEmail('Serviço', escapeHtml(agendamento.servico)) +
-                    linhaEmail('Data', formatarData(agendamento.data)) +
-                    linhaEmail('Horário', escapeHtml(agendamento.hora)) +
-                    linhaEmail('Valor', `R$ ${agendamento.valor},00`, '#2fae6b');
-                notificar({ to: agendamento.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes, '#2fae6b') });
-                notificar({
-                    to: OWNER_EMAIL, subject: `Pagamento recebido: ${agendamento.nome}`,
-                    html: gerarEmailBonito('Pagamento recebido', `${escapeHtml(agendamento.nome)} pagou o agendamento.`, linhaEmail('Cliente', escapeHtml(agendamento.nome)) + detalhes, '#2fae6b', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
-                });
-            }
+        if (!/^\d{3,20}$/.test(id)) return erro(res, 400, 'Pagamento inválido.');
+
+        const agendamento = await Agendamento.findOne({ pagamentoId: id });
+        if (!agendamento) return erro(res, 404, 'Pagamento não encontrado.');
+        if (!donoDoAgendamento(req, agendamento)) { logSeg('acesso_negado_pagamento', req, { email: mascarar(req.usuario.email) }); return erro(res, 403, 'Acesso negado.'); }
+
+        const status = (await payment.get({ id })).status;
+        if (status === 'approved' && agendamento.statusPagamento !== 'approved') {
+            await Agendamento.findOneAndUpdate({ pagamentoId: id }, { statusPagamento: 'approved' });
+            const detalhes =
+                linhaEmail('Serviço', escapeHtml(agendamento.servico)) +
+                linhaEmail('Data', formatarData(agendamento.data)) +
+                linhaEmail('Horário', escapeHtml(agendamento.hora)) +
+                linhaEmail('Valor', `R$ ${agendamento.valor},00`, '#2fae6b');
+            notificar({ to: agendamento.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes, '#2fae6b') });
+            notificar({
+                to: OWNER_EMAIL, subject: `Pagamento recebido: ${agendamento.nome}`,
+                html: gerarEmailBonito('Pagamento recebido', `${escapeHtml(agendamento.nome)} pagou o agendamento.`, linhaEmail('Cliente', escapeHtml(agendamento.nome)) + detalhes, '#2fae6b', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
+            });
         }
-        res.json({ status: status });
-    } catch (error) { res.status(500).json({ status: 'error' }); }
+        res.json({ status });
+    } catch (err) {
+        console.error('ERRO NO STATUS DO PAGAMENTO:', err.message);
+        erro(res, 500, 'Erro ao consultar o pagamento.');
+    }
 });
 
-app.get('/agendamentos', async (req, res) => {
-  try { const lista = await Agendamento.find(); res.json(lista); } catch (e) { res.status(500).json({ erro: 'Erro' }); }
+app.get('/agendamentos', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        res.json(await Agendamento.find().select('-qrCodeBase64 -pixCopiaCola -urlPagamentoCartao'));
+    } catch (err) {
+        console.error('ERRO AO LISTAR AGENDAMENTOS:', err.message);
+        erro(res, 500, 'Erro ao listar os agendamentos.');
+    }
 });
 
-app.get('/meus-agendamentos', async (req, res) => {
-  try { const { email } = req.query; const lista = await Agendamento.find({ email }); res.json(lista); } catch (e) { res.status(500).json({ erro: 'Erro' }); }
+app.get('/meus-agendamentos', exigirLogin, async (req, res) => {
+    try {
+        res.json(await Agendamento.find({ email: req.usuario.email }).collation(COLLATION));
+    } catch (err) {
+        console.error('ERRO AO LISTAR MEUS AGENDAMENTOS:', err.message);
+        erro(res, 500, 'Erro ao listar seus agendamentos.');
+    }
 });
 
-app.delete('/agendamentos/:id', async (req, res) => {
-  try { await Agendamento.findByIdAndDelete(req.params.id); res.json({ mensagem: 'Ok' }); } catch (e) { res.status(500).json({ erro: 'Erro' }); }
+app.delete('/agendamentos/:id', exigirLogin, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const agendamento = await Agendamento.findById(req.params.id);
+        if (!agendamento) return erro(res, 404, 'Agendamento não encontrado.');
+        if (!donoDoAgendamento(req, agendamento)) { logSeg('exclusao_negada', req, { email: mascarar(req.usuario.email) }); return erro(res, 403, 'Acesso negado.'); }
+
+        await agendamento.deleteOne();
+        logSeg('agendamento_excluido', req, { por: mascarar(req.usuario.email), data: agendamento.data, hora: agendamento.hora });
+        res.json({ mensagem: 'Ok' });
+    } catch (err) {
+        console.error('ERRO AO EXCLUIR AGENDAMENTO:', err.message);
+        erro(res, 500, 'Erro ao excluir o agendamento.');
+    }
 });
+
+// ---------------------------------------------------------------------------
+// Erros (A10): sem vazar detalhes internos
+// ---------------------------------------------------------------------------
+
+app.use((req, res) => erro(res, 404, 'Rota não encontrada.'));
+
+app.use((err, req, res, next) => {
+    console.error('ERRO NÃO TRATADO:', err.type || '', err.message);
+    if (res.headersSent) return next(err);
+    const status = err.status || err.statusCode;
+    if (status === 413) return erro(res, 413, 'Requisição grande demais.');
+    if (status >= 400 && status < 500) return erro(res, status, 'Requisição inválida.');
+    erro(res, 500, 'Erro interno do servidor.');
+});
+
+process.on('unhandledRejection', motivo => console.error('unhandledRejection:', motivo));
+process.on('uncaughtException', err => console.error('uncaughtException:', err));
 
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));

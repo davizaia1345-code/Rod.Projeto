@@ -20,7 +20,7 @@
 <div class="dashboard-container">
     <div class="page-header">
         <div class="page-title"><i class="fas fa-calendar-check"></i> Meus Cortes</div>
-        <a href="index.html" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
+        <a href="/" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
     </div>
     <div id="lista-agendamentos">
         <div class="loading-state">
@@ -61,7 +61,7 @@
 
     async function carregarAgendamentos() {
         const email = localStorage.getItem('usuarioEmail');
-        if (!email) { window.location.href = 'login.html'; return; }
+        if (!email) { window.location.href = '/login'; return; }
         
         const container = document.getElementById('lista-agendamentos');
         

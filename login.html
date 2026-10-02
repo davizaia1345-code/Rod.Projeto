@@ -15,7 +15,7 @@
 <body class="auth-page">
 
     <div class="login-container">
-        <a href="index.html" class="logo"><span>/</span> RodBarber</a>
+        <a href="/" class="logo"><span>/</span> RodBarber</a>
 
         <h2>Acesse sua conta</h2>
         <p class="auth-subtitle">Entre para agendar seu próximo horário.</p>
@@ -31,7 +31,7 @@
                 <input type="password" id="senha" placeholder="********" autocomplete="current-password" required>
             </div>
 
-            <a href="esqueci-senha.html" class="forgot-link">Esqueci a senha</a>
+            <a href="/esqueci-senha" class="forgot-link">Esqueci a senha</a>
 
             <button type="submit"><i class="fas fa-right-to-bracket"></i> Entrar</button>
         </form>
@@ -39,8 +39,8 @@
         <p id="mensagem"></p>
 
         <div class="footer-links">
-            <p>Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
-            <a href="index.html" class="back-link">← Voltar ao site</a>
+            <p>Ainda não tem conta? <a href="/cadastro">Cadastre-se</a></p>
+            <a href="/" class="back-link">← Voltar ao site</a>
         </div>
     </div>
 
@@ -79,7 +79,7 @@
                     localStorage.setItem('usuarioEmail', data.usuario.email);
 
                     // O dono vai direto para o painel dele; clientes vão para o site
-                    const destino = data.usuario.email === 'rdbarbercontato@gmail.com' ? 'admin.html' : 'index.html';
+                    const destino = data.usuario.email === 'rdbarbercontato@gmail.com' ? '/admin' : '/';
 
                     setTimeout(() => {
                         window.location.href = destino;

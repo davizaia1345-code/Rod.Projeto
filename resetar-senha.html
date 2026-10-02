@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nova Senha | RodBarber</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
 
         <div class="input-group">
             <label>Nova senha</label>
-            <input type="password" id="novaSenha" placeholder="••••••••" autocomplete="new-password" minlength="6">
+            <input type="password" id="novaSenha" placeholder="••••••••" autocomplete="new-password" minlength="8" maxlength="72">
         </div>
         <button onclick="mudarSenha()"><i class="fas fa-key"></i> Salvar Senha</button>
 
@@ -45,7 +45,7 @@
                 msg.style.color = '#ff4d4d';
                 return;
             }
-            if(!novaSenha) return alert("Digite a nova senha");
+            if(novaSenha.length < 8) { msg.style.color = "#ff4d4d"; msg.innerText = "A senha precisa ter pelo menos 8 caracteres."; return; }
 
             btn.disabled = true; 
             btn.innerText = "Salvando...";

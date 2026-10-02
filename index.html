@@ -16,8 +16,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="rod.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js" integrity="sha384-rHxJuSO4eAGYnLjV2BLfndcudTiVBpNRJsOOLMtkX48TMZ5lefUhbpBJ6t8u/3nH" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 
     <style>
@@ -192,6 +192,7 @@
     <p class="copyright">© 2026 <strong>Barbearia do Rod</strong>.</p>
 </footer>
 
+<script src="auth.js"></script>
 <script>
     (function(){
         var MANHA_INICIO = 9 * 60, MANHA_FIM = 11 * 60 + 30;
@@ -292,9 +293,9 @@
             if(!servico || !hora || !data) { Swal.fire({ icon: 'warning', title: 'Faltam dados!', background: '#1e1e1e', color: '#fff', confirmButtonColor: '#e62e2e' }); return; }
             const botao = form.querySelector("button"); botao.disabled = true; botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirmando...'; 
             try {
-                const response = await fetch(`${API_URL}/agendar`, {
+                const response = await RodAuth.fetch(`${API_URL}/agendar`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, email, data, hora, servico })
+                    body: JSON.stringify({ data, hora, servico })
                 });
                 const result = await response.json();
                 if (response.ok) {
@@ -345,7 +346,7 @@
         if (intervaloVerificacao) clearInterval(intervaloVerificacao);
         intervaloVerificacao = setInterval(async () => {
             try {
-                const res = await fetch(`${API_URL}/status-pagamento/${id}`); const data = await res.json();
+                const res = await RodAuth.fetch(`${API_URL}/status-pagamento/${id}`); const data = await res.json();
                 if (data.status === 'approved') {
                     clearInterval(intervaloVerificacao);
                     Swal.fire({ icon: 'success', title: 'Pagamento Recebido!', background: '#25d366', color: '#fff' }).then(() => window.location.reload());
@@ -371,6 +372,9 @@
         const hoje = new Date().toISOString().split('T')[0];
         const inputData = document.getElementById('data');
         if(inputData) inputData.setAttribute('min', hoje);
+
+        // sem token válido guardado (ex.: sessão antiga), trata como deslogado
+        if (!RodAuth.token()) { localStorage.removeItem('usuarioNome'); localStorage.removeItem('usuarioEmail'); }
 
         const nomeUsuario = localStorage.getItem('usuarioNome');
         const emailUsuario = localStorage.getItem('usuarioEmail');
@@ -433,7 +437,7 @@
         }
     });
 
-    function fazerLogout() { localStorage.clear(); window.location.href = '/login'; }
+    function fazerLogout() { RodAuth.sair(); }
 </script>
 </body>
 </html>

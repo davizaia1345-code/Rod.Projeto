@@ -6,12 +6,12 @@
     <title>Painel do Dono | RodBarber</title>
     <meta name="robots" content="noindex, nofollow">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="rod.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js" integrity="sha384-rHxJuSO4eAGYnLjV2BLfndcudTiVBpNRJsOOLMtkX48TMZ5lefUhbpBJ6t8u/3nH" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body class="admin-page">
@@ -73,16 +73,15 @@
     </div>
 </div>
 
+<script src="auth.js"></script>
 <script>
     const API_URL = 'https://rodbarber-api-0jna.onrender.com';
     let todosAgendamentos = [];
 
     // --- VERIFICAÇÃO DE SEGURANÇA (COROA) ---
     function verificarPermissao() {
-        const email = localStorage.getItem('usuarioEmail');
-        
-        // Se NÃO for o email do Rod, chuta pra fora
-        if (email !== "rdbarbercontato@gmail.com") {
+        // só decide o que mostrar: o servidor recusa (403) qualquer pedido que não seja do dono
+        if (RodAuth.papel() !== 'owner') {
             document.body.innerHTML = `
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e; text-align:center;">
                     <i class="fas fa-ban" style="font-size: 5em; margin-bottom: 20px;"></i>
@@ -101,7 +100,9 @@
         if (!verificarPermissao()) return;
 
         try {
-            const res = await fetch(`${API_URL}/agendamentos`);
+            const res = await RodAuth.fetch(`${API_URL}/agendamentos`);
+            if (res.status === 403) { localStorage.removeItem("token"); return verificarPermissao(); }
+            if (!res.ok) throw new Error("falha");
             todosAgendamentos = await res.json();
             todosAgendamentos.reverse(); 
             
@@ -127,21 +128,21 @@
             tr.innerHTML = `
                 <td data-label="Data / Hora">
                     <span class="info-principal info-destaque">${formatarData(ag.data)}</span>
-                    <span class="info-secundaria"><i class="far fa-clock"></i> ${ag.hora}</span>
+                    <span class="info-secundaria"><i class="far fa-clock"></i> ${RodAuth.esc(ag.hora)}</span>
                 </td>
                 <td data-label="Cliente">
-                    <span class="info-principal">${ag.nome}</span>
-                    <span class="info-secundaria">${ag.email}</span>
+                    <span class="info-principal">${RodAuth.esc(ag.nome)}</span>
+                    <span class="info-secundaria">${RodAuth.esc(ag.email)}</span>
                 </td>
-                <td data-label="Serviço">${ag.servico}</td>
-                <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">R$ ${ag.valor},00</td>
+                <td data-label="Serviço">${RodAuth.esc(ag.servico)}</td>
+                <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">R$ ${Number(ag.valor) || 0},00</td>
                 <td data-label="Status">
                     <span class="badge ${isPago ? 'bg-pago' : 'bg-pendente'}">
                         ${isPago ? '<i class="fas fa-check"></i> PAGO' : '<i class="fas fa-clock"></i> PENDENTE'}
                     </span>
                 </td>
                 <td data-label="Ação" style="text-align: center;">
-                    <button class="btn-lixeira" onclick="deletarAgendamento('${ag._id}')" title="Excluir" aria-label="Excluir agendamento">
+                    <button class="btn-lixeira" onclick="deletarAgendamento('${RodAuth.esc(ag._id)}')" title="Excluir" aria-label="Excluir agendamento">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
@@ -152,7 +153,7 @@
 
     function calcularResumo(lista) {
         document.getElementById('total-geral').innerText = lista.length;
-        const hojeISO = new Date().toISOString().split('T')[0];
+        const hojeISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
         const qtdHoje = lista.filter(item => item.data === hojeISO).length;
         document.getElementById('total-hoje').innerText = qtdHoje;
         const totalGrana = lista.filter(item => item.statusPagamento === 'approved').reduce((acc, item) => acc + (item.valor || 0), 0);
@@ -181,7 +182,8 @@
 
         if (confirm.isConfirmed) {
             try {
-                await fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
+                const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('falha');
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#1e1e1e', color: '#fff' });
                 Toast.fire({ icon: 'success', title: 'Excluído!' });
                 carregarDados(); 

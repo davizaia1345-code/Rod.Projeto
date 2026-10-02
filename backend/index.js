@@ -121,6 +121,8 @@ const Usuario = mongoose.model('Usuario', {
 });
 
 function linhaEmail(rotulo, valor, corValor = '#f4efe4') {
+    // o Gmail transforma e-mails em links azuis; um <a> com estilo próprio mantém a cor da marca
+    if (String(valor).includes('@')) valor = `<a href="mailto:${valor}" style="color:${corValor};text-decoration:none;">${valor}</a>`;
     return `<tr><td style="padding:10px 0;color:#9c9484;font-size:13px;border-bottom:1px solid #2b2822;">${rotulo}</td><td style="padding:10px 0;color:${corValor};font-size:15px;font-weight:600;text-align:right;border-bottom:1px solid #2b2822;">${valor}</td></tr>`;
 }
 
@@ -135,7 +137,7 @@ function gerarEmailBonito(titulo, subtitulo, detalhes, corDestaque = '#c7a04a', 
 </div>
 <div style="padding:18px 30px 6px;"><table style="width:100%;border-collapse:collapse;">${detalhes}</table></div>
 <div style="text-align:center;padding:24px 30px 34px;"><a href="${botao.link}" style="display:inline-block;background-color:${corDestaque};color:#1a1304;padding:13px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:0.5px;">${botao.texto}</a></div>
-<div style="border-top:1px solid #2b2822;padding:16px 30px;text-align:center;color:#746c5d;font-size:12px;">Barbearia do Rod · Rua Mário Ferraz de Souza, 889 · Cidade Tiradentes, SP</div>
+<div style="border-top:1px solid #2b2822;padding:16px 30px;text-align:center;color:#746c5d;font-size:12px;"><a href="https://www.google.com/maps/search/?api=1&query=Rua+M%C3%A1rio+Ferraz+de+Souza+889+Cidade+Tiradentes+SP" style="color:#746c5d;text-decoration:none;">Barbearia do Rod · Rua Mário Ferraz de Souza, 889 · Cidade Tiradentes, SP</a></div>
 </div></div>`;
 }
 

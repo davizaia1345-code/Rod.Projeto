@@ -1,0 +1,20 @@
+name: Manter servidor acordado
+
+# O plano gratuito do Render "dorme" depois de 15 min sem acesso e o primeiro cliente espera ~50 s.
+# Esta rotina acessa o servidor a cada 10 min para evitar isso (e avisa por e-mail se ele cair).
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Servidor (API)
+        run: curl --fail --silent --show-error --retry 3 --retry-delay 20 --max-time 90 https://rodbarber-api-0jna.onrender.com/health
+      - name: Site
+        run: curl --fail --silent --show-error --retry 2 --retry-delay 10 --max-time 30 --output /dev/null https://rod-projeto.vercel.app/

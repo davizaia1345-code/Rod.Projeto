@@ -25,7 +25,7 @@
 
                 RodUI.carregando(btn, true, 'Criando conta...');
                 RodUI.mensagem(mensagem, '', '');
-                var lento = setTimeout(function () { RodUI.mensagem(mensagem, 'info', 'O servidor está acordando, isso pode levar alguns segundos...'); }, 3500);
+                var lento = setTimeout(function () { RodUI.mensagem(mensagem, 'info', 'Quase lá! Estamos finalizando seu cadastro...'); }, 3500);
                 try {
                     var response = await fetch(API_URL + '/cadastro', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -57,7 +57,7 @@
                     setTimeout(function () { window.location.href = '/login'; }, 1200);
                 } catch (err) {
                     clearTimeout(lento);
-                    RodUI.mensagem(mensagem, 'erro', 'Sem conexão com o servidor. Confira sua internet e tente de novo.');
+                    RodUI.mensagem(mensagem, 'erro', 'Não foi possível conectar. Confira sua internet e tente de novo.');
                     RodUI.carregando(btn, false);
                 }
             });

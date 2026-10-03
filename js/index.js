@@ -145,7 +145,7 @@
         if (!silencioso) {
             container.innerHTML = esqueleto();
             aviso.style.display = 'none';
-            lento = setTimeout(function () { if (minha === contadorBusca) { aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Acordando o servidor, só um instante...'; aviso.style.display = 'block'; } }, 3500);
+            lento = setTimeout(function () { if (minha === contadorBusca) { aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Carregando os horários, só um instante...'; aviso.style.display = 'block'; } }, 3500);
         }
         try {
             var r = await fetch(API_URL + '/agenda?data=' + encodeURIComponent(iso));
@@ -287,7 +287,7 @@
         } catch (e) {
             if (e && e.message === 'sessao_expirada') return;
             restaurar();
-            mostrarErroForm('Sem conexão com o servidor. Confira sua internet e tente de novo.');
+            mostrarErroForm('Não foi possível conectar. Confira sua internet e tente de novo.');
         }
     });
 

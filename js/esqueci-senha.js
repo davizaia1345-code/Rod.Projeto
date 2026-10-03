@@ -26,7 +26,7 @@
                         RodUI.mensagem(msg, 'erro', data.erro || 'Não foi possível enviar agora.');
                     }
                 } catch (err) {
-                    RodUI.mensagem(msg, 'erro', 'Sem conexão com o servidor. Tente de novo.');
+                    RodUI.mensagem(msg, 'erro', 'Não foi possível conectar. Tente de novo.');
                 }
                 RodUI.carregando(btn, false);
             });

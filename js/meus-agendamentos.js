@@ -22,7 +22,7 @@
 
     function erroCarregar() {
         return '<div class="estado-vazio"><i class="fas fa-triangle-exclamation"></i><h3>Não foi possível carregar</h3>' +
-            '<p>O servidor pode estar acordando. Tente de novo em alguns segundos.</p>' +
+            '<p>Verifique sua conexão e tente de novo em alguns segundos.</p>' +
             '<button type="button" class="btn-novo grande" id="btn-recarregar"><i class="fas fa-rotate-right"></i> Tentar de novo</button></div>';
     }
 

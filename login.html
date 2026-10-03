@@ -3,32 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | RodBarber</title>
-
+    <title>Entrar | RodBarber</title>
+    <meta name="description" content="Entre na sua conta para agendar seu corte na Barbearia do Rod.">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rodbarber-api-0jna.onrender.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="rod.css">
-    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body class="auth-page">
 
-    <div class="login-container">
+    <main class="login-container">
         <a href="/" class="logo"><span>/</span> RodBarber</a>
 
         <h2>Acesse sua conta</h2>
         <p class="auth-subtitle">Entre para agendar seu próximo horário.</p>
 
-        <form id="form-login">
+        <form id="form-login" novalidate>
             <div class="input-group">
-                <label>E-mail</label>
-                <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required>
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required>
             </div>
 
             <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="senha" placeholder="********" autocomplete="current-password" required>
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" placeholder="Sua senha" autocomplete="current-password" maxlength="72" required>
             </div>
 
             <a href="/esqueci-senha" class="forgot-link">Esqueci a senha</a>
@@ -36,69 +40,67 @@
             <button type="submit"><i class="fas fa-right-to-bracket"></i> Entrar</button>
         </form>
 
-        <p id="mensagem"></p>
+        <p id="mensagem" role="alert" aria-live="polite"></p>
 
         <div class="footer-links">
             <p>Ainda não tem conta? <a href="/cadastro">Cadastre-se</a></p>
-            <a href="/" class="back-link">← Voltar ao site</a>
+            <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Voltar ao site</a>
         </div>
-    </div>
+    </main>
 
+    <script src="auth.js"></script>
+    <script src="auth-ui.js"></script>
     <script>
-        const API_URL = 'https://rodbarber-api-0jna.onrender.com';
-        
-        const form = document.getElementById('form-login');
-        const mensagem = document.getElementById('mensagem');
+        (function () {
+            var API_URL = 'https://rodbarber-api-0jna.onrender.com';
+            if (RodUI.pularSeLogado()) return;
+            RodUI.aquecer(API_URL);
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const senha = document.getElementById('senha').value;
-            const btn = form.querySelector('button');
+            var form = document.getElementById('form-login');
+            var mensagem = document.getElementById('mensagem');
+            var email = document.getElementById('email'), senha = document.getElementById('senha');
+            RodUI.campoSenha(senha);
+            try { var ultimo = sessionStorage.getItem('ultimoEmail'); if (ultimo) email.value = ultimo; } catch (e) {}
+            (email.value ? senha : email).focus();
 
-            btn.disabled = true;
-            btn.innerText = "Carregando...";
-            mensagem.innerText = "";
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('button[type="submit"]');
+                var em = email.value.trim().toLowerCase();
+                if (!em || !senha.value) { RodUI.mensagem(mensagem, 'erro', 'Informe o e-mail e a senha.'); (em ? senha : email).focus(); return; }
+                if (!/^\S+@\S+\.\S+$/.test(em)) { RodUI.mensagem(mensagem, 'erro', 'Esse e-mail não parece válido.'); email.focus(); return; }
 
-            try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, senha })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    mensagem.style.color = '#25d366'; // Verde
-                    mensagem.innerText = "Login realizado! Redirecionando...";
-                    
-                    // Salva os dados
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('usuarioNome', data.usuario.nome);
-                    localStorage.setItem('usuarioEmail', data.usuario.email);
-
-                    // O dono vai direto para o painel dele; clientes vão para o site
-                    const destino = data.usuario.dono ? '/admin' : '/';
-
-                    setTimeout(() => {
-                        window.location.href = destino;
-                    }, 1200);
-
-                } else {
-                    mensagem.style.color = '#ff4d4d'; // Vermelho
-                    mensagem.innerText = data.erro || "Erro ao entrar.";
-                    btn.disabled = false;
-                    btn.innerText = "ENTRAR";
+                RodUI.carregando(btn, true, 'Entrando...');
+                RodUI.mensagem(mensagem, '', '');
+                var lento = setTimeout(function () { RodUI.mensagem(mensagem, 'info', 'O servidor está acordando, isso pode levar alguns segundos...'); }, 3500);
+                try {
+                    var response = await fetch(API_URL + '/login', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: em, senha: senha.value })
+                    });
+                    var data = await response.json().catch(function () { return {}; });
+                    clearTimeout(lento);
+                    if (response.ok) {
+                        RodUI.mensagem(mensagem, 'ok', 'Login realizado! Redirecionando...');
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('usuarioNome', data.usuario.nome);
+                        localStorage.setItem('usuarioEmail', data.usuario.email);
+                        try { sessionStorage.removeItem('ultimoEmail'); } catch (x) {}
+                        // o dono vai direto para o painel dele; clientes vão para o site
+                        var destino = data.usuario.dono ? '/admin' : '/#agendamento';
+                        setTimeout(function () { window.location.href = destino; }, 700);
+                    } else {
+                        RodUI.mensagem(mensagem, 'erro', data.erro || 'Não foi possível entrar.');
+                        RodUI.carregando(btn, false);
+                        senha.select();
+                    }
+                } catch (err) {
+                    clearTimeout(lento);
+                    RodUI.mensagem(mensagem, 'erro', 'Sem conexão com o servidor. Confira sua internet e tente de novo.');
+                    RodUI.carregando(btn, false);
                 }
-            } catch (error) {
-                mensagem.style.color = '#ff4d4d';
-                mensagem.innerText = "Erro de conexão com o servidor.";
-                btn.disabled = false;
-                btn.innerText = "ENTRAR";
-            }
-        });
+            });
+        })();
     </script>
 
 </body>

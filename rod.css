@@ -1513,3 +1513,46 @@ form button[type="submit"].incompleto:hover { transform: none; box-shadow: none;
     .dashboard-page .btn-pagar { flex: 1 1 100%; }
     .ag-selo { left: 18px; }
 }
+
+/* ==========================================================================
+   Telas de conta v2
+   ========================================================================== */
+
+.auth-page .login-container, .auth-page .register-container, .auth-page .container { animation: successIn .5s cubic-bezier(.2, .8, .2, 1); }
+
+.senha-wrap { position: relative; }
+.auth-page .senha-wrap input { padding-right: 46px; }
+.auth-page .senha-olho { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; padding: 0; margin: 0; background: none; border: none; box-shadow: none; color: var(--text-faint); font-size: .95rem; border-radius: 8px; text-transform: none; letter-spacing: 0; }
+.auth-page .senha-olho:hover { background: none; box-shadow: none; transform: translateY(-50%); color: var(--gold-light); }
+.caps-aviso { text-align: left; color: #ffc107; font-size: .76rem; margin-top: 6px; display: flex; align-items: center; gap: 7px; }
+.caps-aviso[hidden] { display: none; }
+
+.forca { margin-top: 9px; display: flex; align-items: center; gap: 12px; min-height: 16px; }
+.forca-barras { display: flex; gap: 5px; flex: 1; }
+.forca-barras span { height: 4px; flex: 1; border-radius: 4px; background: var(--border); transition: background .25s; }
+.forca[data-nivel="1"] .forca-barras span.on { background: var(--red-light); }
+.forca[data-nivel="2"] .forca-barras span.on { background: #e0a23a; }
+.forca[data-nivel="3"] .forca-barras span.on { background: #9bc34a; }
+.forca[data-nivel="4"] .forca-barras span.on { background: var(--green); }
+.forca-texto { font-size: .72rem; color: var(--text-faint); min-width: 118px; text-align: right; }
+
+.dica-campo { display: block; text-align: left; color: var(--text-faint); font-size: .74rem; margin-top: 6px; line-height: 1.4; }
+
+.auth-page .auth-msg { margin-top: 16px; font-size: .88rem; min-height: 0; font-weight: 500; display: flex; align-items: flex-start; gap: 9px; text-align: left; padding: 0; }
+.auth-page .auth-msg:empty { display: none; }
+.auth-page .auth-msg.erro { background: var(--red-dim); border: 1px solid rgba(207, 74, 64, .4); color: #ffb3ac; padding: 11px 13px; border-radius: var(--radius-sm); }
+.auth-page .auth-msg.ok { background: var(--green-dim); border: 1px solid rgba(47, 174, 107, .4); color: #8fe3b6; padding: 11px 13px; border-radius: var(--radius-sm); }
+.auth-page .auth-msg.info { background: var(--gold-dim); border: 1px solid rgba(199, 160, 74, .35); color: var(--gold-light); padding: 11px 13px; border-radius: var(--radius-sm); }
+.auth-msg i { margin-top: 2px; flex-shrink: 0; }
+
+.dica-caixa { margin-top: 14px; padding: 11px 13px; border: 1px dashed var(--border-light); border-radius: var(--radius-sm); color: var(--text-muted); font-size: .8rem; text-align: left; line-height: 1.5; }
+.dica-caixa[hidden] { display: none; }
+.dica-caixa i { color: var(--gold); margin-right: 6px; }
+
+.auth-page button[type="submit"] i { margin-right: 6px; }
+.auth-page .back-link i { margin-right: 6px; font-size: .75rem; }
+.auth-page .logo { transition: opacity .2s; }
+.auth-page .logo:hover { opacity: .85; }
+
+.erro-404 .erro-codigo { font-family: var(--font-display); font-size: 5.5rem; font-weight: 700; line-height: 1; margin: 6px 0 2px; background: linear-gradient(135deg, var(--gold-light), var(--red-light)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: .04em; }
+.erro-404 .btn-login-cta { margin-top: 6px; }

@@ -3,80 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Senha | RodBarber</title>
+    <title>Nova senha | RodBarber</title>
+    <meta name="robots" content="noindex">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rodbarber-api-0jna.onrender.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="rod.css">
-    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body class="auth-page">
-    <div class="container">
+    <main class="container">
         <a href="/" class="logo"><span>/</span> RodBarber</a>
-        <h2>Criar Nova Senha</h2>
+        <h2>Criar nova senha</h2>
         <p class="auth-subtitle">Digite sua nova senha abaixo.</p>
 
-        <div class="input-group">
-            <label>Nova senha</label>
-            <input type="password" id="novaSenha" placeholder="••••••••" autocomplete="new-password" minlength="8" maxlength="72">
-        </div>
-        <button onclick="mudarSenha()"><i class="fas fa-key"></i> Salvar Senha</button>
+        <form id="form-reset" novalidate>
+            <div class="input-group">
+                <label for="novaSenha">Nova senha</label>
+                <input type="password" id="novaSenha" placeholder="Pelo menos 8 caracteres" autocomplete="new-password" maxlength="72" required>
+            </div>
+            <div class="input-group">
+                <label for="confirmar">Repita a senha</label>
+                <input type="password" id="confirmar" placeholder="Repita a nova senha" autocomplete="new-password" maxlength="72" required>
+            </div>
+            <button type="submit"><i class="fas fa-key"></i> Salvar senha</button>
+        </form>
 
-        <p id="mensagem"></p>
-    </div>
+        <p id="mensagem" role="alert" aria-live="polite"></p>
+        <a href="/esqueci-senha" class="back-link" id="link-novo" hidden>Pedir um novo link</a>
+    </main>
 
+    <script src="auth.js"></script>
+    <script src="auth-ui.js"></script>
     <script>
-        // --- CONFIGURAÇÃO DO SERVIDOR LOCAL ---
-        
-        const API_URL = 'https://rodbarber-api-0jna.onrender.com';
+        (function () {
+            var API_URL = 'https://rodbarber-api-0jna.onrender.com';
+            RodUI.aquecer(API_URL);
+            var form = document.getElementById('form-reset'), msg = document.getElementById('mensagem');
+            var nova = document.getElementById('novaSenha'), conf = document.getElementById('confirmar');
+            RodUI.campoSenha(nova); RodUI.medidorForca(nova); RodUI.campoSenha(conf);
 
-        async function mudarSenha() {
-            // Pega o token que veio no link do e-mail
-            const params = new URLSearchParams(window.location.search);
-            const token = params.get('token');
-            
-            const novaSenha = document.getElementById('novaSenha').value;
-            const msg = document.getElementById('mensagem');
-            const btn = document.querySelector('button');
-            
-            if(!token) {
-                msg.innerText = "Link inválido ou expirado. Tente pedir outro.";
-                msg.style.color = '#ff4d4d';
-                return;
-            }
-            if(novaSenha.length < 8) { msg.style.color = "#ff4d4d"; msg.innerText = "A senha precisa ter pelo menos 8 caracteres."; return; }
+            // o token vem no link do e-mail; tira da barra de endereço para não ficar no histórico
+            var token = new URLSearchParams(window.location.search).get('token');
+            if (token) { try { history.replaceState(null, '', window.location.pathname); } catch (e) {} }
+            if (!token) {
+                RodUI.mensagem(msg, 'erro', 'Link inválido ou expirado. Peça outro.');
+                document.getElementById('link-novo').hidden = false;
+                form.querySelector('button').disabled = true;
+            } else nova.focus();
 
-            btn.disabled = true; 
-            btn.innerText = "Salvando...";
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('button[type="submit"]');
+                if (nova.value.length < 8) { RodUI.mensagem(msg, 'erro', 'A senha precisa ter pelo menos 8 caracteres.'); nova.focus(); return; }
+                if (nova.value !== conf.value) { RodUI.mensagem(msg, 'erro', 'As senhas não são iguais.'); conf.focus(); return; }
 
-            try {
-                // Envia a nova senha para o servidor local
-                const response = await fetch(`${API_URL}/resetar-senha`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token, novaSenha })
-                });
-                const data = await response.json();
-
-                if(response.ok) {
-                    msg.style.color = '#25d366';
-                    msg.innerText = "Senha alterada com sucesso! Redirecionando...";
-                    setTimeout(() => window.location.href = '/login', 3000);
-                } else {
-                    msg.style.color = '#ff4d4d';
-                    msg.innerText = data.erro || "Erro ao alterar senha.";
-                    btn.disabled = false; 
-                    btn.innerText = "SALVAR SENHA";
+                RodUI.carregando(btn, true, 'Salvando...');
+                RodUI.mensagem(msg, '', '');
+                try {
+                    var response = await fetch(API_URL + '/resetar-senha', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token, novaSenha: nova.value }) });
+                    var data = await response.json().catch(function () { return {}; });
+                    if (response.ok) {
+                        RodUI.mensagem(msg, 'ok', 'Senha alterada com sucesso! Redirecionando para o login...');
+                        setTimeout(function () { window.location.href = '/login'; }, 2200);
+                    } else {
+                        RodUI.mensagem(msg, 'erro', data.erro || 'Não foi possível alterar a senha.');
+                        document.getElementById('link-novo').hidden = false;
+                        RodUI.carregando(btn, false);
+                    }
+                } catch (err) {
+                    RodUI.mensagem(msg, 'erro', 'Sem conexão com o servidor. Tente de novo.');
+                    RodUI.carregando(btn, false);
                 }
-            } catch (e) {
-                console.error("Erro de conexão:", e);
-                msg.innerText = "Erro ao conectar com o servidor.";
-                msg.style.color = '#ff4d4d';
-                btn.disabled = false; 
-                btn.innerText = "SALVAR SENHA";
-            }
-        }
+            });
+        })();
     </script>
 </body>
 </html>

@@ -1,16 +1,26 @@
 (function () {
     var ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
+    function payload() {
+        try {
+            var corpo = (window.RodAuth.token() || "").split(".")[0].replace(/-/g, "+").replace(/_/g, "/");
+            return JSON.parse(atob(corpo));
+        } catch (e) { return null; }
+    }
+
     window.RodAuth = {
         token: function () {
             try { return localStorage.getItem('token'); } catch (e) { return null; }
         },
         // papel gravado no token (só para decidir o que mostrar; quem valida de verdade é o servidor)
         papel: function () {
-            try {
-                var corpo = (this.token() || "").split(".")[0].replace(/-/g, "+").replace(/_/g, "/");
-                return JSON.parse(atob(corpo)).role || null;
-            } catch (e) { return null; }
+            var p = payload();
+            return p && p.role || null;
+        },
+        // há um token que ainda não venceu (o servidor continua sendo quem decide)
+        logado: function () {
+            var p = payload();
+            return Boolean(p && p.exp && p.exp > Date.now() / 1000);
         },
         // remove a sessão e volta para o login
         sair: function () {

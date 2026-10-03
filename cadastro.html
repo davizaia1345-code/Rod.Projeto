@@ -3,100 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro | RodBarber</title>
-
+    <title>Criar conta | RodBarber</title>
+    <meta name="description" content="Crie sua conta em menos de um minuto e agende seu corte na Barbearia do Rod.">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rodbarber-api-0jna.onrender.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="rod.css">
-    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body class="auth-page">
 
-    <div class="register-container">
+    <main class="register-container">
         <a href="/" class="logo"><span>/</span> RodBarber</a>
 
         <h2>Crie sua conta</h2>
         <p class="auth-subtitle">Leva menos de um minuto.</p>
 
-        <form id="form-cadastro">
+        <form id="form-cadastro" novalidate>
             <div class="input-group">
-                <label>Nome Completo</label>
-                <input type="text" id="nome" placeholder="Seu nome" required>
+                <label for="nome">Nome completo</label>
+                <input type="text" id="nome" placeholder="Seu nome" autocomplete="name" maxlength="80" required>
             </div>
 
             <div class="input-group">
-                <label>E-mail</label>
-                <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required>
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required>
+                <small class="dica-campo">Enviamos a confirmação dos seus agendamentos para este e-mail.</small>
             </div>
 
             <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="senha" placeholder="Crie uma senha" autocomplete="new-password" minlength="8" maxlength="72" required>
-                <small style="color: var(--text-faint); font-size: 0.75rem; display: block; margin-top: 5px;">Mínimo de 8 caracteres</small>
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" placeholder="Crie uma senha" autocomplete="new-password" maxlength="72" required>
             </div>
 
-            <button type="submit"><i class="fas fa-user-plus"></i> Cadastrar</button>
+            <button type="submit"><i class="fas fa-user-plus"></i> Criar conta</button>
         </form>
 
-        <p id="mensagem"></p>
+        <p id="mensagem" role="alert" aria-live="polite"></p>
 
         <div class="footer-links">
             <p>Já tem conta? <a href="/login">Faça login</a></p>
+            <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Voltar ao site</a>
         </div>
-    </div>
+    </main>
 
+    <script src="auth.js"></script>
+    <script src="auth-ui.js"></script>
     <script>
-        // --- CONFIGURAÇÃO LOCAL ---
-        const API_URL = 'https://rodbarber-api-0jna.onrender.com';
-        
-        const form = document.getElementById('form-cadastro');
-        const mensagem = document.getElementById('mensagem');
+        (function () {
+            var API_URL = 'https://rodbarber-api-0jna.onrender.com';
+            if (RodUI.pularSeLogado()) return;
+            RodUI.aquecer(API_URL);
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const nome = document.getElementById('nome').value;
-            const email = document.getElementById('email').value;
-            const senha = document.getElementById('senha').value;
-            const btn = form.querySelector('button');
+            var form = document.getElementById('form-cadastro');
+            var mensagem = document.getElementById('mensagem');
+            var nome = document.getElementById('nome'), email = document.getElementById('email'), senha = document.getElementById('senha');
+            RodUI.campoSenha(senha);
+            RodUI.medidorForca(senha);
+            nome.focus();
 
-            btn.disabled = true;
-            btn.innerText = "Criando...";
-            mensagem.innerText = "";
+            function falha(texto, campo) { RodUI.mensagem(mensagem, 'erro', texto); if (campo) campo.focus(); }
 
-            try {
-                // Requisição Local
-                const response = await fetch(`${API_URL}/cadastro`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome, email, senha })
-                });
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('button[type="submit"]');
+                var n = nome.value.trim().replace(/\s+/g, ' '), em = email.value.trim().toLowerCase();
+                if (n.length < 2) return falha('Informe seu nome.', nome);
+                if (!/^\S+@\S+\.\S+$/.test(em)) return falha('Esse e-mail não parece válido.', email);
+                if (senha.value.length < 8) return falha('A senha precisa ter pelo menos 8 caracteres.', senha);
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    mensagem.style.color = '#25d366'; // Verde
-                    mensagem.innerText = "Cadastro realizado! Indo para o login...";
-                    
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 2000);
-                } else {
-                    mensagem.style.color = '#ff4d4d'; // Vermelho
-                    mensagem.innerText = data.erro || "Erro ao cadastrar.";
-                    btn.disabled = false;
-                    btn.innerText = "CADASTRAR";
+                RodUI.carregando(btn, true, 'Criando conta...');
+                RodUI.mensagem(mensagem, '', '');
+                var lento = setTimeout(function () { RodUI.mensagem(mensagem, 'info', 'O servidor está acordando, isso pode levar alguns segundos...'); }, 3500);
+                try {
+                    var response = await fetch(API_URL + '/cadastro', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nome: n, email: em, senha: senha.value })
+                    });
+                    var data = await response.json().catch(function () { return {}; });
+                    if (!response.ok) {
+                        clearTimeout(lento);
+                        RodUI.mensagem(mensagem, 'erro', data.erro || 'Não foi possível criar a conta.');
+                        RodUI.carregando(btn, false);
+                        return;
+                    }
+                    // conta criada: já entra direto, sem precisar digitar tudo de novo
+                    RodUI.mensagem(mensagem, 'ok', 'Conta criada! Entrando...');
+                    try {
+                        var lr = await fetch(API_URL + '/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em, senha: senha.value }) });
+                        var ld = await lr.json().catch(function () { return {}; });
+                        clearTimeout(lento);
+                        if (lr.ok) {
+                            localStorage.setItem('token', ld.token);
+                            localStorage.setItem('usuarioNome', ld.usuario.nome);
+                            localStorage.setItem('usuarioEmail', ld.usuario.email);
+                            setTimeout(function () { window.location.href = '/#agendamento'; }, 700);
+                            return;
+                        }
+                    } catch (x) { /* cai no login manual abaixo */ }
+                    clearTimeout(lento);
+                    try { sessionStorage.setItem('ultimoEmail', em); } catch (x) {}
+                    setTimeout(function () { window.location.href = '/login'; }, 1200);
+                } catch (err) {
+                    clearTimeout(lento);
+                    RodUI.mensagem(mensagem, 'erro', 'Sem conexão com o servidor. Confira sua internet e tente de novo.');
+                    RodUI.carregando(btn, false);
                 }
-            } catch (error) {
-                console.error("Erro de conexão:", error);
-                mensagem.style.color = '#ff4d4d';
-                mensagem.innerText = "Erro de conexão com o servidor.";
-                btn.disabled = false;
-                btn.innerText = "CADASTRAR";
-            }
-        });
+            });
+        })();
     </script>
 
 </body>

@@ -3,70 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Senha | RodBarber</title>
-
+    <title>Recuperar senha | RodBarber</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rodbarber-api-0jna.onrender.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="rod.css">
-    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body class="auth-page">
-    <div class="container">
+    <main class="container">
         <a href="/" class="logo"><span>/</span> RodBarber</a>
-        <h2>Recuperar Senha</h2>
+        <h2>Recuperar senha</h2>
         <p class="auth-subtitle">Digite seu e-mail para receber o link de redefinição.</p>
 
-        <div class="input-group">
-            <label>E-mail</label>
-            <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
-        </div>
-        <button onclick="enviarEmail()"><i class="fas fa-paper-plane"></i> Enviar Link</button>
+        <form id="form-esqueci" novalidate>
+            <div class="input-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required>
+            </div>
+            <button type="submit"><i class="fas fa-paper-plane"></i> Enviar link</button>
+        </form>
 
-        <p id="mensagem"></p>
-        <a href="/login" class="back-link">← Voltar ao Login</a>
-    </div>
+        <p id="mensagem" role="alert" aria-live="polite"></p>
+        <div id="dica-spam" class="dica-caixa" hidden><i class="far fa-envelope"></i> Não chegou? Confira a caixa de spam ou lixo eletrônico. O link vale por tempo limitado.</div>
+        <a href="/login" class="back-link"><i class="fas fa-arrow-left"></i> Voltar ao login</a>
+    </main>
 
+    <script src="auth.js"></script>
+    <script src="auth-ui.js"></script>
     <script>
-        // Configuração Local
-        const API_URL = 'https://rodbarber-api-0jna.onrender.com';
+        (function () {
+            var API_URL = 'https://rodbarber-api-0jna.onrender.com';
+            RodUI.aquecer(API_URL);
+            var form = document.getElementById('form-esqueci'), msg = document.getElementById('mensagem'), email = document.getElementById('email');
+            email.focus();
+            var ultimoEnvio = 0;
 
-        async function enviarEmail() {
-            const email = document.getElementById('email').value;
-            const msg = document.getElementById('mensagem');
-            const btn = document.querySelector('button');
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('button[type="submit"]');
+                var em = email.value.trim().toLowerCase();
+                if (!em) { RodUI.mensagem(msg, 'erro', 'Por favor, digite seu e-mail.'); email.focus(); return; }
+                if (!/^\S+@\S+\.\S+$/.test(em)) { RodUI.mensagem(msg, 'erro', 'Esse e-mail não parece válido.'); email.focus(); return; }
+                if (Date.now() - ultimoEnvio < 30000) { RodUI.mensagem(msg, 'info', 'Aguarde alguns segundos antes de pedir outro link.'); return; }
 
-            if(!email) {
-                msg.innerText = "Por favor, digite seu e-mail.";
-                msg.style.color = '#ff4d4d';
-                return;
-            }
-
-            btn.disabled = true; btn.innerText = "Enviando...";
-            msg.innerText = "";
-
-            try {
-                const response = await fetch(`${API_URL}/esqueci-senha`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                const data = await response.json();
-                
-                if (response.ok) {
-                    msg.innerText = data.mensagem || "Se o e-mail estiver cadastrado, você receberá o link.";
-                    msg.style.color = '#25d366';
-                } else {
-                    msg.innerText = data.erro || "Erro ao enviar.";
-                    msg.style.color = '#ff4d4d';
+                RodUI.carregando(btn, true, 'Enviando...');
+                RodUI.mensagem(msg, '', '');
+                try {
+                    var response = await fetch(API_URL + '/esqueci-senha', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em }) });
+                    var data = await response.json().catch(function () { return {}; });
+                    if (response.ok) {
+                        ultimoEnvio = Date.now();
+                        RodUI.mensagem(msg, 'ok', data.mensagem || 'Se o e-mail estiver cadastrado, você receberá o link.');
+                        document.getElementById('dica-spam').hidden = false;
+                    } else {
+                        RodUI.mensagem(msg, 'erro', data.erro || 'Não foi possível enviar agora.');
+                    }
+                } catch (err) {
+                    RodUI.mensagem(msg, 'erro', 'Sem conexão com o servidor. Tente de novo.');
                 }
-            } catch (e) {
-                msg.innerText = "Erro ao conectar com o servidor.";
-                msg.style.color = '#ff4d4d';
-            }
-            btn.disabled = false; btn.innerText = "ENVIAR LINK";
-        }
+                RodUI.carregando(btn, false);
+            });
+        })();
     </script>
 </body>
 </html>

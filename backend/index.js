@@ -197,7 +197,7 @@ mongoose.connect(process.env.MONGO_URI)
 const agendamentoSchema = new mongoose.Schema({
     nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
     pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String,
-    referencia: String, pagamentoManual: String
+    referencia: String, pagamentoManual: String, lembreteEnviado: Boolean
 });
 agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
 const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
@@ -462,6 +462,76 @@ function garantirRelatorioMensal() {
 setInterval(garantirRelatorioMensal, 60 * 60 * 1000).unref();
 mongoose.connection.once('open', () => setTimeout(garantirRelatorioMensal, 3000).unref());
 app.use((req, res, next) => { garantirRelatorioMensal(); next(); });
+
+// ---------------------------------------------------------------------------
+// Avisos automáticos: lembrete para o cliente e agenda do dia para o dono
+// ---------------------------------------------------------------------------
+
+const LEMBRETE_HORAS = Number(process.env.LEMBRETE_ANTECEDENCIA_H ?? 2);   // lembra o cliente X horas antes
+const AGENDA_DIA_HORA = Number(process.env.AGENDA_DIA_HORA ?? 7);           // a partir de que hora o dono recebe a agenda do dia
+const AGENDA_DIA_ATE = Number(process.env.AGENDA_DIA_ATE ?? 20);            // depois dessa hora já não faz sentido enviar
+const INTERVALO_AVISOS_S = Number(process.env.AVISOS_INTERVALO_S ?? 300);
+const AgendaDia = mongoose.model('AgendaDia', new mongoose.Schema({ dia: { type: String, unique: true }, enviadoEm: Date }));
+
+async function enviarLembretes() {
+    const agora = Date.now();
+    const hoje = agoraSP().data;
+    const amanha = new Date(`${hoje}T00:00:00Z`); amanha.setUTCDate(amanha.getUTCDate() + 1);
+    const candidatos = await Agendamento.find({ statusPagamento: 'approved', lembreteEnviado: { $ne: true }, data: { $in: [hoje, amanha.toISOString().slice(0, 10)] } });
+    for (const ag of candidatos) {
+        const falta = inicioDoAgendamento(ag) - agora;
+        if (falta <= 0 || falta > LEMBRETE_HORAS * 3600e3) continue;
+        if (agora - ag._id.getTimestamp().getTime() < 60 * 60e3) continue;   // acabou de reservar: lembrar seria redundante
+        const r = await Agendamento.updateOne({ _id: ag._id, lembreteEnviado: { $ne: true } }, { lembreteEnviado: true });
+        if (!r.modifiedCount) continue;                                       // outra execução já cuidou deste
+        const quando = ag.data === hoje ? `hoje às ${ag.hora}` : `amanhã às ${ag.hora}`;
+        const detalhes =
+            linhaEmail('Serviço', escapeHtml(ag.servico)) +
+            linhaEmail('Quando', escapeHtml(quando)) +
+            linhaEmail('Local', `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ENDERECO)}" style="color:#f4efe4;text-decoration:none;">Rua Mário Ferraz de Souza, 889</a>`) +
+            linhaAgenda(ag);
+        notificar({
+            to: ag.email, subject: `Lembrete: seu corte é ${quando} - RodBarber`,
+            html: gerarEmailBonito('Seu horário está chegando', `Olá, ${escapeHtml(String(ag.nome).split(' ')[0])}! Te esperamos ${escapeHtml(quando)}.`, detalhes, '#c7a04a', { texto: 'COMO CHEGAR', link: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ENDERECO)}` })
+        });
+        console.log(JSON.stringify({ tipo: 'agenda', evento: 'lembrete_enviado', data: ag.data, hora: ag.hora, cliente: mascarar(ag.email) }));
+    }
+}
+
+async function enviarAgendaDoDia() {
+    const { data, minutos } = agoraSP();
+    if (minutos < AGENDA_DIA_HORA * 60 || minutos > AGENDA_DIA_ATE * 60) return;
+    try { await AgendaDia.create({ dia: data }); } catch (err) { if (err.code === 11000) return; throw err; }
+    const lista = await Agendamento.find({ data }).sort({ hora: 1 });
+    if (!lista.length) return;
+    try {
+        const pagos = lista.filter(a => a.statusPagamento === 'approved');
+        const total = lista.reduce((s, a) => s + (Number(a.valor) || 0), 0);
+        const linhas = lista.map(a => linhaEmail(escapeHtml(a.hora), `${escapeHtml(a.nome)} · ${escapeHtml(a.servico)} · ${a.statusPagamento === 'approved' ? 'Pago' : 'Pendente'}`, a.statusPagamento === 'approved' ? '#f4efe4' : '#e8ca8c')).join('') +
+            linhaEmail('Previsto no dia', brl(total), '#2fae6b');
+        await enviarEmail({
+            to: OWNER_EMAIL, subject: `Agenda de hoje: ${lista.length} cliente${lista.length === 1 ? '' : 's'} - RodBarber`,
+            html: gerarEmailBonito('Agenda de hoje', `${lista.length} cliente${lista.length === 1 ? '' : 's'} marcado${lista.length === 1 ? '' : 's'} para ${formatarData(data)}, ${pagos.length} já pago${pagos.length === 1 ? '' : 's'}.`, linhas, '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
+        });
+        console.log(`📅 Agenda do dia enviada ao proprietário (${lista.length}).`);
+    } catch (err) {
+        await AgendaDia.deleteOne({ dia: data });   // tenta de novo na próxima checagem
+        console.error('⚠️  Agenda do dia não enviada; tentará de novo:', err.message);
+    }
+}
+
+let avisosUltimo = 0, avisosEmCurso = null;
+function garantirAvisos() {
+    if (avisosEmCurso || Date.now() - avisosUltimo < INTERVALO_AVISOS_S * 1000) return;
+    avisosUltimo = Date.now();
+    avisosEmCurso = Promise.resolve()
+        .then(enviarLembretes).catch(err => console.error('Erro nos lembretes:', err.message))
+        .then(enviarAgendaDoDia).catch(err => console.error('Erro na agenda do dia:', err.message))
+        .finally(() => { avisosEmCurso = null; });
+}
+setInterval(garantirAvisos, 5 * 60 * 1000).unref();
+mongoose.connection.once('open', () => setTimeout(garantirAvisos, 5000).unref());
+app.use((req, res, next) => { garantirAvisos(); next(); });
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 

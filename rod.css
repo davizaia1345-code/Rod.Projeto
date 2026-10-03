@@ -1868,14 +1868,12 @@ body.doc-page { background: var(--bg); padding: 40px 16px 60px; text-align: left
 }
 .secao-foto.foto-dir::before { background-position: 0 0, right center; }
 .secao-foto.foto-esq::before { background-position: 0 0, left center; }
-#sobre::before { background-image: linear-gradient(to right, rgba(10, 9, 8, .58) 0%, rgba(10, 9, 8, .9) 32%, var(--bg) 52%), url('fundo-sobre.jpg'); }
 #precos::before { background-image: linear-gradient(to left, rgba(10, 9, 8, .58) 0%, rgba(10, 9, 8, .9) 32%, var(--bg) 52%), url('fundo-precos.jpg'); }
 #depoimentos::before { background-image: linear-gradient(to right, rgba(10, 9, 8, .58) 0%, rgba(10, 9, 8, .9) 32%, var(--bg) 52%), url('fundo-depoimentos.jpg'); }
 
 @media (max-width: 768px) {
     .secao-foto::before { background-size: 100% 100%, cover; background-position: 0 0, center 30% !important; }
-    #sobre::before, #precos::before, #depoimentos::before { background-image: linear-gradient(rgba(10, 9, 8, .82), rgba(10, 9, 8, .82)), var(--foto); }
-    #sobre { --foto: url('fundo-sobre.jpg'); }
+    #precos::before, #depoimentos::before { background-image: linear-gradient(rgba(10, 9, 8, .82), rgba(10, 9, 8, .82)), var(--foto); }
     #precos { --foto: url('fundo-precos.jpg'); }
     #depoimentos { --foto: url('fundo-depoimentos.jpg'); }
 }

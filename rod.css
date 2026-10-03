@@ -24,7 +24,7 @@
 
     --text: #f4efe4;
     --text-muted: #b2a996;
-    --text-faint: #746c5d;
+    --text-faint: #968d7b;
 
     --radius-sm: 8px;
     --radius: 14px;
@@ -996,7 +996,7 @@ body.admin-page { background-color: var(--bg); color: var(--text); padding: 36px
 .admin-page .card-resumo.money::before { background: var(--green); }
 .admin-page .card-resumo.total::before { background: var(--red-light); }
 
-.admin-page .card-resumo h3 { color: var(--text-faint); font-size: 0.82em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.admin-page .card-resumo h2 { color: var(--text-faint); font-size: 0.82em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 .admin-page .card-resumo p { font-family: var(--font-display); font-size: 2.3rem; font-weight: 600; color: var(--text); margin: 0; }
 .admin-page .card-resumo.money p { color: var(--green); }
 .admin-page .card-icon { position: absolute; top: 22px; right: 22px; font-size: 2.8rem; color: rgba(255,255,255,0.03); }
@@ -1226,7 +1226,7 @@ body.dashboard-page { background-color: var(--bg); color: var(--text); padding: 
 
 .admin-page .rel-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .admin-page .rel-bloco { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: left; }
-.admin-page .rel-bloco h4 { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .05em; font-size: .95rem; color: var(--gold-light); margin-bottom: 14px; display: flex; align-items: center; gap: 9px; font-weight: 500; }
+.admin-page .rel-bloco h2 { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .05em; font-size: .95rem; color: var(--gold-light); margin-bottom: 14px; display: flex; align-items: center; gap: 9px; font-weight: 500; }
 .admin-page .rel-linha { margin-bottom: 14px; }
 .admin-page .rel-linha:last-child { margin-bottom: 0; }
 .admin-page .rel-linha-topo { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; color: var(--text); margin-bottom: 6px; }
@@ -1245,7 +1245,7 @@ body.dashboard-page { background-color: var(--bg); color: var(--text); padding: 
 @media (max-width: 768px) {
     .admin-page .resumo-cards.resumo-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
     .admin-page .resumo-4 .card-resumo { padding: 16px 14px; }
-    .admin-page .resumo-4 .card-resumo h3 { font-size: .68em; }
+    .admin-page .resumo-4 .card-resumo h2 { font-size: .68em; }
     .admin-page .resumo-4 .card-resumo p { font-size: 1.35rem; }
     .admin-page .resumo-4 .card-icon { font-size: 1.9rem; top: 14px; right: 12px; }
     .admin-page .acoes-grupo { flex-direction: column; }
@@ -1666,3 +1666,12 @@ form button[type="submit"].incompleto:hover { transform: none; box-shadow: none;
     .admin-page tbody td { padding: 9px 0; font-size: .9em; }
     .admin-page tbody tr { padding: 4px 14px; }
 }
+
+/* menu do celular acessível por teclado: o checkbox fica fora da tela, mas continua focável */
+.menu-toggle { display: block !important; position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.menu-toggle:focus-visible ~ .menu-icon { outline: 2px solid var(--gold-light); outline-offset: 2px; border-radius: 8px; }
+@media (min-width: 769px) { .menu-toggle { display: none !important; } }
+.depoimento-card h3.depo-autor { font-family: var(--font-display); color: var(--gold-light); margin-bottom: 6px; font-weight: 500; font-size: 1.1rem; }
+.depoimentos-grid:focus-visible { outline-offset: -2px; }
+
+.auth-page h1 { margin-bottom: 6px; font-size: 1.3rem; color: var(--text); font-weight: 600; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.03em; }

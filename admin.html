@@ -19,11 +19,11 @@
 </head>
 <body class="admin-page">
 
-<div class="admin-container">
+<main class="admin-container">
     <div class="header-admin">
-        <div class="logo-admin">
+        <h1 class="logo-admin">
             <i class="fas fa-crown"></i> PAINEL DO <span>ROD</span>
-        </div>
+        </h1>
         <div class="header-acoes">
             <span class="atualizado" id="atualizado" title="Os dados se atualizam sozinhos a cada minuto"><i class="fas fa-circle-notch"></i> <span id="atualizado-txt">Carregando...</span></span>
             <button type="button" class="btn-voltar" onclick="RodAuth.sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
@@ -34,22 +34,22 @@
 
     <div class="resumo-cards resumo-4">
         <div class="card-resumo">
-            <h3>Agendamentos Hoje</h3>
+            <h2>Agendamentos Hoje</h2>
             <p id="total-hoje">0</p>
             <i class="fas fa-calendar-day card-icon"></i>
         </div>
         <div class="card-resumo money">
-            <h3>Caixa de Hoje</h3>
+            <h2>Caixa de Hoje</h2>
             <p id="caixa-hoje">R$ 0,00</p>
             <i class="fas fa-cash-register card-icon"></i>
         </div>
         <div class="card-resumo money">
-            <h3>Faturamento do Mês</h3>
+            <h2>Faturamento do Mês</h2>
             <p id="fat-mes">R$ 0,00</p>
             <i class="fas fa-wallet card-icon"></i>
         </div>
         <div class="card-resumo total">
-            <h3>Atendimentos no Mês</h3>
+            <h2>Atendimentos no Mês</h2>
             <p id="atend-mes">0</p>
             <i class="fas fa-scissors card-icon"></i>
         </div>
@@ -104,7 +104,7 @@
                     </tr>
                 </thead>
                 <tbody id="lista-admin">
-                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-faint);">
                         <i class="fas fa-spinner fa-spin"></i> Conectando ao sistema...
                     </td></tr>
                 </tbody>
@@ -127,7 +127,7 @@
                     </tr>
                 </thead>
                 <tbody id="lista-balcao">
-                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-faint);">
                         <i class="fas fa-spinner fa-spin"></i> Carregando...
                     </td></tr>
                 </tbody>
@@ -162,7 +162,7 @@
         <p class="aba-dica"><i class="fas fa-circle-info"></i> Todo começo de mês o relatório do mês anterior é enviado automaticamente para o seu e-mail.</p>
         <div id="rel-conteudo"></div>
     </section>
-</div>
+</main>
 
 <!-- Registrar atendimento avulso -->
 <div id="modal-atendimento" class="modal-overlay" onclick="if (event.target === this) fecharModalAtendimento()">
@@ -247,7 +247,7 @@
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e; text-align:center;">
                     <i class="fas fa-ban" style="font-size: 5em; margin-bottom: 20px;"></i>
                     <h1 style="text-transform:uppercase; font-size:2em;">Acesso Negado</h1>
-                    <p style="color:#666; margin-top:10px;">Esta área é restrita apenas ao proprietário.</p>
+                    <p style="color:var(--text-faint); margin-top:10px;">Esta área é restrita apenas ao proprietário.</p>
                     <a href="/" style="color:#fff; margin-top:20px; text-decoration:underline;">Voltar ao início</a>
                 </div>
             `;
@@ -332,7 +332,7 @@
         tbody.innerHTML = '';
 
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr class="linha-vazia"><td colspan="6" style="text-align:center; padding:40px; color:#555; display:table-cell;"><i class="fas fa-box-open" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum agendamento encontrado neste filtro.</td></tr>';
+            tbody.innerHTML = '<tr class="linha-vazia"><td colspan="6" style="text-align:center; padding:40px; color:var(--text-faint); display:table-cell;"><i class="fas fa-box-open" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum agendamento encontrado neste filtro.</td></tr>';
             return;
         }
 
@@ -369,7 +369,7 @@
         tbody.innerHTML = '';
 
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr class="linha-vazia"><td colspan="6" style="text-align:center; padding:40px; color:#555; display:table-cell;"><i class="fas fa-store" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum atendimento de balcão encontrado.<br><span style="font-size:.85em;">Use "Registrar atendimento" para lançar um corte feito na barbearia.</span></td></tr>';
+            tbody.innerHTML = '<tr class="linha-vazia"><td colspan="6" style="text-align:center; padding:40px; color:var(--text-faint); display:table-cell;"><i class="fas fa-store" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum atendimento de balcão encontrado.<br><span style="font-size:.85em;">Use "Registrar atendimento" para lançar um corte feito na barbearia.</span></td></tr>';
             return;
         }
 
@@ -662,7 +662,7 @@
                 ${barra(i.total, max)}
                 <small>${i.qtd} atendimento${i.qtd === 1 ? '' : 's'}</small>
             </div>`).join('') : '<p class="rel-vazio">Sem movimento neste mês.</p>';
-        return `<div class="rel-bloco"><h4><i class="${icone}"></i> ${titulo}</h4>${linhas}</div>`;
+        return `<div class="rel-bloco"><h2><i class="${icone}"></i> ${titulo}</h2>${linhas}</div>`;
     }
 
     window.carregarRelatorio = async function () {

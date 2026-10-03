@@ -53,21 +53,21 @@
 
 <a href="#agendamento" class="skip-link">Ir para o agendamento</a>
 
-<div id="area-usuario">
+<aside id="area-usuario" aria-label="Sua conta">
     <div id="logado" style="display: none;">
         <span id="boas-vindas"></span>
         <a href="/meus-agendamentos" id="btn-meus-cortes" class="btn-cortes"><i class="fas fa-calendar-check"></i> Meus Cortes</a>
         <button type="button" onclick="fazerLogout()" class="btn-sair"><i class="fas fa-sign-out-alt"></i> Sair</button>
     </div>
-</div>
+</aside>
 
 <header class="navbar" id="navbar">
     <a href="#topo" class="logo" aria-label="Barbearia do Rod, início">
         <img src="https://i.ibb.co/0jFF6FcM/IMG-5529.png" alt="" width="56" height="56" style="width: 56px; height: auto; vertical-align: middle;">
         RODBARBER
     </a>
-    <input type="checkbox" id="menu-toggle" class="menu-toggle">
-    <label for="menu-toggle" class="menu-icon" aria-label="Abrir menu" role="button"><span></span><span></span><span></span></label>
+    <input type="checkbox" id="menu-toggle" class="menu-toggle" aria-label="Abrir ou fechar o menu">
+    <label for="menu-toggle" class="menu-icon" aria-label="Abrir menu"><span></span><span></span><span></span></label>
     <nav aria-label="Principal">
         <ul class="nav-links">
             <li><a href="#agendamento" onclick="fecharMenuMobile()">Agendamento</a></li>
@@ -87,7 +87,8 @@
     </a>
 </header>
 
-<main class="hero" id="topo">
+<main id="conteudo">
+<section class="hero" id="topo">
     <div class="hero-deco" aria-hidden="true">
         <span class="deco-dot d1"></span>
         <span class="deco-dot d2"></span>
@@ -117,7 +118,7 @@
             </div>
 
             <div id="area-formulario" style="display: none;">
-                <h3 class="form-title" id="titulo-agendamento">Agende Seu Horário</h3>
+                <h2 class="form-title" id="titulo-agendamento">Agende Seu Horário</h2>
                 <p class="form-subtitle">Escolha o serviço, o dia e o horário em poucos cliques.</p>
                 <form id="form-agendamento" novalidate>
                     <input type="hidden" id="servico-selecionado">
@@ -155,7 +156,7 @@
             </div>
         </section>
     </div>
-</main>
+</section>
 
 <section class="about-section hidden" id="sobre">
     <div class="about-container">
@@ -203,21 +204,23 @@
 <section class="container hidden" id="depoimentos">
     <span class="section-eyebrow">Confiança</span>
     <h2>O Que Dizem Nossos Clientes</h2>
-    <div class="depoimentos-grid">
-        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"O melhor degradê da região. O Rod é fera demais! Ambiente top e atendimento de primeira."</p><h4>- Davi</h4><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
-        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Profissionalismo puro. Cheguei e fui atendido na hora com muita qualidade. Recomendo muito!"</p><h4>- Marcelo</h4><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
-        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Papo reto, atendimento excelente, o melhor da região."</p><h4>- Rafael</h4><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
-        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Corto há anos com o rod, ótimo profissional e boa pessoa."</p><h4>- Daniel</h4><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
+    <div class="depoimentos-grid" tabindex="0" role="region" aria-label="Depoimentos de clientes">
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"O melhor degradê da região. O Rod é fera demais! Ambiente top e atendimento de primeira."</p><h3 class="depo-autor">- Davi</h3><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Profissionalismo puro. Cheguei e fui atendido na hora com muita qualidade. Recomendo muito!"</p><h3 class="depo-autor">- Marcelo</h3><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Papo reto, atendimento excelente, o melhor da região."</p><h3 class="depo-autor">- Rafael</h3><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
+        <div class="depoimento-card"><i class="fas fa-quote-left quote-icon"></i><p>"Corto há anos com o rod, ótimo profissional e boa pessoa."</p><h3 class="depo-autor">- Daniel</h3><div class="stars" role="img" aria-label="5 estrelas">★★★★★</div></div>
     </div>
 </section>
 
-<div class="social-floating">
+</main>
+
+<aside class="social-floating" aria-label="Redes sociais">
     <a href="https://www.instagram.com/souzard_barber/" target="_blank" rel="noopener noreferrer" class="btn-float instagram" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
     <a href="https://api.whatsapp.com/send?phone=5511949411527&text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20corte." target="_blank" rel="noopener noreferrer" class="btn-float whatsapp" aria-label="WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
-</div>
-<button type="button" id="btn-topo" class="btn-topo" aria-label="Voltar ao topo"><i class="fas fa-arrow-up"></i></button>
+</aside>
+<aside aria-label="Voltar ao topo"><button type="button" id="btn-topo" class="btn-topo" aria-label="Voltar ao topo"><i class="fas fa-arrow-up"></i></button></aside>
 
 <footer id="contatos" class="footer-premium hidden">
     <div class="footer-content">
@@ -418,7 +421,7 @@
                 var hh = ('0' + Math.floor(t / 60)).slice(-2) + ':' + ('0' + (t % 60)).slice(-2);
                 var b = document.createElement('button'); b.type = 'button'; b.textContent = hh; b.setAttribute('role', 'radio');
                 mostrados++;
-                if (indisponiveis[hh]) { b.className = 'time-btn ocupado'; b.disabled = true; b.setAttribute('aria-label', hh + ', indisponível'); }
+                if (indisponiveis[hh]) { b.className = 'time-btn ocupado'; b.disabled = true; b.setAttribute('aria-checked', 'false'); b.setAttribute('aria-label', hh + ', indisponível'); }
                 else {
                     livres++; b.className = 'time-btn'; b.setAttribute('aria-checked', 'false');
                     if (estado.hora === hh) { b.classList.add('selected'); b.setAttribute('aria-checked', 'true'); }

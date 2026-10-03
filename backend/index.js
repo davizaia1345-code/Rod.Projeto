@@ -57,6 +57,18 @@ const senhaValida = s => typeof s === 'string' && s.length >= 8 && Buffer.byteLe
 const sha256 = v => crypto.createHash('sha256').update(v).digest('hex');
 const erro = (res, status, msg) => res.status(status).json({ erro: msg, mensagem: msg });
 
+// telefone brasileiro só com dígitos (DDD + número); '' = não informado; null = inválido
+function normTelefone(v) {
+    if (v === undefined || v === null || v === '') return '';
+    if (typeof v !== 'string' && typeof v !== 'number') return null;
+    let d = String(v).replace(/\D/g, '');
+    if (d.length >= 12 && d.startsWith('55')) d = d.slice(2);
+    return d.length === 10 || d.length === 11 ? d : null;
+}
+const emailReal = e => typeof e === 'string' && e.includes('@') && !e.endsWith('.invalid');
+const linkWhatsTel = tel => `https://wa.me/55${tel}`;
+const formatarTelefone = t => t && t.length >= 10 ? `(${t.slice(0, 2)}) ${t.slice(2, t.length - 4)}-${t.slice(-4)}` : '';
+
 function mascarar(email) {
     const [u = '', d = ''] = String(email).split('@');
     return `${u.slice(0, 2)}***@${d}`;
@@ -197,7 +209,8 @@ mongoose.connect(process.env.MONGO_URI)
 const agendamentoSchema = new mongoose.Schema({
     nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
     pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String,
-    referencia: String, pagamentoManual: String, lembreteEnviado: Boolean
+    referencia: String, pagamentoManual: String, lembreteEnviado: Boolean,
+    telefone: String, origem: String, remarcacoes: Number, avaliacaoPedida: Boolean
 });
 agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
 const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
@@ -237,7 +250,7 @@ const Bloqueio = mongoose.model('Bloqueio', bloqueioSchema);
 Bloqueio.init().catch(err => console.error('⚠️  Índice de bloqueios não criado:', err.message));
 
 const Usuario = mongoose.model('Usuario', {
-    nome: String, email: { type: String, unique: true }, senha: String,
+    nome: String, email: { type: String, unique: true }, senha: String, telefone: String,
     resetPasswordToken: String, resetPasswordExpires: Date
 });
 
@@ -397,8 +410,8 @@ const limpar = (v, max) => str(v, max).replace(/[\u0000-\u001f<>]/g, '');
 async function lancamentosDoMes(mes) {
     const faixa = { $gte: `${mes}-01`, $lte: `${mes}-31` };
     const [online, balcao, pendentes] = await Promise.all([
-        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data servico valor pagamentoManual'),
-        Atendimento.find({ data: faixa }).select('data servico valor forma'),
+        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data hora nome email servico valor pagamentoManual'),
+        Atendimento.find({ data: faixa }).select('data hora nome servico valor forma'),
         Agendamento.find({ statusPagamento: 'pendente', data: faixa }).select('valor')
     ]);
     return { online, balcao, pendentes };
@@ -412,6 +425,17 @@ async function calcularRelatorio(mes) {
     online.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, x.pagamentoManual ? (FORMAS[x.pagamentoManual] || 'Outro') : 'Online (site)', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
     balcao.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, FORMAS[x.forma] || 'Outro', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
     const lista = obj => Object.entries(obj).map(([nome, o]) => ({ nome, qtd: o.qtd, total: r2(o.total) })).sort((a, b) => b.total - a.total);
+
+    // quem mais vem, horários e dias mais movimentados
+    const clientes = {}, horarios = {}, semana = [0, 1, 2, 3, 4, 5, 6].map(() => ({ qtd: 0, total: 0 }));
+    const contar = (x, v, chave, nome) => {
+        if (chave) { const c = clientes[chave] || (clientes[chave] = { nome, qtd: 0, total: 0 }); c.qtd++; c.total += v; }
+        if (x.hora) { const h = String(x.hora).slice(0, 2) + 'h'; const o = horarios[h] || (horarios[h] = { qtd: 0, total: 0 }); o.qtd++; o.total += v; }
+        const d = new Date(`${x.data}T12:00:00Z`).getUTCDay(); if (!Number.isNaN(d)) { semana[d].qtd++; semana[d].total += v; }
+    };
+    online.forEach(x => contar(x, Number(x.valor) || 0, emailReal(x.email) ? x.email.toLowerCase() : (x.nome && x.nome !== 'Cliente removido' ? 'n:' + x.nome.toLowerCase() : ''), x.nome));
+    balcao.forEach(x => contar(x, Number(x.valor) || 0, x.nome ? 'n:' + x.nome.toLowerCase() : '', x.nome));
+    const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
     const total = soma(online) + soma(balcao);
     const qtd = online.length + balcao.length;
@@ -429,7 +453,10 @@ async function calcularRelatorio(mes) {
         diasComMovimento: dias.length,
         totalMesAnterior: r2(totalAnterior),
         variacaoPercentual: totalAnterior > 0 ? Math.round((total - totalAnterior) / totalAnterior * 1000) / 10 : null,
-        aguardandoPagamento: { qtd: pendentes.length, total: r2(soma(pendentes)) }
+        aguardandoPagamento: { qtd: pendentes.length, total: r2(soma(pendentes)) },
+        topClientes: Object.values(clientes).sort((a, b) => b.qtd - a.qtd || b.total - a.total).slice(0, 5).map(c => ({ nome: c.nome, qtd: c.qtd, total: r2(c.total) })),
+        porHorario: Object.entries(horarios).map(([nome, o]) => ({ nome, qtd: o.qtd, total: r2(o.total) })).sort((a, b) => b.qtd - a.qtd).slice(0, 6),
+        porDiaSemana: semana.map((o, i) => ({ nome: DIAS[i], qtd: o.qtd, total: r2(o.total) }))
     };
 }
 
@@ -507,7 +534,7 @@ async function enviarLembretes() {
     const candidatos = await Agendamento.find({ statusPagamento: 'approved', lembreteEnviado: { $ne: true }, data: { $in: [hoje, amanha.toISOString().slice(0, 10)] } });
     for (const ag of candidatos) {
         const falta = inicioDoAgendamento(ag) - agora;
-        if (falta <= 0 || falta > LEMBRETE_HORAS * 3600e3) continue;
+        if (falta <= 0 || falta > LEMBRETE_HORAS * 3600e3 || !emailReal(ag.email)) continue;
         if (agora - ag._id.getTimestamp().getTime() < 60 * 60e3) continue;   // acabou de reservar: lembrar seria redundante
         const r = await Agendamento.updateOne({ _id: ag._id, lembreteEnviado: { $ne: true } }, { lembreteEnviado: true });
         if (!r.modifiedCount) continue;                                       // outra execução já cuidou deste
@@ -547,6 +574,44 @@ async function enviarAgendaDoDia() {
     }
 }
 
+// avaliação: convite assinado (não precisa de login) enviado depois do atendimento
+const AVALIACAO_APOS_H = Number(process.env.AVALIACAO_APOS_H ?? 1);
+const Avaliacao = mongoose.model('Avaliacao', new mongoose.Schema({
+    agendamento: { type: mongoose.Schema.Types.ObjectId, unique: true }, nome: String, servico: String,
+    nota: Number, comentario: String, oculta: { type: Boolean, default: false }
+}, { timestamps: true }));
+const assinarConvite = id => `${id}.${crypto.createHmac('sha256', JWT_SECRET).update('avaliacao|' + id).digest('base64url').slice(0, 24)}`;
+function lerConvite(t) {
+    if (typeof t !== 'string' || t.length > 80) return null;
+    const [id, sig] = t.split('.');
+    if (!mongoose.isValidObjectId(id) || !sig) return null;
+    const esperado = Buffer.from(assinarConvite(id).split('.')[1]);
+    const recebido = Buffer.from(sig);
+    return recebido.length === esperado.length && crypto.timingSafeEqual(recebido, esperado) ? id : null;
+}
+const nomePublico = nome => { const p = String(nome || 'Cliente').trim().split(/\s+/); return p.length > 1 ? `${p[0]} ${p[p.length - 1][0].toUpperCase()}.` : p[0]; };
+
+async function pedirAvaliacoes() {
+    const agora = Date.now();
+    const desde = new Date(agora - 3 * 3600e3 - 8 * 86400e3).toISOString().slice(0, 10);
+    const candidatos = await Agendamento.find({ statusPagamento: 'approved', avaliacaoPedida: { $ne: true }, data: { $gte: desde, $lte: agoraSP().data } });
+    for (const ag of candidatos) {
+        if (!emailReal(ag.email)) continue;
+        const fim = inicioDoAgendamento(ag) + duracaoDe(ag.servico) * 60e3;
+        if (agora < fim + AVALIACAO_APOS_H * 3600e3) continue;
+        const r = await Agendamento.updateOne({ _id: ag._id, avaliacaoPedida: { $ne: true } }, { avaliacaoPedida: true });
+        if (!r.modifiedCount || agora - fim > 7 * 86400e3) continue;   // antigo demais: só marca
+        const t = assinarConvite(String(ag._id));
+        const estrelas = [1, 2, 3, 4, 5].map(i => `<a href="${FRONTEND_URL}/avaliar?t=${t}&n=${i}" style="color:#c7a04a;text-decoration:none;font-size:34px;padding:0 4px;" title="${i} estrela${i > 1 ? 's' : ''}">&#9733;</a>`).join('');
+        notificar({
+            to: ag.email, subject: 'Como foi seu corte? - RodBarber',
+            html: gerarEmailBonito('Como foi seu corte?', `Olá, ${escapeHtml(String(ag.nome).split(' ')[0])}! Sua opinião ajuda o Rod a melhorar sempre. Leva 10 segundos.`,
+                `<tr><td colspan="2" style="text-align:center;padding:16px 0 6px;">${estrelas}</td></tr><tr><td colspan="2" style="text-align:center;color:#9c9484;font-size:12px;">Toque nas estrelas para dar sua nota</td></tr>`,
+                '#c7a04a', { texto: 'AVALIAR ATENDIMENTO', link: `${FRONTEND_URL}/avaliar?t=${t}` })
+        });
+    }
+}
+
 let avisosUltimo = 0, avisosEmCurso = null;
 function garantirAvisos() {
     if (avisosEmCurso || Date.now() - avisosUltimo < INTERVALO_AVISOS_S * 1000) return;
@@ -554,6 +619,7 @@ function garantirAvisos() {
     avisosEmCurso = Promise.resolve()
         .then(enviarLembretes).catch(err => console.error('Erro nos lembretes:', err.message))
         .then(enviarAgendaDoDia).catch(err => console.error('Erro na agenda do dia:', err.message))
+        .then(pedirAvaliacoes).catch(err => console.error('Erro nos pedidos de avaliação:', err.message))
         .finally(() => { avisosEmCurso = null; });
 }
 setInterval(garantirAvisos, 5 * 60 * 1000).unref();
@@ -570,11 +636,13 @@ app.post('/cadastro', limitadorAuth, async (req, res) => {
         if (nome.length < 2) return erro(res, 400, 'Informe seu nome.');
         if (!emailValido(email)) return erro(res, 400, 'Informe um e-mail válido.');
         if (!senhaValida(senha)) return erro(res, 400, 'A senha precisa ter de 8 a 72 caracteres.');
+        const telefone = normTelefone(req.body && req.body.telefone);
+        if (telefone === null) return erro(res, 400, 'Informe um WhatsApp válido com DDD (ou deixe em branco).');
 
         // a conta do proprietário não pode ser criada pelo cadastro público
         if (email === OWNER_EMAIL && process.env.ALLOW_OWNER_SIGNUP !== 'true') { logSeg('cadastro_email_do_dono', req); return erro(res, 409, 'E-mail já cadastrado.'); }
         if (await Usuario.findOne({ email }).collation(COLLATION)) return erro(res, 409, 'E-mail já cadastrado.');
-        await new Usuario({ nome, email, senha: await bcrypt.hash(senha, BCRYPT_CUSTO) }).save();
+        await new Usuario({ nome, email, telefone, senha: await bcrypt.hash(senha, BCRYPT_CUSTO) }).save();
         res.json({ mensagem: 'Usuário cadastrado!' });
     } catch (err) {
         if (err && err.code === 11000) return erro(res, 409, 'E-mail já cadastrado.');
@@ -748,9 +816,12 @@ app.post('/agendar', exigirLogin, async (req, res) => {
     try {
         // a conta do proprietário só acessa o painel
         if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário acessa apenas o painel.');
-        if (!(await Usuario.exists({ email: req.usuario.email }).collation(COLLATION))) return erro(res, 401, 'Conta não encontrada. Faça login novamente.');
-        // nome e e-mail vêm do token: ninguém agenda em nome de outra pessoa nem usa o sistema para mandar e-mail a terceiros
-        const { nome, email } = req.usuario;
+        const usuarioDb = await Usuario.findOne({ email: req.usuario.email }).collation(COLLATION).select('nome telefone');
+        if (!usuarioDb) return erro(res, 401, 'Conta não encontrada. Faça login novamente.');
+        // e-mail vem do token e nome/telefone do cadastro: ninguém agenda em nome de outra pessoa nem usa o sistema para mandar e-mail a terceiros
+        const email = req.usuario.email;
+        const nome = usuarioDb.nome || req.usuario.nome;
+        const telefone = usuarioDb.telefone || '';
         await garantirLiberacao();
         const servico = str(req.body && req.body.servico, 60);
         const data = str(req.body && req.body.data, 10);
@@ -802,7 +873,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
 
         try {
             await new Agendamento({
-                nome, email, data, hora, servico, valor: preco,
+                nome, email, telefone, origem: 'site', data, hora, servico, valor: preco,
                 pagamentoId: idPagamento.toString(), statusPagamento: 'pendente',
                 pixCopiaCola: codigoPix, qrCodeBase64, urlPagamentoCartao: linkCartao, referencia
             }).save();
@@ -823,7 +894,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         notificar({
             to: OWNER_EMAIL, subject: `Novo agendamento: ${nome} - ${formatarData(data)} ${hora}`,
             html: gerarEmailBonito('Novo agendamento', `${nomeSeguro} reservou um horário.`,
-                linhasTabela + linhaEmail('Contato', escapeHtml(email)) + linhaEmail('Pagamento', 'Aguardando', '#e8ca8c'),
+                linhasTabela + linhaEmail('Contato', escapeHtml(email)) + (telefone ? linhaEmail('WhatsApp', `<a href="${linkWhatsTel(telefone)}" style="color:#f4efe4;text-decoration:none;">${formatarTelefone(telefone)}</a>`) : '') + linhaEmail('Pagamento', 'Aguardando', '#e8ca8c'),
                 '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
         });
         notificar({
@@ -1145,6 +1216,205 @@ app.delete('/agendamentos/:id', exigirLogin, async (req, res) => {
     } catch (err) {
         console.error('ERRO AO EXCLUIR AGENDAMENTO:', err.message);
         erro(res, 500, 'Erro ao excluir o agendamento.');
+    }
+});
+
+// --- perfil do cliente ---
+
+app.get('/meu-perfil', exigirLogin, async (req, res) => {
+    try {
+        if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário acessa apenas o painel.');
+        const u = await Usuario.findOne({ email: req.usuario.email }).collation(COLLATION).select('nome email telefone');
+        if (!u) return erro(res, 404, 'Conta não encontrada.');
+        res.json({ nome: u.nome, email: u.email, telefone: u.telefone || '' });
+    } catch (err) {
+        console.error('ERRO AO LER PERFIL:', err.message);
+        erro(res, 500, 'Erro ao carregar o perfil.');
+    }
+});
+
+app.put('/meu-perfil', exigirLogin, async (req, res) => {
+    try {
+        if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário acessa apenas o painel.');
+        const b = req.body || {};
+        const nome = limpar(b.nome, 80);
+        if (nome.length < 2) return erro(res, 400, 'Informe seu nome.');
+        const telefone = normTelefone(b.telefone);
+        if (telefone === null) return erro(res, 400, 'Informe um WhatsApp válido com DDD (ou deixe em branco).');
+        const u = await Usuario.findOneAndUpdate({ email: req.usuario.email }, { nome, telefone }, { new: true }).collation(COLLATION);
+        if (!u) return erro(res, 404, 'Conta não encontrada.');
+        // horários futuros passam a mostrar o nome/telefone novos para o Rod
+        await Agendamento.updateMany({ email: u.email, data: { $gte: agoraSP().data } }, { nome, telefone }).collation(COLLATION);
+        res.json({ nome: u.nome, email: u.email, telefone: u.telefone || '' });
+    } catch (err) {
+        console.error('ERRO AO SALVAR PERFIL:', err.message);
+        erro(res, 500, 'Erro ao salvar o perfil.');
+    }
+});
+
+// valida um novo horário (mesmas regras do agendamento pelo site)
+function erroDeHorario(data, hora) {
+    if (!dataReal(data) || !HORARIOS.has(hora)) return 'Data ou horário inválido.';
+    const agora = agoraSP();
+    const limite = new Date(`${agora.data}T00:00:00Z`); limite.setUTCDate(limite.getUTCDate() + 90);
+    if (data < agora.data || data > limite.toISOString().slice(0, 10)) return 'Escolha uma data entre hoje e os próximos 90 dias.';
+    const [h, m] = hora.split(':').map(Number);
+    if (data === agora.data && h * 60 + m <= agora.minutos) return 'Esse horário já passou.';
+    return null;
+}
+
+// --- agendamento feito pelo dono (cliente pediu pelo WhatsApp, telefone ou na hora) ---
+app.post('/agendamentos/manual', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const b = req.body || {};
+        const nome = limpar(b.nome, 80);
+        if (nome.length < 2) return erro(res, 400, 'Informe o nome do cliente.');
+        const telefone = normTelefone(b.telefone);
+        if (telefone === null) return erro(res, 400, 'WhatsApp inválido. Use DDD + número.');
+        const servico = str(b.servico, 60);
+        const preco = precoAtivo(servico);
+        if (preco === undefined) return erro(res, 400, 'Serviço inválido ou desativado.');
+        const data = str(b.data, 10), hora = str(b.hora, 5);
+        const problema = erroDeHorario(data, hora);
+        if (problema) return erro(res, 400, problema);
+        if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário está bloqueado em Folgas. Remova o bloqueio antes.');
+        try {
+            const doc = await Agendamento.create({ nome, email: '', telefone, origem: 'painel', data, hora, servico, valor: preco, statusPagamento: 'pendente' });
+            logSeg('agendamento_manual', req, { data, hora });
+            res.status(201).json(doc);
+        } catch (err) {
+            if (err && err.code === 11000) return erro(res, 400, 'Horário já reservado!');
+            throw err;
+        }
+    } catch (err) {
+        console.error('ERRO NO AGENDAMENTO MANUAL:', err.message);
+        erro(res, 500, 'Erro ao criar o agendamento.');
+    }
+});
+
+// --- remarcar ---
+const REMARCAR_ANTECEDENCIA_H = Number(process.env.REMARCAR_ANTECEDENCIA_H ?? 2);
+const MAX_REMARCACOES = 2;
+
+app.post('/agendamentos/:id/remarcar', exigirLogin, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const ag = await Agendamento.findById(req.params.id);
+        if (!ag) return erro(res, 404, 'Agendamento não encontrado.');
+        if (!donoDoAgendamento(req, ag)) { logSeg('remarcacao_negada', req, { email: mascarar(req.usuario.email) }); return erro(res, 403, 'Acesso negado.'); }
+        const data = str(req.body && req.body.data, 10), hora = str(req.body && req.body.hora, 5);
+        const problema = erroDeHorario(data, hora);
+        if (problema) return erro(res, 400, problema);
+        if (data === ag.data && hora === ag.hora) return erro(res, 400, 'Escolha um horário diferente do atual.');
+        const dono = req.usuario.dono;
+        if (!dono) {
+            if (ag.statusPagamento !== 'approved') return erro(res, 400, 'Só horários já pagos podem ser remarcados. Para os não pagos, cancele e agende de novo.');
+            if (inicioDoAgendamento(ag) - Date.now() < REMARCAR_ANTECEDENCIA_H * 3600e3) return erro(res, 400, `Remarcações só até ${REMARCAR_ANTECEDENCIA_H} horas antes do horário. Fale com o Rod pelo WhatsApp.`);
+            if ((ag.remarcacoes || 0) >= MAX_REMARCACOES) return erro(res, 400, `Este horário já foi remarcado ${MAX_REMARCACOES} vezes. Fale com o Rod pelo WhatsApp.`);
+        }
+        if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário não está disponível.');
+        const antes = { data: ag.data, hora: ag.hora };
+        try {
+            await Agendamento.updateOne({ _id: ag._id }, { $set: { data, hora, lembreteEnviado: false }, $inc: { remarcacoes: 1 } });
+        } catch (err) {
+            if (err && err.code === 11000) return erro(res, 400, 'Horário já reservado!');
+            throw err;
+        }
+        logSeg('agendamento_remarcado', req, { por: dono ? 'dono' : 'cliente', de: `${antes.data} ${antes.hora}`, para: `${data} ${hora}` });
+        res.json({ mensagem: 'Remarcado!', data, hora });
+
+        const detalhes = linhaEmail('Serviço', escapeHtml(ag.servico)) +
+            linhaEmail('Antes', `${formatarData(antes.data)} às ${escapeHtml(antes.hora)}`, '#9c9484') +
+            linhaEmail('Agora', `${formatarData(data)} às ${escapeHtml(hora)}`, '#2fae6b');
+        if (emailReal(ag.email)) notificar({ to: ag.email, subject: `Horário remarcado para ${formatarData(data)} às ${hora} - RodBarber`, html: gerarEmailBonito('Horário remarcado', 'Seu horário foi alterado. Te esperamos na nova data!', detalhes + linhaAgenda({ data, hora, servico: ag.servico })) });
+        if (!dono) notificar({ to: OWNER_EMAIL, subject: `Cliente remarcou: ${ag.nome} - ${formatarData(data)} ${hora}`, html: gerarEmailBonito('Cliente remarcou', `${escapeHtml(ag.nome)} mudou o horário.`, linhaEmail('Cliente', escapeHtml(ag.nome)) + detalhes, '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` }) });
+    } catch (err) {
+        console.error('ERRO AO REMARCAR:', err.message);
+        if (!res.headersSent) erro(res, 500, 'Erro ao remarcar.');
+    }
+});
+
+// --- avaliações ---
+
+app.get('/avaliacoes/convite', async (req, res) => {
+    try {
+        const id = lerConvite(req.query.t);
+        if (!id) return erro(res, 400, 'Link de avaliação inválido.');
+        const ag = await Agendamento.findById(id).select('nome servico data statusPagamento');
+        if (!ag || ag.statusPagamento !== 'approved') return erro(res, 404, 'Atendimento não encontrado.');
+        res.json({ nome: String(ag.nome || '').split(' ')[0], servico: ag.servico, data: ag.data, avaliado: Boolean(await Avaliacao.exists({ agendamento: id })) });
+    } catch (err) {
+        console.error('ERRO NO CONVITE DE AVALIAÇÃO:', err.message);
+        erro(res, 500, 'Erro ao abrir a avaliação.');
+    }
+});
+
+app.post('/avaliacoes', limitadorAuth, async (req, res) => {
+    try {
+        const b = req.body || {};
+        const id = lerConvite(b.t);
+        if (!id) return erro(res, 400, 'Link de avaliação inválido.');
+        const nota = typeof b.nota === 'number' || typeof b.nota === 'string' ? Number(b.nota) : NaN;
+        if (!Number.isInteger(nota) || nota < 1 || nota > 5) return erro(res, 400, 'Escolha de 1 a 5 estrelas.');
+        const comentario = limpar(b.comentario, 400);
+        const ag = await Agendamento.findById(id).select('nome servico data statusPagamento');
+        if (!ag || ag.statusPagamento !== 'approved') return erro(res, 404, 'Atendimento não encontrado.');
+        try {
+            await Avaliacao.create({ agendamento: id, nome: ag.nome, servico: ag.servico, nota, comentario });
+        } catch (err) {
+            if (err && err.code === 11000) return erro(res, 409, 'Este atendimento já foi avaliado. Obrigado!');
+            throw err;
+        }
+        res.status(201).json({ mensagem: 'Obrigado pela avaliação!' });
+        notificar({
+            to: OWNER_EMAIL, subject: `Nova avaliação: ${'★'.repeat(nota)}${'☆'.repeat(5 - nota)} - ${ag.nome}`,
+            html: gerarEmailBonito(nota <= 3 ? 'Avaliação que pede atenção' : 'Nova avaliação', `${escapeHtml(ag.nome)} avaliou o atendimento de ${formatarData(ag.data)}.`,
+                linhaEmail('Nota', `${'★'.repeat(nota)}${'☆'.repeat(5 - nota)}`, nota <= 3 ? '#cf4a40' : '#c7a04a') + linhaEmail('Serviço', escapeHtml(ag.servico)) + (comentario ? linhaEmail('Comentário', escapeHtml(comentario)) : ''),
+                nota <= 3 ? '#cf4a40' : '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
+        });
+    } catch (err) {
+        console.error('ERRO AO SALVAR AVALIAÇÃO:', err.message);
+        if (!res.headersSent) erro(res, 500, 'Erro ao salvar a avaliação.');
+    }
+});
+
+app.get('/avaliacoes', async (req, res) => {
+    try {
+        const todas = await Avaliacao.find().sort({ createdAt: -1 }).limit(500).lean();
+        const total = todas.length;
+        const media = total ? Math.round(todas.reduce((s2, a) => s2 + a.nota, 0) / total * 10) / 10 : null;
+        const distribuicao = [5, 4, 3, 2, 1].map(nv => ({ nota: nv, qtd: todas.filter(a => a.nota === nv).length }));
+        const lista = todas.filter(a => !a.oculta && a.comentario).slice(0, 12).map(a => ({
+            nome: nomePublico(a.nome), nota: a.nota, comentario: a.comentario, servico: a.servico, quando: nomeDoMes(new Date(a.createdAt).toISOString().slice(0, 7))
+        }));
+        res.set('Cache-Control', 'no-cache');
+        res.json({ media, total, distribuicao, lista });
+    } catch (err) {
+        console.error('ERRO AO LISTAR AVALIAÇÕES:', err.message);
+        erro(res, 500, 'Erro ao carregar as avaliações.');
+    }
+});
+
+app.get('/avaliacoes/todas', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        res.json(await Avaliacao.find().sort({ createdAt: -1 }).limit(1000));
+    } catch (err) {
+        console.error('ERRO AO LISTAR AVALIAÇÕES (DONO):', err.message);
+        erro(res, 500, 'Erro ao carregar as avaliações.');
+    }
+});
+
+app.put('/avaliacoes/:id', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        if (typeof (req.body && req.body.oculta) !== 'boolean') return erro(res, 400, 'Valor inválido.');
+        const doc = await Avaliacao.findByIdAndUpdate(req.params.id, { oculta: req.body.oculta }, { new: true });
+        if (!doc) return erro(res, 404, 'Avaliação não encontrada.');
+        logSeg('avaliacao_visibilidade', req, { oculta: doc.oculta });
+        res.json(doc);
+    } catch (err) {
+        console.error('ERRO AO ATUALIZAR AVALIAÇÃO:', err.message);
+        erro(res, 500, 'Erro ao atualizar a avaliação.');
     }
 });
 

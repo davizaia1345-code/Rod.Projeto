@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Rod em versão cartoon">
+  <defs>
+    <linearGradient id="pele" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c88660"/>
+      <stop offset="1" stop-color="#a8673f"/>
+    </linearGradient>
+    <linearGradient id="lente" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d5cff"/>
+      <stop offset=".55" stop-color="#2f3fd8"/>
+      <stop offset="1" stop-color="#1b1f7a"/>
+    </linearGradient>
+    <linearGradient id="anel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8ca8c"/>
+      <stop offset="1" stop-color="#c7a04a"/>
+    </linearGradient>
+    <clipPath id="circulo"><circle cx="64" cy="64" r="60"/></clipPath>
+  </defs>
+
+  <circle cx="64" cy="64" r="63" fill="url(#anel)"/>
+  <circle cx="64" cy="64" r="60" fill="#1c1a16"/>
+
+  <g clip-path="url(#circulo)">
+    <!-- camiseta -->
+    <path d="M14 128 C16 104 34 94 50 91 L78 91 C94 94 112 104 114 128 Z" fill="#0f0e0c"/>
+    <path d="M50 91 C55 100 73 100 78 91" fill="none" stroke="#c7a04a" stroke-width="2.4" stroke-linecap="round"/>
+    <!-- pescoço -->
+    <path d="M51 78 L77 78 L78 93 C72 99 56 99 50 93 Z" fill="#9c5d38"/>
+    <!-- orelhas -->
+    <ellipse cx="33.5" cy="60" rx="5.5" ry="8" fill="#b06e46"/>
+    <ellipse cx="94.5" cy="60" rx="5.5" ry="8" fill="#b06e46"/>
+    <!-- rosto -->
+    <path d="M36 50 C36 30 50 22 64 22 C78 22 92 30 92 50 L92 64 C92 80 80 90 64 90 C48 90 36 80 36 64 Z" fill="url(#pele)"/>
+    <!-- bochechas (sombra) -->
+    <path d="M38 66 C40 80 50 88 64 88 C78 88 88 80 90 66 C86 78 76 84 64 84 C52 84 42 78 38 66 Z" fill="#94532f" opacity=".35"/>
+    <!-- cabelo curto -->
+    <path d="M35 49 C34 30 47 19 64 19 C81 19 94 30 93 49 C90 41 86 37 80 35 C72 32 56 32 48 35 C42 37 38 41 35 49 Z" fill="#1b130f"/>
+    <path d="M36 47 C36 42 37 40 39 38 L39 52 Z M92 47 C92 42 91 40 89 38 L89 52 Z" fill="#1b130f" opacity=".7"/>
+    <!-- brilho e risca do cabelo -->
+    <path d="M47 30 C54 25 66 24 76 27" stroke="#3a2c24" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".8"/>
+    <path d="M40 40 L45 37" stroke="#c7a04a" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+    <!-- óculos juliet -->
+    <path d="M40 51 C46 48 56 48 61 51 L67 51 C72 48 82 48 88 51" fill="none" stroke="#8d8f93" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M41 52 C41 49 59 48 61 52 C61 60 57 65 50 65 C44 65 40 59 41 52 Z" fill="url(#lente)" stroke="#6e7075" stroke-width="1.6"/>
+    <path d="M67 52 C69 48 87 49 87 52 C88 59 84 65 78 65 C71 65 67 60 67 52 Z" fill="url(#lente)" stroke="#6e7075" stroke-width="1.6"/>
+    <path d="M45 54 C47 52 52 51 55 52" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".75" fill="none"/>
+    <path d="M71 54 C73 52 78 51 81 52" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".75" fill="none"/>
+    <path d="M40 51 L35 54 M88 51 L93 54" stroke="#8d8f93" stroke-width="2.4" stroke-linecap="round"/>
+    <!-- nariz -->
+    <path d="M60 65 C59 70 58 72 61 73.5 C63 74.5 66 74.5 68 73.5 C70.5 72 69 70 68 65" fill="#9c5a35" opacity=".55"/>
+    <!-- bigode -->
+    <path d="M54 77.5 C57 75 61 74.5 64 76 C67 74.5 71 75 74 77.5 C71 78.3 67 78.5 64 77.8 C61 78.5 57 78.3 54 77.5 Z" fill="#1f1611"/>
+    <!-- boca -->
+    <path d="M56 79.5 C60 82.5 68 82.5 72 79.5 C68 80.6 60 80.6 56 79.5 Z" fill="#6f3426"/>
+    <!-- cavanhaque / barba rala -->
+    <path d="M58 85 C60 88 68 88 70 85 C68 86 60 86 58 85 Z" fill="#1f1611" opacity=".85"/>
+    <path d="M44 76 C47 85 56 90 64 90 C72 90 81 85 84 76 C80 84 72 87.5 64 87.5 C56 87.5 48 84 44 76 Z" fill="#1f1611" opacity=".28"/>
+  </g>
+</svg>

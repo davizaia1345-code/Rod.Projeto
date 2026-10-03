@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de cuidados com o cabelo | Barbearia do Rod</title>
+    <meta name="description" content="Como cuidar do cabelo liso, ondulado, cacheado e crespo: lavagem, hidratação, finalização, produtos e cortes que valorizam. Guia da Barbearia do Rod.">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="canonical" href="https://rod-projeto.vercel.app/guia">
+    <meta property="og:title" content="Guia de cuidados com o cabelo | Barbearia do Rod">
+    <meta property="og:description" content="Descubra seu tipo de cabelo e aprenda a cuidar dele do jeito certo.">
+    <meta property="og:image" content="https://rod-projeto.vercel.app/fundo-precos.jpg">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="rod.css">
+</head>
+<body class="guia-page">
+
+<header class="guia-topo">
+    <a href="/" class="logo" aria-label="Barbearia do Rod, início">
+        <img src="rod-avatar.svg" alt="" class="logo-avatar" width="42" height="42">
+        RODBARBER
+    </a>
+    <nav class="guia-topo-acoes" aria-label="Atalhos">
+        <a href="/" class="guia-link"><i class="fas fa-arrow-left"></i> <span>Site</span></a>
+        <a href="/#agendamento" class="btn-book"><i class="far fa-calendar-plus"></i> Agendar</a>
+    </nav>
+</header>
+
+<main>
+    <section class="guia-hero">
+        <span class="hero-eyebrow">Guia da barbearia</span>
+        <h1>Como cuidar do <span>seu</span> cabelo</h1>
+        <p>Cada tipo de fio pede um cuidado diferente. Descubra o seu e veja o passo a passo para manter o corte bonito por mais tempo.</p>
+        <div class="guia-tipos-rapidos" role="list">
+            <a href="#guia" data-tipo="liso" role="listitem"><i class="fas fa-grip-lines"></i> Liso</a>
+            <a href="#guia" data-tipo="ondulado" role="listitem"><i class="fas fa-water"></i> Ondulado</a>
+            <a href="#guia" data-tipo="cacheado" role="listitem"><i class="fas fa-spinner"></i> Cacheado</a>
+            <a href="#guia" data-tipo="crespo" role="listitem"><i class="fas fa-braille"></i> Crespo</a>
+        </div>
+    </section>
+
+    <!-- descubra seu tipo -->
+    <section class="guia-quiz" id="quiz" aria-labelledby="quiz-titulo">
+        <h2 id="quiz-titulo"><i class="fas fa-wand-magic-sparkles"></i> Não sabe seu tipo? Descubra em 3 perguntas</h2>
+        <div class="quiz-pergunta" data-q="1">
+            <p><b>1.</b> Lave e deixe o cabelo secar sozinho, sem produto. Como ele fica?</p>
+            <div class="quiz-opcoes">
+                <button type="button" data-v="liso">Reto, cai sem formar ondas</button>
+                <button type="button" data-v="ondulado">Faz ondas soltas, em "S"</button>
+                <button type="button" data-v="cacheado">Forma cachos definidos, em molas</button>
+                <button type="button" data-v="crespo">Fica bem fechadinho, em "zigue-zague"</button>
+            </div>
+        </div>
+        <div class="quiz-pergunta" data-q="2" hidden>
+            <p><b>2.</b> Ao longo do dia, o couro cabeludo e os fios...</p>
+            <div class="quiz-opcoes">
+                <button type="button" data-v="liso">Ficam oleosos rápido</button>
+                <button type="button" data-v="ondulado">Ficam com frizz, oleosidade normal</button>
+                <button type="button" data-v="cacheado">Ressecam nas pontas</button>
+                <button type="button" data-v="crespo">Ressecam bastante e encolhem</button>
+            </div>
+        </div>
+        <div class="quiz-pergunta" data-q="3" hidden>
+            <p><b>3.</b> Se você passar o dedo enrolando uma mecha molhada...</p>
+            <div class="quiz-opcoes">
+                <button type="button" data-v="liso">Ela escorrega e volta reta</button>
+                <button type="button" data-v="ondulado">Ela forma uma onda larga</button>
+                <button type="button" data-v="cacheado">Ela vira um cacho do tamanho de um lápis ou maior</button>
+                <button type="button" data-v="crespo">Ela forma espirais bem pequenas</button>
+            </div>
+        </div>
+        <div class="quiz-resultado" id="quiz-resultado" hidden aria-live="polite"></div>
+    </section>
+
+    <!-- guia por tipo -->
+    <section class="guia-conteudo" id="guia" aria-label="Cuidados por tipo de cabelo">
+        <div class="guia-abas" role="tablist" aria-label="Tipo de cabelo">
+            <button type="button" role="tab" id="tab-liso" aria-controls="painel-liso" aria-selected="true" data-tipo="liso"><i class="fas fa-grip-lines"></i> Liso</button>
+            <button type="button" role="tab" id="tab-ondulado" aria-controls="painel-ondulado" aria-selected="false" data-tipo="ondulado" tabindex="-1"><i class="fas fa-water"></i> Ondulado</button>
+            <button type="button" role="tab" id="tab-cacheado" aria-controls="painel-cacheado" aria-selected="false" data-tipo="cacheado" tabindex="-1"><i class="fas fa-spinner"></i> Cacheado</button>
+            <button type="button" role="tab" id="tab-crespo" aria-controls="painel-crespo" aria-selected="false" data-tipo="crespo" tabindex="-1"><i class="fas fa-braille"></i> Crespo</button>
+            <button type="button" role="tab" id="tab-barba" aria-controls="painel-barba" aria-selected="false" data-tipo="barba" tabindex="-1"><i class="fas fa-user-tie"></i> Barba & degradê</button>
+        </div>
+
+        <!-- LISO -->
+        <article class="guia-painel" id="painel-liso" role="tabpanel" aria-labelledby="tab-liso">
+            <header class="guia-painel-topo">
+                <div><h2>Cabelo liso</h2><p>Fio reto do couro até a ponta. Costuma brilhar fácil, mas a oleosidade desce rápido pelo fio e ele pode "baixar" ao longo do dia.</p></div>
+                <span class="guia-selo"><i class="fas fa-droplet"></i> Ponto de atenção: oleosidade</span>
+            </header>
+            <div class="guia-grade">
+                <div class="guia-card"><h3><i class="fas fa-shower"></i> Lavagem</h3><ul>
+                    <li>Se a raiz fica oleosa, pode lavar todo dia ou em dias alternados, sem culpa.</li>
+                    <li>Use água morna ou fria. Água muito quente estimula ainda mais a oleosidade.</li>
+                    <li>Massageie o shampoo só no couro cabeludo, com a ponta dos dedos, por 1 a 2 minutos. A espuma que escorre já limpa o resto.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-pump-soap"></i> Condicionador</h3><ul>
+                    <li>Só do meio para as pontas, nunca na raiz.</li>
+                    <li>Prefira fórmulas leves. Em cabelo curto, pouca quantidade basta.</li>
+                    <li>Enxágue bem: resto de produto deixa o fio pesado e sem volume.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-wind"></i> Secagem e finalização</h3><ul>
+                    <li>Tire o excesso de água apertando a toalha, sem esfregar.</li>
+                    <li>Para volume, seque com o secador direcionando a raiz para o lado contrário de onde ela cai.</li>
+                    <li>Pomada ou cera <b>efeito seco (matte)</b> segura sem deixar aspecto de cabelo sujo.</li>
+                </ul></div>
+                <div class="guia-card evite"><h3><i class="fas fa-ban"></i> Evite</h3><ul>
+                    <li>Gel brilhante em excesso: pesa e "cola" o fio.</li>
+                    <li>Mexer no cabelo com a mão o dia todo, que espalha oleosidade.</li>
+                    <li>Dormir com o cabelo molhado.</li>
+                </ul></div>
+            </div>
+            <div class="guia-cortes"><h3><i class="fas fa-scissors"></i> Cortes que valorizam</h3>
+                <p>Social com textura em cima, <i>side part</i> (risca lateral), <i>crop</i> francês e degradê baixo. Fio liso marca bem as linhas, então o acabamento faz toda a diferença.</p>
+                <p class="guia-manut"><i class="far fa-clock"></i> Manutenção ideal: a cada <b>3 a 4 semanas</b>.</p>
+            </div>
+        </article>
+
+        <!-- ONDULADO -->
+        <article class="guia-painel" id="painel-ondulado" role="tabpanel" aria-labelledby="tab-ondulado" hidden>
+            <header class="guia-painel-topo">
+                <div><h2>Cabelo ondulado</h2><p>Forma ondas em "S", mais soltas ou mais marcadas. É o tipo que mais sofre com <b>frizz</b> e costuma alisar se for penteado seco.</p></div>
+                <span class="guia-selo"><i class="fas fa-cloud"></i> Ponto de atenção: frizz</span>
+            </header>
+            <div class="guia-grade">
+                <div class="guia-card"><h3><i class="fas fa-shower"></i> Lavagem</h3><ul>
+                    <li>Lave de 2 a 4 vezes por semana. Lavar todo dia costuma ressecar e aumentar o frizz.</li>
+                    <li>Prefira shampoo suave (sem sulfatos fortes) e condicionador sempre.</li>
+                    <li>Nos dias sem shampoo, só molhar e passar condicionador já reativa as ondas.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-hand-sparkles"></i> Para definir as ondas</h3><ul>
+                    <li>Com o cabelo ainda molhado, aplique um leave-in ou creme leve.</li>
+                    <li>Amasse os fios de baixo para cima com as mãos ("amassar" ou <i>scrunch</i>).</li>
+                    <li>Deixe secar naturalmente ou use difusor no secador, em temperatura morna.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-feather"></i> Pentear</h3><ul>
+                    <li>Pentear só molhado, com pente de dentes largos ou com os dedos.</li>
+                    <li>Escovar seco desmancha a onda e deixa o cabelo armado.</li>
+                    <li>Uma gotinha de óleo nas pontas ajuda a segurar o frizz em dia úmido.</li>
+                </ul></div>
+                <div class="guia-card evite"><h3><i class="fas fa-ban"></i> Evite</h3><ul>
+                    <li>Esfregar a toalha na cabeça: prefira uma camiseta de algodão para tirar a água.</li>
+                    <li>Produtos com muito álcool, que ressecam.</li>
+                    <li>Secador muito quente direto no fio.</li>
+                </ul></div>
+            </div>
+            <div class="guia-cortes"><h3><i class="fas fa-scissors"></i> Cortes que valorizam</h3>
+                <p>Volume em cima com laterais mais baixas (<i>taper</i> ou degradê médio), <i>mullet</i> moderno e franja texturizada. Deixar um pouco mais de comprimento em cima mostra a onda.</p>
+                <p class="guia-manut"><i class="far fa-clock"></i> Manutenção ideal: a cada <b>3 a 4 semanas</b>.</p>
+            </div>
+        </article>
+
+        <!-- CACHEADO -->
+        <article class="guia-painel" id="painel-cacheado" role="tabpanel" aria-labelledby="tab-cacheado" hidden>
+            <header class="guia-painel-topo">
+                <div><h2>Cabelo cacheado</h2><p>Cachos em espiral, do mais aberto ao mais fechado. A oleosidade natural tem dificuldade de descer pelo fio, por isso o cacho tende a ressecar e precisa de <b>hidratação</b>.</p></div>
+                <span class="guia-selo"><i class="fas fa-tint"></i> Ponto de atenção: ressecamento</span>
+            </header>
+            <div class="guia-grade">
+                <div class="guia-card"><h3><i class="fas fa-shower"></i> Lavagem</h3><ul>
+                    <li>Lave de 2 a 3 vezes por semana com shampoo hidratante ou suave.</li>
+                    <li>Entre as lavagens dá para fazer <i>co-wash</i>: lavar só com condicionador.</li>
+                    <li>Mesmo quem lava pouco deve limpar o couro cabeludo pelo menos a cada 2 ou 3 semanas.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-calendar-check"></i> Cronograma capilar</h3><ul>
+                    <li><b>Hidratação</b> (água e maciez): a cada 1 ou 2 semanas.</li>
+                    <li><b>Nutrição</b> (óleos e brilho): quando o cacho estiver opaco e áspero.</li>
+                    <li><b>Reconstrução</b> (força): só quando o fio estiver elástico e quebrando. Em excesso, endurece.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-hand-sparkles"></i> Finalização</h3><ul>
+                    <li>Desembarace com o cabelo molhado e cheio de condicionador, usando os dedos ou pente largo.</li>
+                    <li>Aplique leave-in ou creme de pentear em mechas e amasse para definir. Gel leve dá mais duração.</li>
+                    <li>Seque ao natural ou com difusor. Não mexa até secar, para não abrir frizz.</li>
+                </ul></div>
+                <div class="guia-card evite"><h3><i class="fas fa-ban"></i> Evite</h3><ul>
+                    <li>Pentear o cabelo seco.</li>
+                    <li>Dormir direto na fronha de algodão. Fronha ou touca de cetim reduz atrito e frizz.</li>
+                    <li>Muitos produtos com silicone pesado sem limpar direito depois.</li>
+                </ul></div>
+            </div>
+            <div class="guia-cortes"><h3><i class="fas fa-scissors"></i> Cortes que valorizam</h3>
+                <p>Cachos em cima com <i>low fade</i> ou <i>taper fade</i>, <i>mid fade</i> com risquinho (navalhado) e o clássico "cachos com degradê". O corte certo tira volume das laterais e deixa o cacho em evidência.</p>
+                <p class="guia-manut"><i class="far fa-clock"></i> Manutenção ideal: degradê a cada <b>2 a 3 semanas</b>; cachos a cada 6 a 8 semanas.</p>
+            </div>
+        </article>
+
+        <!-- CRESPO -->
+        <article class="guia-painel" id="painel-crespo" role="tabpanel" aria-labelledby="tab-crespo" hidden>
+            <header class="guia-painel-topo">
+                <div><h2>Cabelo crespo</h2><p>Fio em espirais bem fechadas ou em zigue-zague. É o mais frágil quando seco e o que mais encolhe, por isso pede <b>muita hidratação e cuidado ao pentear</b>.</p></div>
+                <span class="guia-selo"><i class="fas fa-shield"></i> Ponto de atenção: quebra</span>
+            </header>
+            <div class="guia-grade">
+                <div class="guia-card"><h3><i class="fas fa-shower"></i> Lavagem</h3><ul>
+                    <li>Uma vez por semana costuma bastar. Nos outros dias, <i>co-wash</i> ou só água e leave-in.</li>
+                    <li>Shampoo suave e hidratante. Uma vez por mês, um shampoo de limpeza mais profunda tira o acúmulo de produto.</li>
+                    <li>Se tiver caspa, aplique o anticaspa só no couro cabeludo e o shampoo hidratante no resto.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-tint"></i> Hidratação</h3><ul>
+                    <li>Use leave-in todos os dias de lavagem e reforce com um óleo leve para "selar" a água no fio.</li>
+                    <li>Máscara de hidratação toda semana.</li>
+                    <li>Borrifar um pouco de água com leave-in reativa o cabelo nos dias seguintes.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-feather"></i> Pentear</h3><ul>
+                    <li>Sempre molhado, com bastante condicionador, por partes, das pontas para a raiz.</li>
+                    <li>Pente garfo ou de dentes largos. Escova de cerdas só para o <i>twist</i> e esponja de nudred.</li>
+                    <li>Para quem usa <i>twist</i> ou nudred: desfazer e refazer com cuidado evita quebra.</li>
+                </ul></div>
+                <div class="guia-card evite"><h3><i class="fas fa-ban"></i> Evite</h3><ul>
+                    <li>Puxar ou prender apertado: pode causar quebra e queda na linha da testa.</li>
+                    <li>Química em cima de química, ou secador e chapinha com frequência.</li>
+                    <li>Dormir sem proteção: use touca ou fronha de cetim.</li>
+                </ul></div>
+            </div>
+            <div class="guia-cortes"><h3><i class="fas fa-scissors"></i> Cortes que valorizam</h3>
+                <p>Nudred com degradê, <i>twist</i>, <i>black power</i> desenhado, <i>buzz cut</i> com navalhado e freestyle nas laterais. O pezinho e a linha bem marcados destacam o corte.</p>
+                <p class="guia-manut"><i class="far fa-clock"></i> Manutenção ideal: degradê e pezinho a cada <b>2 semanas</b>.</p>
+            </div>
+        </article>
+
+        <!-- BARBA -->
+        <article class="guia-painel" id="painel-barba" role="tabpanel" aria-labelledby="tab-barba" hidden>
+            <header class="guia-painel-topo">
+                <div><h2>Barba e degradê em dia</h2><p>O segredo de um corte que parece sempre recém-feito está nos detalhes do dia a dia.</p></div>
+                <span class="guia-selo"><i class="fas fa-star"></i> Para todos os tipos</span>
+            </header>
+            <div class="guia-grade">
+                <div class="guia-card"><h3><i class="fas fa-user-tie"></i> Barba</h3><ul>
+                    <li>Lave com sabonete facial ou shampoo próprio para barba, não com sabonete comum de corpo.</li>
+                    <li>Óleo ou balm de barba depois do banho deixa os fios macios e evita coceira.</li>
+                    <li>Penteie todo dia no sentido do crescimento.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-hand-holding-droplet"></i> Pele e pelos encravados</h3><ul>
+                    <li>Esfoliação leve 1 a 2 vezes por semana ajuda a evitar pelos encravados.</li>
+                    <li>Se fizer a barba em casa, use lâmina nova e passe a favor dos pelos.</li>
+                    <li>Hidratante sem perfume depois de barbear acalma a pele.</li>
+                </ul></div>
+                <div class="guia-card"><h3><i class="fas fa-sun"></i> No sol e na piscina</h3><ul>
+                    <li>Boné ou chapéu protegem fio e couro cabeludo (o degradê deixa a pele exposta).</li>
+                    <li>Depois de piscina ou mar, enxágue o cabelo com água limpa.</li>
+                    <li>Protetor solar também vale para a nuca e as laterais raspadas.</li>
+                </ul></div>
+                <div class="guia-card evite"><h3><i class="fas fa-ban"></i> Evite</h3><ul>
+                    <li>Tentar "acertar o pezinho" em casa: um erro de máquina pode exigir baixar o degradê todo.</li>
+                    <li>Arrancar pelos encravados com a unha.</li>
+                    <li>Produtos com muito álcool na pele recém-barbeada.</li>
+                </ul></div>
+            </div>
+            <div class="guia-cortes"><h3><i class="fas fa-calendar-check"></i> Calendário de manutenção</h3>
+                <p>Degradê: a cada <b>2 a 3 semanas</b> · Barba: a cada <b>1 a 2 semanas</b> · Pezinho e acabamento: entre um corte e outro, se quiser o visual sempre alinhado.</p>
+            </div>
+        </article>
+
+        <div class="guia-cta">
+            <div><h3>Quer o corte certo para o seu tipo de cabelo?</h3><p>O Rod avalia seu fio na hora e indica o melhor estilo.</p></div>
+            <a href="/#agendamento" class="btn-cta-precos"><i class="far fa-calendar-plus"></i> Agendar meu horário</a>
+        </div>
+
+        <p class="guia-aviso"><i class="fas fa-circle-info"></i> Dicas gerais de cuidado. Queda, coceira forte, feridas ou caspa que não melhora merecem avaliação de um dermatologista. Referências: <a href="https://www.aad.org/public/everyday-care/hair-scalp-care/hair/healthy-hair-tips" target="_blank" rel="noopener noreferrer">AAD: dicas para cabelos saudáveis</a>, <a href="https://www.aad.org/public/everyday-care/hair-scalp-care/hair/curly-hair-care" target="_blank" rel="noopener noreferrer">AAD: cuidados com cabelo cacheado</a> e <a href="https://www.aad.org/public/everyday-care/hair-scalp-care/hair/habits-that-damage-hair" target="_blank" rel="noopener noreferrer">AAD: hábitos que danificam o cabelo</a>.</p>
+    </section>
+</main>
+
+<footer class="footer-premium guia-rodape">
+    <p class="copyright">© 2026 <strong>Barbearia do Rod</strong> · <a href="/" class="link-discreto">Início</a> · <a href="/privacidade" class="link-discreto">Privacidade</a></p>
+</footer>
+
+<script src="js/guia.js"></script>
+</body>
+</html>

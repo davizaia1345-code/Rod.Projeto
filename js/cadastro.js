@@ -5,7 +5,8 @@
 
             var form = document.getElementById('form-cadastro');
             var mensagem = document.getElementById('mensagem');
-            var nome = document.getElementById('nome'), email = document.getElementById('email'), senha = document.getElementById('senha');
+            var nome = document.getElementById('nome'), email = document.getElementById('email'), senha = document.getElementById('senha'), tel = document.getElementById('telefone');
+            RodUI.mascaraTelefone(tel);
             RodUI.campoSenha(senha);
             RodUI.medidorForca(senha);
             nome.focus();
@@ -18,6 +19,8 @@
                 var n = nome.value.trim().replace(/\s+/g, ' '), em = email.value.trim().toLowerCase();
                 if (n.length < 2) return falha('Informe seu nome.', nome);
                 if (!/^\S+@\S+\.\S+$/.test(em)) return falha('Esse e-mail não parece válido.', email);
+                var digitos = tel.value.replace(/\D/g, '');
+                if (digitos && digitos.length !== 10 && digitos.length !== 11) return falha('WhatsApp incompleto: use DDD + número (ou deixe em branco).', tel);
                 if (senha.value.length < 8) return falha('A senha precisa ter pelo menos 8 caracteres.', senha);
 
                 RodUI.carregando(btn, true, 'Criando conta...');
@@ -26,7 +29,7 @@
                 try {
                     var response = await fetch(API_URL + '/cadastro', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nome: n, email: em, senha: senha.value })
+                        body: JSON.stringify({ nome: n, email: em, senha: senha.value, telefone: digitos })
                     });
                     var data = await response.json().catch(function () { return {}; });
                     if (!response.ok) {

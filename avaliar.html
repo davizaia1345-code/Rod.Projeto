@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar atendimento | RodBarber</title>
+    <meta name="robots" content="noindex">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
+    <link rel="preconnect" href="https://rodbarber-api-0jna.onrender.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="rod.css">
+</head>
+<body class="auth-page">
+    <main class="container avaliar-box">
+        <a href="/" class="logo"><span>/</span> RodBarber</a>
+        <div id="carregando" class="avaliar-carregando"><i class="fas fa-circle-notch fa-spin"></i> Carregando...</div>
+
+        <form id="form-avaliar" hidden novalidate>
+            <h1>Como foi seu atendimento?</h1>
+            <p class="auth-subtitle" id="avaliar-sub"></p>
+            <div class="estrelas" role="radiogroup" aria-label="Sua nota" id="estrelas">
+                <button type="button" role="radio" aria-checked="false" data-n="1" aria-label="1 estrela"><i class="fas fa-star"></i></button>
+                <button type="button" role="radio" aria-checked="false" data-n="2" aria-label="2 estrelas"><i class="fas fa-star"></i></button>
+                <button type="button" role="radio" aria-checked="false" data-n="3" aria-label="3 estrelas"><i class="fas fa-star"></i></button>
+                <button type="button" role="radio" aria-checked="false" data-n="4" aria-label="4 estrelas"><i class="fas fa-star"></i></button>
+                <button type="button" role="radio" aria-checked="false" data-n="5" aria-label="5 estrelas"><i class="fas fa-star"></i></button>
+            </div>
+            <p class="estrelas-legenda" id="estrelas-legenda" aria-live="polite">Toque nas estrelas</p>
+            <div class="input-group">
+                <label for="comentario">Conte como foi <span class="opcional">(opcional)</span></label>
+                <textarea id="comentario" rows="4" maxlength="400" placeholder="O que você achou do corte e do atendimento?"></textarea>
+                <small class="dica-campo"><span id="contador">0</span>/400 · Seu primeiro nome pode aparecer no site junto com o comentário.</small>
+            </div>
+            <button type="submit"><i class="fas fa-paper-plane"></i> Enviar avaliação</button>
+        </form>
+
+        <div id="resultado" hidden></div>
+        <p id="mensagem" role="alert" aria-live="polite"></p>
+    </main>
+
+    <script src="auth.js"></script>
+    <script src="auth-ui.js"></script>
+    <script src="js/avaliar.js"></script>
+</body>
+</html>

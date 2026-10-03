@@ -57,8 +57,11 @@
 
     <div class="controles-bar">
         <div class="acoes-grupo">
-            <button type="button" data-click="abrirModalAtendimento" class="btn-atualizar">
-                <i class="fas fa-plus"></i> Registrar atendimento
+            <button type="button" data-click="novoAgendamento" class="btn-atualizar">
+                <i class="far fa-calendar-plus"></i> Novo agendamento
+            </button>
+            <button type="button" data-click="abrirModalAtendimento" class="btn-secundario">
+                <i class="fas fa-cash-register"></i> Registrar atendimento
             </button>
             <button type="button" data-click="carregarDados" class="btn-secundario">
                 <i class="fas fa-sync-alt"></i> Atualizar
@@ -76,6 +79,7 @@
         <button type="button" class="aba" id="btn-aba-balcao" role="tab" data-click="mudarAba" data-arg="balcao"><i class="fas fa-store"></i> Balcão</button>
         <button type="button" class="aba" id="btn-aba-folgas" role="tab" data-click="mudarAba" data-arg="folgas"><i class="fas fa-umbrella-beach"></i> Folgas</button>
         <button type="button" class="aba" id="btn-aba-servicos" role="tab" data-click="mudarAba" data-arg="servicos"><i class="fas fa-tags"></i> Serviços</button>
+        <button type="button" class="aba" id="btn-aba-avaliacoes" role="tab" data-click="mudarAba" data-arg="avaliacoes"><i class="fas fa-star"></i> Avaliações</button>
         <button type="button" class="aba" id="btn-aba-relatorio" role="tab" data-click="mudarAba" data-arg="relatorio"><i class="fas fa-chart-line"></i> Relatório</button>
     </div>
 
@@ -160,6 +164,11 @@
         </form>
     </section>
 
+    <section id="aba-avaliacoes" class="aba-painel" hidden>
+        <p class="aba-dica"><i class="fas fa-circle-info"></i> Depois de cada atendimento pago, o cliente recebe um e-mail para avaliar. As avaliações com comentário aparecem no site a partir de 3 avaliações; você pode ocultar qualquer uma.</p>
+        <div id="avaliacoes-admin"></div>
+    </section>
+
     <section id="aba-relatorio" class="aba-painel" hidden>
         <div class="relatorio-topo">
             <div class="filtro-group">
@@ -230,6 +239,7 @@
 
 <script src="auth.js"></script>
 <script src="util.js"></script>
+<script src="js/seletor.js"></script>
 <script src="js/acoes.js"></script>
 <script src="js/admin.js"></script>
 </body>

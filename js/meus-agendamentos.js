@@ -45,6 +45,7 @@
             if (/^https:\/\//.test(ag.urlPagamentoCartao || '')) acoes += '<a href="' + esc(ag.urlPagamentoCartao) + '" target="_blank" rel="noopener noreferrer" class="btn-card"><i class="far fa-credit-card"></i> Cartão</a>';
             acoes += '<button type="button" class="btn-cancelar" data-acao="cancelar" data-id="' + esc(ag._id) + '"><i class="far fa-trash-can"></i> Cancelar</button>';
         } else if (!passou && pago) {
+            if ((ag.remarcacoes || 0) < 2 && RodUtil.instante(ag.data, ag.hora).getTime() - Date.now() > 2 * 3600e3) acoes += '<button type="button" class="btn-sec" data-acao="remarcar" data-id="' + esc(ag._id) + '"><i class="fas fa-calendar-days"></i> Remarcar</button>';
             acoes += '<button type="button" class="btn-sec" data-acao="ics" data-id="' + esc(ag._id) + '"><i class="far fa-calendar-plus"></i> Adicionar à agenda</button>';
             acoes += '<a class="btn-sec" href="' + esc(RodUtil.linkMapa()) + '" target="_blank" rel="noopener noreferrer"><i class="fas fa-location-arrow"></i> Como chegar</a>';
             acoes += '<a class="btn-sec discreto" href="' + esc(RodUtil.linkWhats('Olá! Preciso remarcar ou cancelar meu horário de ' + RodUtil.dataBR(ag.data) + ' às ' + ag.hora + ' (' + ag.servico + ').')) + '" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> Remarcar / cancelar</a>';
@@ -109,6 +110,7 @@
         var ag = achar(el.dataset.id); if (!ag) return;
         if (el.dataset.acao === 'pix') abrirModal(ag);
         else if (el.dataset.acao === 'cancelar') cancelar(ag);
+        else if (el.dataset.acao === 'remarcar') remarcar(ag);
         else if (el.dataset.acao === 'ics') RodUtil.baixarIcs({ id: ag._id, servico: ag.servico, data: ag.data, hora: ag.hora });
     });
 
@@ -168,6 +170,67 @@
         }
     }
 
+    // ----- remarcar (horários pagos, até 2h antes, no máximo 2 vezes)
+    function remarcar(ag) {
+        RodSeletor.abrir({
+            api: API_URL, titulo: 'Remarcar horário', textoBotao: 'Confirmar nova data',
+            subtitulo: '<b>' + esc(ag.servico) + '</b> · marcado para ' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '<br><small>Você pode remarcar até 2 vezes, até 2 horas antes.</small>',
+            aoConfirmar: async function (sel) {
+                var resp = await RodAuth.fetch(API_URL + '/agendamentos/' + encodeURIComponent(ag._id) + '/remarcar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: sel.data, hora: sel.hora }) });
+                var corpo = await resp.json().catch(function () { return {}; });
+                if (!resp.ok) return corpo.mensagem || 'Não foi possível remarcar.';
+                Toast.fire({ icon: 'success', title: 'Remarcado para ' + RodUtil.dataBR(sel.data) + ' às ' + sel.hora });
+                carregar();
+                return null;
+            }
+        });
+    }
+
+    // ----- meus dados
+    var perfil = null;
+    function desenharPerfil() {
+        var box = $('perfil-card'); if (!perfil) return;
+        var tel = perfil.telefone ? '(' + perfil.telefone.slice(0, 2) + ') ' + perfil.telefone.slice(2, perfil.telefone.length - 4) + '-' + perfil.telefone.slice(-4) : '';
+        box.hidden = false;
+        box.innerHTML = '<span class="avatar-mini" aria-hidden="true">' + esc(perfil.nome.trim().charAt(0).toUpperCase()) + '</span>' +
+            '<div class="perfil-info"><strong>' + esc(perfil.nome) + '</strong><span>' + esc(perfil.email) + '</span>' +
+            (tel ? '<span><i class="fab fa-whatsapp"></i> ' + esc(tel) + '</span>' : '<span class="perfil-dica"><i class="fab fa-whatsapp"></i> Adicione seu WhatsApp para o Rod falar com você se precisar.</span>') + '</div>' +
+            '<button type="button" class="btn-sec" id="btn-editar-perfil"><i class="fas fa-pen"></i> Editar</button>';
+        $('btn-editar-perfil').addEventListener('click', editarPerfil);
+    }
+    async function carregarPerfil() {
+        try { var r = await RodAuth.fetch(API_URL + '/meu-perfil'); if (r.ok) { perfil = await r.json(); desenharPerfil(); } } catch (e) { /* opcional */ }
+    }
+    async function editarPerfil() {
+        var r = await Tema.fire({
+            title: 'Meus dados', showCancelButton: true, confirmButtonText: 'Salvar', cancelButtonText: 'Voltar',
+            html: '<label class="swal-rotulo" for="pf-nome">Nome</label><input id="pf-nome" class="swal2-input" maxlength="80" autocomplete="name">' +
+                  '<label class="swal-rotulo" for="pf-tel">WhatsApp (opcional)</label><input id="pf-tel" class="swal2-input" type="tel" inputmode="tel" maxlength="16" placeholder="(11) 91234-5678" autocomplete="tel-national">',
+            didOpen: function () {
+                document.getElementById('pf-nome').value = perfil.nome;
+                var t = document.getElementById('pf-tel'); RodUI.mascaraTelefone(t);
+                t.value = perfil.telefone || ''; t.dispatchEvent(new Event('input'));
+            },
+            preConfirm: async function () {
+                var nome = document.getElementById('pf-nome').value.trim(), tel = document.getElementById('pf-tel').value.replace(/\D/g, '');
+                if (nome.length < 2) { Swal.showValidationMessage('Informe seu nome.'); return false; }
+                if (tel && tel.length !== 10 && tel.length !== 11) { Swal.showValidationMessage('WhatsApp incompleto: use DDD + número.'); return false; }
+                try {
+                    var resp = await RodAuth.fetch(API_URL + '/meu-perfil', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: nome, telefone: tel }) });
+                    var corpo = await resp.json().catch(function () { return {}; });
+                    if (!resp.ok) { Swal.showValidationMessage(corpo.mensagem || 'Não foi possível salvar.'); return false; }
+                    return corpo;
+                } catch (e) { Swal.showValidationMessage('Sem conexão.'); return false; }
+            }
+        });
+        if (!r.isConfirmed || !r.value) return;
+        perfil = r.value;
+        try { localStorage.setItem('usuarioNome', perfil.nome); } catch (e) {}
+        $('ola').textContent = 'Olá, ' + perfil.nome.split(' ')[0] + '! Aqui estão os seus horários.';
+        desenharPerfil();
+        Toast.fire({ icon: 'success', title: 'Dados atualizados!' });
+    }
+
     // ----- excluir a própria conta (LGPD)
     async function excluirConta() {
         var r = await Tema.fire({
@@ -196,5 +259,5 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden && lista.length) carregar(); });
     // durações atuais (usadas para saber quando o corte termina e no arquivo do calendário)
     fetch(API_URL + '/servicos').then(function (r) { return r.ok ? r.json() : []; }).then(function (l) { (l || []).forEach(function (s) { RodUtil.duracoes[s.nome] = Number(s.minutos) || 40; }); if (lista.length) desenhar(); }).catch(function () {});
-    document.addEventListener('DOMContentLoaded', carregar);
+    document.addEventListener('DOMContentLoaded', function () { carregar(); if (RodAuth.token() && RodAuth.papel() !== 'owner') carregarPerfil(); });
 })();

@@ -3,5 +3,6 @@ Allow: /
 Disallow: /admin
 Disallow: /meus-agendamentos
 Disallow: /resetar-senha
+Disallow: /avaliar
 
 Sitemap: https://rod-projeto.vercel.app/sitemap.xml

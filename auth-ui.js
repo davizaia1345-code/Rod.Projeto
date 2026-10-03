@@ -82,5 +82,16 @@
     // acorda o servidor (plano gratuito dorme) enquanto a pessoa digita
     function aquecer(api) { try { fetch(api + '/health').catch(function () {}); } catch (e) {} }
 
-    window.RodUI = { campoSenha: campoSenha, medidorForca: medidorForca, mensagem: mensagem, carregando: carregando, pularSeLogado: pularSeLogado, aquecer: aquecer };
+    // (11) 91234-5678 enquanto digita
+    function mascaraTelefone(input) {
+        input.addEventListener('input', function () {
+            var d = input.value.replace(/\D/g, '').slice(0, 11);
+            var r = d;
+            if (d.length > 2) r = '(' + d.slice(0, 2) + ') ' + d.slice(2);
+            if (d.length > 6) r = '(' + d.slice(0, 2) + ') ' + d.slice(2, d.length - 4) + '-' + d.slice(-4);
+            input.value = r;
+        });
+    }
+
+    window.RodUI = { mascaraTelefone: mascaraTelefone, campoSenha: campoSenha, medidorForca: medidorForca, mensagem: mensagem, carregando: carregando, pularSeLogado: pularSeLogado, aquecer: aquecer };
 })();

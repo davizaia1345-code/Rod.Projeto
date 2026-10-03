@@ -487,6 +487,39 @@
         });
     }
 
+    // ---------------------------------------------------------------- avaliações reais (aparecem a partir de 3)
+    function estrelasTexto(nv) { return '★★★★★'.slice(0, nv) + '☆☆☆☆☆'.slice(0, 5 - nv); }
+    async function carregarAvaliacoes() {
+        try {
+            var r = await fetch(API_URL + '/avaliacoes');
+            if (!r.ok) return;
+            var d = await r.json();
+            if (!d || !d.total || d.total < 3 || d.media === null) return;
+            var media = d.media.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            var resumo = $('avaliacoes-resumo');
+            resumo.hidden = false;
+            resumo.innerHTML = '<strong class="ar-media">' + media + '</strong>' +
+                '<div><span class="ar-estrelas" role="img" aria-label="Nota média ' + media + ' de 5">' + estrelasTexto(Math.round(d.media)) + '</span>' +
+                '<span class="ar-total">' + d.total + ' avaliações de clientes verificados</span></div>';
+            var li = document.createElement('li');
+            li.innerHTML = '<i class="fas fa-star"></i> Nota ' + media + ' · ' + d.total + ' avaliações';
+            document.querySelector('.hero-pontos').appendChild(li);
+            if (!d.lista || d.lista.length < 2) return;   // poucos comentários: mantém os depoimentos atuais
+            var grid = document.querySelector('.depoimentos-grid');
+            grid.innerHTML = '';
+            d.lista.slice(0, 8).forEach(function (a) {
+                var c = document.createElement('div');
+                c.className = 'depoimento-card';
+                c.innerHTML = '<i class="fas fa-quote-left quote-icon" aria-hidden="true"></i><p></p><h3 class="depo-autor"></h3>' +
+                    '<div class="stars" role="img" aria-label="' + a.nota + ' estrelas">' + estrelasTexto(a.nota) + '</div><small class="depo-meta"></small>';
+                c.querySelector('p').textContent = '"' + a.comentario + '"';
+                c.querySelector('h3').textContent = '- ' + a.nome;
+                c.querySelector('.depo-meta').textContent = a.servico + ' · ' + a.quando;
+                grid.appendChild(c);
+            });
+        } catch (e) { /* mantém os depoimentos atuais */ }
+    }
+
     // ---------------------------------------------------------------- sessão
     function iniciarSessao() {
         // a conta do proprietário só usa o painel
@@ -528,6 +561,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         desenharServicos();
         carregarServicos();
+        carregarAvaliacoes();
         iniciarNavegacao();
         iniciarGaleria();
         iniciarRevelar();

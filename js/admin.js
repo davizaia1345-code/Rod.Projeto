@@ -21,6 +21,7 @@
     const horaSP = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
     const formatarData = d => RodUtil.dataBR(d);
     const chave = a => a.data + ' ' + a.hora;
+    const telBR = t => t && t.length >= 10 ? `(${t.slice(0, 2)}) ${t.slice(2, t.length - 4)}-${t.slice(-4)}` : '';
 
     // --- só decide o que mostrar: o servidor recusa (403) qualquer pedido que não seja do dono ---
     function verificarPermissao() {
@@ -129,14 +130,16 @@
                     <span class="info-secundaria"><i class="far fa-clock"></i> ${esc(ag.hora)} · ${esc(RodUtil.diaDaSemana(ag.data, 'short'))}</span>
                 </td>
                 <td data-label="Cliente">
-                    <span class="info-principal">${esc(ag.nome)}</span>
-                    <span class="info-secundaria"><a class="link-email" href="mailto:${esc(ag.email)}">${esc(ag.email)}</a></span>
+                    <span class="info-principal">${esc(ag.nome)}${ag.origem === 'painel' ? ' <em class="tag-origem" title="Agendado por você no painel">painel</em>' : ''}</span>
+                    ${ag.email ? `<span class="info-secundaria"><a class="link-email" href="mailto:${esc(ag.email)}">${esc(ag.email)}</a></span>` : ''}
+                    ${ag.telefone ? `<span class="info-secundaria"><a class="link-whats" href="https://wa.me/55${esc(ag.telefone)}?text=${encodeURIComponent('Olá, ' + String(ag.nome).split(' ')[0] + '! Aqui é o Rod, sobre seu horário de ' + formatarData(ag.data) + ' às ' + ag.hora + '.')}" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> ${esc(telBR(ag.telefone))}</a></span>` : ''}
                 </td>
                 <td data-label="Serviço">${esc(ag.servico)}</td>
                 <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">${brl(ag.valor)}</td>
                 <td data-label="Status">${badgeStatus(ag)}</td>
                 <td data-label="Ações" style="text-align: center;">
                     <div class="acoes-linha">
+                        ${ag.data >= hoje ? `<button type="button" class="btn-lixeira" data-acao="remarcar" data-id="${esc(ag._id)}" title="Remarcar" aria-label="Remarcar agendamento"><i class="fas fa-calendar-days"></i></button>` : ''}
                         ${pago ? '' : `<button type="button" class="btn-recebi" data-acao="pago" data-id="${esc(ag._id)}" title="Recebi o pagamento em mãos"><i class="fas fa-hand-holding-dollar"></i> Recebi</button>`}
                         <button type="button" class="btn-lixeira" data-acao="excluir" data-id="${esc(ag._id)}" title="Excluir" aria-label="Excluir agendamento"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -237,17 +240,18 @@
 
     window.mudarAba = function (nome) {
         abaAtual = nome;
-        ['agendamentos', 'balcao', 'folgas', 'servicos', 'relatorio'].forEach(a => {
+        ['agendamentos', 'balcao', 'folgas', 'servicos', 'avaliacoes', 'relatorio'].forEach(a => {
             $('aba-' + a).hidden = a !== nome;
             $('btn-aba-' + a).classList.toggle('ativa', a === nome);
         });
-        const semFiltros = nome === 'relatorio' || nome === 'folgas' || nome === 'servicos';
+        const semFiltros = ['relatorio', 'folgas', 'servicos', 'avaliacoes'].includes(nome);
         $('filtro-wrap').style.display = semFiltros ? 'none' : '';
         $('filtros-lista').style.display = semFiltros ? 'none' : '';
         document.querySelector('.chips').style.display = nome === 'agendamentos' ? '' : 'none';
         if (nome === 'relatorio') carregarRelatorio();
         if (nome === 'folgas') carregarFolgas();
         if (nome === 'servicos') carregarServicosAdmin();
+        if (nome === 'avaliacoes') carregarAvaliacoesAdmin();
     };
 
     // --- ações nas linhas (excluir / marcar como pago) ---
@@ -308,7 +312,93 @@
         else if (b.dataset.acao === 'excluir-atendimento') deletarAtendimento(id);
         else if (b.dataset.acao === 'remover-folga') removerFolga(id);
         else if (b.dataset.acao === 'salvar-servico') salvarServico(id);
+        else if (b.dataset.acao === 'remarcar') remarcarAgendamento(id);
+        else if (b.dataset.acao === 'ocultar-avaliacao') alternarAvaliacao(id, true);
+        else if (b.dataset.acao === 'mostrar-avaliacao') alternarAvaliacao(id, false);
     });
+
+    // --- novo agendamento (cliente pediu pelo WhatsApp, telefone ou pessoalmente) ---
+    window.novoAgendamento = function () {
+        const opcoes = Object.keys(PRECOS).map(nm => `<option value="${esc(nm)}">${esc(nm)} - ${brl(PRECOS[nm])}</option>`).join('');
+        RodSeletor.abrir({
+            api: API_URL, titulo: 'Novo agendamento', textoBotao: 'Agendar',
+            subtitulo: 'Para clientes que pediram pelo WhatsApp ou pessoalmente. Fica como pendente até você marcar "Recebi".',
+            extraHtml: '<div class="sel-campos"><label class="sel-rotulo" for="na-nome">Cliente</label><input id="na-nome" class="sel-input" maxlength="80" placeholder="Nome do cliente" autocomplete="off">' +
+                '<label class="sel-rotulo" for="na-tel">WhatsApp (opcional)</label><input id="na-tel" class="sel-input" type="tel" inputmode="tel" maxlength="16" placeholder="(11) 91234-5678">' +
+                '<label class="sel-rotulo" for="na-serv">Serviço</label><select id="na-serv" class="sel-input">' + opcoes + '</select></div>',
+            coletarExtra: ov => {
+                const nome = ov.querySelector('#na-nome').value.trim(), tel = ov.querySelector('#na-tel').value.replace(/\D/g, '');
+                if (nome.length < 2) return 'Informe o nome do cliente.';
+                if (tel && tel.length !== 10 && tel.length !== 11) return 'WhatsApp incompleto: use DDD + número.';
+                return { nome, telefone: tel, servico: ov.querySelector('#na-serv').value };
+            },
+            aoConfirmar: async sel => {
+                const res = await RodAuth.fetch(`${API_URL}/agendamentos/manual`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...sel.extra, data: sel.data, hora: sel.hora }) });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) return d.mensagem || 'Não foi possível agendar.';
+                toast('success', `Agendado: ${sel.extra.nome} · ${formatarData(sel.data)} ${sel.hora}`);
+                window.mudarAba('agendamentos');
+                carregarDados(true);
+                return null;
+            }
+        });
+        const t = document.getElementById('na-tel');
+        if (t) t.addEventListener('input', () => {
+            const d = t.value.replace(/\D/g, '').slice(0, 11);
+            t.value = d.length > 6 ? `(${d.slice(0, 2)}) ${d.slice(2, d.length - 4)}-${d.slice(-4)}` : d.length > 2 ? `(${d.slice(0, 2)}) ${d.slice(2)}` : d;
+        });
+    };
+
+    function remarcarAgendamento(id) {
+        const ag = todosAgendamentos.find(a => a._id === id); if (!ag) return;
+        RodSeletor.abrir({
+            api: API_URL, titulo: 'Remarcar', textoBotao: 'Confirmar nova data', dataInicial: ag.data >= hojeSP() ? ag.data : '',
+            subtitulo: `<b>${esc(ag.nome)}</b> · ${esc(ag.servico)}<br>Marcado para ${formatarData(ag.data)} às ${esc(ag.hora)}${ag.email ? '<br><small>O cliente recebe um e-mail com a nova data.</small>' : ''}`,
+            aoConfirmar: async sel => {
+                const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}/remarcar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: sel.data, hora: sel.hora }) });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) return d.mensagem || 'Não foi possível remarcar.';
+                toast('success', `Remarcado para ${formatarData(sel.data)} às ${sel.hora}`);
+                carregarDados(true);
+                return null;
+            }
+        });
+    }
+
+    // --- avaliações ---
+    const estrelas = nv => '<span class="av-estrelas" aria-label="' + nv + ' de 5">' + '★'.repeat(nv) + '<span>' + '★'.repeat(5 - nv) + '</span></span>';
+    async function carregarAvaliacoesAdmin() {
+        const alvo = $('avaliacoes-admin');
+        alvo.innerHTML = '<p class="rel-vazio"><i class="fas fa-spinner fa-spin"></i> Carregando...</p>';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/avaliacoes/todas`);
+            if (!res.ok) throw new Error('falha');
+            const lista = await res.json();
+            if (!lista.length) { alvo.innerHTML = '<p class="rel-vazio"><i class="far fa-star"></i> Ainda não há avaliações. Elas chegam por e-mail depois dos atendimentos pagos.</p>'; return; }
+            const media = lista.reduce((s, a) => s + a.nota, 0) / lista.length;
+            const dist = [5, 4, 3, 2, 1].map(nv => ({ nv, q: lista.filter(a => a.nota === nv).length }));
+            alvo.innerHTML = `
+                <div class="av-resumo">
+                    <div class="av-media"><strong>${media.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</strong>${estrelas(Math.round(media))}<span>${lista.length} avaliaç${lista.length === 1 ? 'ão' : 'ões'}</span></div>
+                    <div class="av-dist">${dist.map(x => `<div class="av-dist-linha"><span>${x.nv}★</span><span class="rel-barra"><span style="width:${Math.round(x.q / lista.length * 100)}%"></span></span><small>${x.q}</small></div>`).join('')}</div>
+                </div>
+                <div class="av-lista">${lista.map(a => `
+                    <div class="av-item${a.oculta ? ' oculta' : ''}${a.nota <= 3 ? ' baixa' : ''}">
+                        <div class="av-topo">${estrelas(a.nota)}<strong>${esc(a.nome)}</strong><span>${esc(a.servico)} · ${new Date(a.createdAt).toLocaleDateString('pt-BR')}</span>${a.oculta ? '<span class="badge bg-forma">Oculta no site</span>' : ''}</div>
+                        ${a.comentario ? `<p>"${esc(a.comentario)}"</p>` : '<p class="av-sem">Sem comentário.</p>'}
+                        <button type="button" class="btn-sec-admin" data-acao="${a.oculta ? 'mostrar' : 'ocultar'}-avaliacao" data-id="${esc(a._id)}"><i class="far fa-eye${a.oculta ? '' : '-slash'}"></i> ${a.oculta ? 'Mostrar no site' : 'Ocultar do site'}</button>
+                    </div>`).join('')}</div>`;
+        } catch (error) { if (error.message !== 'sessao_expirada') alvo.innerHTML = '<p class="rel-vazio">Não foi possível carregar as avaliações.</p>'; }
+    }
+
+    async function alternarAvaliacao(id, oculta) {
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/avaliacoes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oculta }) });
+            if (!res.ok) throw new Error('falha');
+            toast('success', oculta ? 'Avaliação ocultada do site.' : 'Avaliação visível no site.');
+            carregarAvaliacoesAdmin();
+        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não foi possível alterar' }); }
+    }
 
     // --- serviços e preços ---
     let servicosAdmin = [];
@@ -567,6 +657,9 @@
                 <div class="rel-grade">
                     ${listaRelatorio('Por serviço', 'fas fa-scissors', r.porServico)}
                     ${listaRelatorio('Forma de pagamento', 'fas fa-wallet', r.porForma)}
+                    ${listaRelatorio('Clientes que mais vieram', 'fas fa-user-group', r.topClientes || [])}
+                    ${listaRelatorio('Horários mais movimentados', 'far fa-clock', r.porHorario || [])}
+                    ${listaRelatorio('Dias da semana', 'far fa-calendar', (r.porDiaSemana || []).filter(d => d.qtd))}
                 </div>
                 ${r.aguardandoPagamento.qtd ? `<p class="rel-aviso"><i class="fas fa-triangle-exclamation"></i> ${r.aguardandoPagamento.qtd} reserva${r.aguardandoPagamento.qtd === 1 ? '' : 's'} sem pagamento (${brl(r.aguardandoPagamento.total)}) não entram no faturamento.</p>` : ''}
             `;

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /meus-agendamentos
+Disallow: /resetar-senha
+
+Sitemap: https://rod-projeto.vercel.app/sitemap.xml

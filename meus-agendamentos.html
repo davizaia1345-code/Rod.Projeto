@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Cortes - RodBarber</title>
+    <title>Meus Cortes | RodBarber</title>
     <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0a0908">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,189 +18,221 @@
     <link rel="stylesheet" href="rod.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js" integrity="sha384-rHxJuSO4eAGYnLjV2BLfndcudTiVBpNRJsOOLMtkX48TMZ5lefUhbpBJ6t8u/3nH" crossorigin="anonymous"></script>
-    <link rel="icon" type="image/png" href="https://i.ibb.co/8DXKQy0T/IMG-5529.png">
 </head>
 <body class="dashboard-page">
 
-<div class="dashboard-container">
+<main class="dashboard-container">
     <div class="page-header">
         <div class="page-title"><i class="fas fa-calendar-check"></i> Meus Cortes</div>
-        <a href="/" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
-    </div>
-    <div id="lista-agendamentos">
-        <div class="loading-state">
-            <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando seus horários...
+        <div class="page-header-acoes">
+            <a href="/#agendamento" class="btn-novo"><i class="far fa-calendar-plus"></i> Novo agendamento</a>
+            <a href="/" class="btn-voltar"><i class="fas fa-arrow-left"></i> Início</a>
         </div>
     </div>
-</div>
+    <p class="ola" id="ola"></p>
+    <div id="lista-agendamentos" aria-live="polite">
+        <div class="skel-card skel"></div>
+        <div class="skel-card skel"></div>
+    </div>
+</main>
 
-<div id="modal-pix" class="modal-overlay">
+<div id="modal-pix" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-pix-titulo">
     <div class="modal-content">
-        <span style="cursor:pointer; float:right; color:#888; font-size: 1.5rem;" onclick="fecharModal()" role="button" tabindex="0" aria-label="Fechar">&times;</span>
-        <h3 style="color:#fff; text-transform: uppercase;">Pagamento PIX</h3>
-        <p style="color:#888; font-size: 0.9rem;">Escaneie ou copie o código abaixo</p>
-        
-        <img id="qr-image" src="" class="pix-img">
-        
-        <textarea id="pix-text" class="pix-textarea" readonly></textarea>
-        
-        <button onclick="copiarPix()" class="btn-pagar" style="width:100%; justify-content:center; margin-bottom:15px;">
+        <button type="button" class="modal-fechar" onclick="fecharModal()" aria-label="Fechar"><i class="fas fa-xmark"></i></button>
+        <h3 id="modal-pix-titulo" class="modal-titulo"><i class="fa-brands fa-pix"></i> Pagamento PIX</h3>
+        <p class="modal-sub">Escaneie o QR Code ou copie o código abaixo.</p>
+
+        <img id="qr-image" src="" alt="QR Code PIX" class="pix-img" width="190" height="190">
+
+        <textarea id="pix-text" class="pix-textarea" rows="4" readonly aria-label="Código PIX copia e cola"></textarea>
+
+        <button type="button" onclick="copiarPix()" class="btn-pagar" style="width:100%; justify-content:center; margin-bottom:15px;">
             <i class="fas fa-copy"></i> COPIAR CÓDIGO
         </button>
-        
-        <div id="status-verificacao" style="color:#d4af37; font-size:0.9rem; font-weight: bold;">
-            <i class="fas fa-spinner fa-spin"></i> Aguardando confirmação...
+
+        <div id="status-verificacao" class="modal-status">
+            <span class="pix-pulse"></span> Aguardando confirmação do pagamento...
         </div>
     </div>
 </div>
 
 <script src="auth.js"></script>
+<script src="util.js"></script>
 <script>
-    // --- CONFIGURAÇÃO LOCAL ---
-    const API_URL = 'https://rodbarber-api-0jna.onrender.com';
-    let intervaloVerificacao = null;
+(function () {
+    'use strict';
+    var API_URL = 'https://rodbarber-api-0jna.onrender.com';
+    var esc = RodAuth.esc;
+    var intervaloVerificacao = null;
+    var lista = [];
+    var Tema = Swal.mixin({ background: '#151310', color: '#f4efe4', confirmButtonColor: '#c7a04a', cancelButtonColor: '#2b2822' });
+    var Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 2200, background: '#1c1a16', color: '#f4efe4' });
+    var $ = function (id) { return document.getElementById(id); };
 
-    function formatarData(dataISO) {
-        if (!dataISO) return '--/--/----';
-        const p = dataISO.split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
+    function fim(ag) { return RodUtil.instante(ag.data, ag.hora).getTime() + (RodUtil.duracoes[ag.servico] || 40) * 60000; }
+    function jaTerminou(ag) { return fim(ag) < Date.now(); }
+    function limiteId(id) { return String(id || '').replace(/[^a-f0-9]/gi, ''); }
+
+    function esqueleto() { return '<div class="skel-card skel"></div><div class="skel-card skel"></div>'; }
+
+    function vazio() {
+        return '<div class="estado-vazio"><i class="far fa-calendar-plus"></i>' +
+            '<h3>Você ainda não tem cortes marcados</h3><p>Escolha serviço, dia e horário em menos de 1 minuto.</p>' +
+            '<a href="/#agendamento" class="btn-novo grande"><i class="far fa-calendar-plus"></i> Agendar agora</a></div>';
     }
 
-    async function carregarAgendamentos() {
+    function erroCarregar() {
+        return '<div class="estado-vazio"><i class="fas fa-triangle-exclamation"></i><h3>Não foi possível carregar</h3>' +
+            '<p>O servidor pode estar acordando. Tente de novo em alguns segundos.</p>' +
+            '<button type="button" class="btn-novo grande" id="btn-recarregar"><i class="fas fa-rotate-right"></i> Tentar de novo</button></div>';
+    }
+
+    function cartao(ag, destaque) {
+        var pago = ag.statusPagamento === 'approved';
+        var passou = jaTerminou(ag);
+        var d = new Date(ag.data + 'T12:00:00');
+        var mes = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+        var rotulo, classe;
+        if (pago) { rotulo = passou ? 'Concluído' : 'Pago'; classe = 'status-pago'; }
+        else { rotulo = passou ? 'Não pago' : 'Aguardando pagamento'; classe = passou ? 'status-expirado' : 'status-pendente'; }
+
+        var info = '';
+        if (!passou) info += '<p class="ag-quando"><i class="far fa-clock"></i> ' + esc(RodUtil.quando(ag.data, ag.hora)) + '</p>';
+        if (!pago && !passou && ag.pagarAte) info += '<p class="pagar-ate"><i class="far fa-hourglass-half"></i> Pague até ' + esc(RodUtil.prazoBR(ag.pagarAte)) + ' ou a vaga é liberada</p>';
+
+        var acoes = '';
+        if (!passou && !pago) {
+            if (ag.pixCopiaCola) acoes += '<button type="button" class="btn-pagar" data-acao="pix" data-id="' + esc(ag._id) + '"><i class="fa-brands fa-pix"></i> Pagar com PIX</button>';
+            if (/^https:\/\//.test(ag.urlPagamentoCartao || '')) acoes += '<a href="' + esc(ag.urlPagamentoCartao) + '" target="_blank" rel="noopener noreferrer" class="btn-card"><i class="far fa-credit-card"></i> Cartão</a>';
+            acoes += '<button type="button" class="btn-cancelar" data-acao="cancelar" data-id="' + esc(ag._id) + '"><i class="far fa-trash-can"></i> Cancelar</button>';
+        } else if (!passou && pago) {
+            acoes += '<button type="button" class="btn-sec" data-acao="ics" data-id="' + esc(ag._id) + '"><i class="far fa-calendar-plus"></i> Adicionar à agenda</button>';
+            acoes += '<a class="btn-sec" href="' + esc(RodUtil.linkMapa()) + '" target="_blank" rel="noopener noreferrer"><i class="fas fa-location-arrow"></i> Como chegar</a>';
+            acoes += '<a class="btn-sec discreto" href="' + esc(RodUtil.linkWhats('Olá! Preciso remarcar ou cancelar meu horário de ' + RodUtil.dataBR(ag.data) + ' às ' + ag.hora + ' (' + ag.servico + ').')) + '" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> Remarcar / cancelar</a>';
+        } else {
+            acoes += '<a class="btn-sec" href="/#agendamento"><i class="fas fa-rotate-right"></i> Agendar de novo</a>';
+        }
+
+        return '<article class="agendamento-card ' + (pago ? 'pago' : 'pendente') + (passou ? ' passado' : '') + (destaque ? ' destaque' : '') + '">' +
+            (destaque ? '<span class="ag-selo"><i class="fas fa-bolt"></i> Próximo corte</span>' : '') +
+            '<div class="ag-data" aria-hidden="true"><span class="ag-dia-sem">' + esc(RodUtil.diaDaSemana(ag.data, 'short')) + '</span><span class="ag-dia">' + esc(ag.data.slice(8)) + '</span><span class="ag-mes">' + esc(mes) + '</span></div>' +
+            '<div class="ag-corpo">' +
+            '<h3 class="card-service">' + esc(ag.servico) + '</h3>' +
+            '<p class="card-date"><i class="far fa-calendar-alt"></i> ' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '</p>' +
+            info + '</div>' +
+            '<div class="ag-lado"><span class="status-badge ' + classe + '">' + rotulo + '</span><strong class="ag-valor">' + esc(RodUtil.brl(ag.valor)) + '</strong></div>' +
+            (acoes ? '<div class="card-actions">' + acoes + '</div>' : '') +
+            '</article>';
+    }
+
+    function desenhar() {
+        var box = $('lista-agendamentos');
+        if (!lista.length) { box.innerHTML = vazio(); return; }
+        var proximos = lista.filter(function (a) { return !jaTerminou(a); }).sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; });
+        var passados = lista.filter(jaTerminou).sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? 1 : -1; });
+        var html = '';
+        if (proximos.length) {
+            html += '<h2 class="ag-secao"><i class="fas fa-calendar-day"></i> Próximos <span>' + proximos.length + '</span></h2>';
+            proximos.forEach(function (a, i) { html += cartao(a, i === 0); });
+        } else {
+            html += '<div class="proximos-vazio"><i class="far fa-calendar"></i> Nenhum corte futuro. <a href="/#agendamento">Agendar agora</a></div>';
+        }
+        if (passados.length) {
+            html += '<h2 class="ag-secao historico"><i class="fas fa-clock-rotate-left"></i> Histórico <span>' + passados.length + '</span></h2>';
+            passados.forEach(function (a) { html += cartao(a, false); });
+        }
+        box.innerHTML = html;
+    }
+
+    async function carregar() {
         if (!RodAuth.token()) { window.location.href = '/login'; return; }
         if (RodAuth.papel() === 'owner') { window.location.replace('/admin'); return; }
-        
-        const container = document.getElementById('lista-agendamentos');
-        
+        var box = $('lista-agendamentos');
+        var nome = ''; try { nome = (localStorage.getItem('usuarioNome') || '').split(' ')[0]; } catch (e) {}
+        if (nome) $('ola').textContent = 'Olá, ' + nome + '! Aqui estão os seus horários.';
         try {
-            const res = await RodAuth.fetch(`${API_URL}/meus-agendamentos`);
-            if (!res.ok) throw new Error("falha");
-            const lista = await res.json();
-            
-            container.innerHTML = '';
-            
-            if (lista.length === 0) {
-                container.innerHTML = `
-                    <div class="loading-state">
-                        <i class="far fa-calendar-times fa-3x" style="margin-bottom:15px; opacity:0.5;"></i>
-                        <br>Nenhum agendamento encontrado.
-                    </div>`;
-                return;
-            }
-            
-            lista.reverse().forEach(item => {
-                const pago = item.statusPagamento === 'approved';
-                const card = document.createElement('div');
-                card.className = 'agendamento-card';
-                
-                // HTML DO CARD
-                card.innerHTML = `
-                    <div class="card-info">
-                        <span class="card-date"><i class="far fa-calendar-alt"></i> ${formatarData(item.data)} às ${RodAuth.esc(item.hora)}</span>
-                        <span class="card-service">${RodAuth.esc(item.servico)}</span>
-                        <span style="color:#888; font-size:0.95rem;">Valor: R$ ${Number(item.valor) || 0},00</span>
-                        ${!pago && item.pagarAte ? `<span class="pagar-ate"><i class="far fa-hourglass-half"></i> Pague até ${RodAuth.esc(new Date(item.pagarAte).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(', ', ' às '))} ou a vaga é liberada</span>` : ''}
-                    </div>
-                    <div class="card-actions">
-                        <span class="status-badge ${pago ? 'status-pago' : 'status-pendente'}">${pago ? 'PAGO' : 'PENDENTE'}</span>
-                        
-                        ${!pago && item.pixCopiaCola ? `
-                            <button class="btn-pagar" onclick='abrirModal("${RodAuth.esc(item.qrCodeBase64)}", "${RodAuth.esc(item.pixCopiaCola)}", "${RodAuth.esc(item.pagamentoId)}")'>
-                                <i class="fa-brands fa-pix"></i> PIX
-                            </button>` : ''
-                        }
-                        
-                        ${!pago && /^https:\/\//.test(item.urlPagamentoCartao || "") ? `
-                            <a href="${RodAuth.esc(item.urlPagamentoCartao)}" target="_blank" rel="noopener noreferrer" class="btn-card">
-                                <i class="far fa-credit-card"></i> CARTÃO
-                            </a>` : ''
-                        }
-                        
-                        <button class="btn-cancelar" onclick="cancelar('${RodAuth.esc(item._id)}')" title="Cancelar Agendamento" aria-label="Cancelar agendamento">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>`;
-                container.appendChild(card);
-            });
-        } catch (e) { 
-            console.error(e);
-            container.innerHTML = '<p style="color:#e62e2e">Erro ao conectar com o servidor.</p>'; 
+            var res = await RodAuth.fetch(API_URL + '/meus-agendamentos');
+            if (!res.ok) throw new Error('falha');
+            lista = await res.json();
+            desenhar();
+        } catch (e) {
+            if (e && e.message === 'sessao_expirada') return;
+            box.innerHTML = erroCarregar();
+            var b = $('btn-recarregar'); if (b) b.addEventListener('click', function () { box.innerHTML = esqueleto(); carregar(); });
         }
     }
 
-    // --- FUNÇÕES DO MODAL DE PAGAMENTO ---
-    function abrirModal(base64, copiaCola, id) {
-        document.getElementById('qr-image').src = `data:image/jpeg;base64,${base64}`;
-        document.getElementById('pix-text').value = copiaCola;
-        document.getElementById('modal-pix').style.display = 'flex';
-        iniciarVerificacao(id);
-    }
+    function achar(id) { return lista.filter(function (a) { return a._id === id; })[0]; }
 
-    function fecharModal() { 
-        document.getElementById('modal-pix').style.display = 'none'; 
-        clearInterval(intervaloVerificacao); 
-    }
+    // ----- delegação de cliques nos botões dos cartões
+    $('lista-agendamentos').addEventListener('click', function (ev) {
+        var el = ev.target.closest('[data-acao]'); if (!el) return;
+        var ag = achar(el.dataset.id); if (!ag) return;
+        if (el.dataset.acao === 'pix') abrirModal(ag);
+        else if (el.dataset.acao === 'cancelar') cancelar(ag);
+        else if (el.dataset.acao === 'ics') RodUtil.baixarIcs({ id: ag._id, servico: ag.servico, data: ag.data, hora: ag.hora });
+    });
 
-    function copiarPix() {
-        const t = document.getElementById('pix-text'); 
-        t.select(); 
-        navigator.clipboard.writeText(t.value);
-        Swal.fire({ 
-            toast: true, position: 'top', icon: 'success', 
-            title: 'Código Copiado!', showConfirmButton: false, 
-            timer: 1500, background: '#333', color: '#fff' 
-        });
+    // ----- PIX
+    function abrirModal(ag) {
+        if (/^[A-Za-z0-9+\/=]+$/.test(ag.qrCodeBase64 || '')) $('qr-image').src = 'data:image/png;base64,' + ag.qrCodeBase64;
+        $('pix-text').value = ag.pixCopiaCola || '';
+        $('modal-pix').style.display = 'flex';
+        $('modal-pix').querySelector('.modal-fechar').focus();
+        iniciarVerificacao(ag.pagamentoId);
     }
+    window.fecharModal = function () { $('modal-pix').style.display = 'none'; clearInterval(intervaloVerificacao); };
+    window.copiarPix = function () {
+        RodUtil.copiar($('pix-text').value).then(function (ok) { Toast.fire({ icon: ok ? 'success' : 'error', title: ok ? 'Código copiado!' : 'Não consegui copiar. Selecione e copie o código.' }); });
+    };
+    $('modal-pix').addEventListener('click', function (e) { if (e.target === this) fecharModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('modal-pix').style.display === 'flex') fecharModal(); });
 
     function iniciarVerificacao(id) {
         clearInterval(intervaloVerificacao);
-        intervaloVerificacao = setInterval(async () => {
+        var ocupado = false, inicio = Date.now();
+        intervaloVerificacao = setInterval(async function () {
+            if (ocupado || document.hidden) return;
+            if (Date.now() - inicio > 30 * 60000) { clearInterval(intervaloVerificacao); return; }
+            ocupado = true;
             try {
-                const res = await RodAuth.fetch(`${API_URL}/status-pagamento/${id}`);
-                const data = await res.json();
+                var res = await RodAuth.fetch(API_URL + '/status-pagamento/' + encodeURIComponent(id));
+                var data = await res.json();
                 if (data.status === 'approved') {
                     clearInterval(intervaloVerificacao);
-                    Swal.fire({ 
-                        icon: 'success', title: 'Pagamento Confirmado!', 
-                        text: 'Seu horário está garantido.', 
-                        background: '#1a1a1a', color: '#fff', confirmButtonColor: '#25d366'
-                    });
-                    fecharModal(); 
-                    carregarAgendamentos(); // Recarrega a lista para mostrar "PAGO"
+                    fecharModal();
+                    await Tema.fire({ icon: 'success', title: 'Pagamento confirmado!', text: 'Seu horário está garantido. Enviamos a confirmação por e-mail.', confirmButtonText: 'Ótimo' });
+                    carregar();
                 }
-            } catch (e) {}
-        }, 3000); 
+            } catch (e) { /* tenta de novo */ }
+            ocupado = false;
+        }, 3000);
     }
 
-    async function cancelar(id) {
-        const result = await Swal.fire({
-            title: 'Cancelar horário?',
-            text: "Essa vaga será liberada para outros clientes.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#e62e2e',
-            cancelButtonColor: '#333',
-            confirmButtonText: 'Sim, cancelar',
-            background: '#1a1a1a',
-            color: '#fff'
+    // ----- cancelar (só horários ainda não pagos)
+    async function cancelar(ag) {
+        var r = await Tema.fire({
+            title: 'Cancelar este horário?', icon: 'warning',
+            html: '<b>' + esc(ag.servico) + '</b><br>' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '<br><small style="color:#b2a996">A vaga será liberada e o PIX deixa de valer.</small>',
+            showCancelButton: true, confirmButtonColor: '#cf4a40', confirmButtonText: 'Sim, cancelar', cancelButtonText: 'Voltar'
         });
-        
-        if (result.isConfirmed) {
-            try {
-                const resp = await RodAuth.fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
-                if (!resp.ok) throw new Error('falha');
-                Swal.fire({ 
-                    title: 'Cancelado!', icon: 'success', 
-                    background: '#1a1a1a', color: '#fff', 
-                    timer: 1500, showConfirmButton: false 
-                });
-                carregarAgendamentos();
-            } catch (e) { 
-                Swal.fire('Erro', 'Não foi possível cancelar.', 'error'); 
-            }
+        if (!r.isConfirmed) return;
+        try {
+            var resp = await RodAuth.fetch(API_URL + '/agendamentos/' + encodeURIComponent(ag._id), { method: 'DELETE' });
+            var corpo = await resp.json().catch(function () { return {}; });
+            if (!resp.ok) { await Tema.fire({ icon: resp.status === 409 ? 'info' : 'error', title: resp.status === 409 ? 'Pagamento já confirmado' : 'Não foi possível cancelar', text: corpo.mensagem || 'Tente novamente em instantes.' }); carregar(); return; }
+            Toast.fire({ icon: 'success', title: 'Horário cancelado.' });
+            carregar();
+        } catch (e) {
+            if (e && e.message === 'sessao_expirada') return;
+            Tema.fire({ icon: 'error', title: 'Sem conexão', text: 'Confira sua internet e tente de novo.' });
         }
     }
-    
-    document.addEventListener('DOMContentLoaded', carregarAgendamentos);
+
+    // atualiza prazos/estados quando a pessoa volta para a aba
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && lista.length) carregar(); });
+    document.addEventListener('DOMContentLoaded', carregar);
+})();
 </script>
 </body>
 </html>

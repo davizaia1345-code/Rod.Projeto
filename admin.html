@@ -24,63 +24,177 @@
         <button type="button" class="btn-voltar" onclick="RodAuth.sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
     </div>
 
-    <div class="resumo-cards">
+    <div class="resumo-cards resumo-4">
         <div class="card-resumo">
             <h3>Agendamentos Hoje</h3>
             <p id="total-hoje">0</p>
             <i class="fas fa-calendar-day card-icon"></i>
         </div>
-        <div class="card-resumo total">
-            <h3>Total Geral</h3>
-            <p id="total-geral">0</p>
-            <i class="fas fa-users card-icon"></i>
+        <div class="card-resumo money">
+            <h3>Caixa de Hoje</h3>
+            <p id="caixa-hoje">R$ 0,00</p>
+            <i class="fas fa-cash-register card-icon"></i>
         </div>
         <div class="card-resumo money">
-            <h3>Faturamento (PIX)</h3>
-            <p id="total-faturamento">R$ 0,00</p>
+            <h3>Faturamento do Mês</h3>
+            <p id="fat-mes">R$ 0,00</p>
             <i class="fas fa-wallet card-icon"></i>
+        </div>
+        <div class="card-resumo total">
+            <h3>Atendimentos no Mês</h3>
+            <p id="atend-mes">0</p>
+            <i class="fas fa-scissors card-icon"></i>
         </div>
     </div>
 
     <div class="controles-bar">
-        <div class="filtro-group">
-            <label style="color:#aaa; font-size:0.9em;"><i class="fas fa-filter"></i> Data Específica:</label>
+        <div class="acoes-grupo">
+            <button type="button" onclick="abrirModalAtendimento()" class="btn-atualizar">
+                <i class="fas fa-plus"></i> Registrar atendimento
+            </button>
+            <button type="button" onclick="carregarDados()" class="btn-secundario">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+        </div>
+        <div class="filtro-group" id="filtro-wrap">
+            <label style="color:#aaa; font-size:0.9em;"><i class="fas fa-filter"></i> Data:</label>
             <input type="date" id="filtro-data" onchange="filtrarTabela()">
         </div>
-        <button onclick="carregarDados()" class="btn-atualizar">
-            <i class="fas fa-sync-alt"></i> Atualizar Painel
-        </button>
     </div>
 
-    <div class="tabela-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Data / Hora</th>
-                    <th>Cliente</th>
-                    <th>Serviço</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th style="text-align: center;">Ação</th>
-                </tr>
-            </thead>
-            <tbody id="lista-admin">
-                <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">
-                    <i class="fas fa-spinner fa-spin"></i> Conectando ao sistema...
-                </td></tr>
-            </tbody>
-        </table>
+    <div class="abas" role="tablist">
+        <button type="button" class="aba ativa" id="btn-aba-agendamentos" role="tab" onclick="mudarAba('agendamentos')"><i class="fas fa-globe"></i> Agendamentos do site</button>
+        <button type="button" class="aba" id="btn-aba-balcao" role="tab" onclick="mudarAba('balcao')"><i class="fas fa-store"></i> Balcão</button>
+        <button type="button" class="aba" id="btn-aba-relatorio" role="tab" onclick="mudarAba('relatorio')"><i class="fas fa-chart-line"></i> Relatório do mês</button>
+    </div>
+
+    <section id="aba-agendamentos" class="aba-painel">
+        <div class="tabela-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data / Hora</th>
+                        <th>Cliente</th>
+                        <th>Serviço</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th style="text-align: center;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-admin">
+                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                        <i class="fas fa-spinner fa-spin"></i> Conectando ao sistema...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="aba-balcao" class="aba-painel" hidden>
+        <p class="aba-dica"><i class="fas fa-circle-info"></i> Atendimentos de quem não passou pelo site. Entram no caixa e no relatório mensal.</p>
+        <div class="tabela-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data / Hora</th>
+                        <th>Cliente</th>
+                        <th>Serviço</th>
+                        <th>Pagamento</th>
+                        <th>Valor</th>
+                        <th style="text-align: center;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-balcao">
+                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="aba-relatorio" class="aba-painel" hidden>
+        <div class="relatorio-topo">
+            <div class="filtro-group">
+                <label style="color:#aaa; font-size:0.9em;"><i class="far fa-calendar"></i> Mês:</label>
+                <input type="month" id="rel-mes" onchange="carregarRelatorio()">
+            </div>
+            <button type="button" id="btn-enviar-relatorio" onclick="enviarRelatorio()" class="btn-atualizar">
+                <i class="fas fa-envelope"></i> Enviar por e-mail
+            </button>
+        </div>
+        <p class="aba-dica"><i class="fas fa-circle-info"></i> Todo começo de mês o relatório do mês anterior é enviado automaticamente para o seu e-mail.</p>
+        <div id="rel-conteudo"></div>
+    </section>
+</div>
+
+<!-- Registrar atendimento avulso -->
+<div id="modal-atendimento" class="modal-overlay" onclick="if (event.target === this) fecharModalAtendimento()">
+    <div class="modal-content modal-form" role="dialog" aria-modal="true" aria-labelledby="titulo-atendimento">
+        <button type="button" class="modal-fechar" aria-label="Fechar" onclick="fecharModalAtendimento()">&times;</button>
+        <h3 id="titulo-atendimento"><i class="fas fa-cash-register"></i> Registrar atendimento</h3>
+        <p class="modal-sub">Cliente que não passou pelo site? Lance aqui para manter o caixa em dia.</p>
+
+        <form id="form-atendimento" onsubmit="salvarAtendimento(event)">
+            <label for="at-servico">Serviço</label>
+            <select id="at-servico" onchange="aoMudarServico()"></select>
+            <input type="text" id="at-servico-outro" placeholder="Nome do serviço" maxlength="60" style="display:none">
+
+            <div class="linha-2">
+                <div>
+                    <label for="at-valor">Valor (R$)</label>
+                    <input type="number" id="at-valor" min="0.01" max="10000" step="0.01" inputmode="decimal" required>
+                </div>
+                <div>
+                    <label for="at-nome">Cliente (opcional)</label>
+                    <input type="text" id="at-nome" maxlength="80" placeholder="Nome">
+                </div>
+            </div>
+
+            <label>Forma de pagamento</label>
+            <div class="formas" id="at-formas">
+                <label class="forma-opcao"><input type="radio" name="forma" value="dinheiro" checked><span><i class="fas fa-money-bill-wave"></i> Dinheiro</span></label>
+                <label class="forma-opcao"><input type="radio" name="forma" value="pix"><span><i class="fa-brands fa-pix"></i> PIX</span></label>
+                <label class="forma-opcao"><input type="radio" name="forma" value="debito"><span><i class="far fa-credit-card"></i> Débito</span></label>
+                <label class="forma-opcao"><input type="radio" name="forma" value="credito"><span><i class="fas fa-credit-card"></i> Crédito</span></label>
+            </div>
+
+            <div class="linha-2">
+                <div>
+                    <label for="at-data">Data</label>
+                    <input type="date" id="at-data" required>
+                </div>
+                <div>
+                    <label for="at-hora">Hora</label>
+                    <input type="time" id="at-hora" required>
+                </div>
+            </div>
+
+            <label for="at-obs">Observação (opcional)</label>
+            <input type="text" id="at-obs" maxlength="120" placeholder="Ex.: desconto de amigo">
+
+            <button type="submit" id="btn-salvar-atendimento" class="btn-atualizar btn-salvar"><i class="fas fa-check"></i> Salvar atendimento</button>
+        </form>
     </div>
 </div>
 
 <script src="auth.js"></script>
 <script>
     const API_URL = 'https://rodbarber-api-0jna.onrender.com';
-    let todosAgendamentos = [];
+    const PRECOS = { 'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60, 'Progressiva + Corte': 120, 'Luzes + Corte': 100, 'Sobrancelha': 10 };
+    const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX', debito: 'Cartão de débito', credito: 'Cartão de crédito', outro: 'Outro' };
+    const esc = v => RodAuth.esc(v);
+    const toast = (icon, title) => Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 2500, background: '#1e1e1e', color: '#fff' });
 
-    // --- VERIFICAÇÃO DE SEGURANÇA (COROA) ---
+    let todosAgendamentos = [];
+    let todosAtendimentos = [];
+
+    const brl = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const hojeSP = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const horaSP = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+
+    // --- só decide o que mostrar: o servidor recusa (403) qualquer pedido que não seja do dono ---
     function verificarPermissao() {
-        // só decide o que mostrar: o servidor recusa (403) qualquer pedido que não seja do dono
         if (RodAuth.papel() !== 'owner') {
             document.body.innerHTML = `
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e; text-align:center;">
@@ -100,17 +214,28 @@
         if (!verificarPermissao()) return;
 
         try {
-            const res = await RodAuth.fetch(`${API_URL}/agendamentos`);
-            if (res.status === 403) { localStorage.removeItem("token"); return verificarPermissao(); }
-            if (!res.ok) throw new Error("falha");
-            todosAgendamentos = await res.json();
-            todosAgendamentos.reverse(); 
-            
-            renderizarTabela(todosAgendamentos);
-            calcularResumo(todosAgendamentos);
+            const [rAg, rAt] = await Promise.all([
+                RodAuth.fetch(`${API_URL}/agendamentos`),
+                RodAuth.fetch(`${API_URL}/atendimentos`)
+            ]);
+            if (rAg.status === 403 || rAt.status === 403) { localStorage.removeItem('token'); return verificarPermissao(); }
+            if (!rAg.ok || !rAt.ok) throw new Error('falha');
+            todosAgendamentos = (await rAg.json()).reverse();
+            todosAtendimentos = await rAt.json();
+
+            filtrarTabela();
+            calcularResumo();
+            if (!document.getElementById('aba-relatorio').hidden) carregarRelatorio();
         } catch (error) {
-            Swal.fire({ icon: 'error', title: 'Erro', text: 'Servidor offline.', background: '#1e1e1e', color: '#fff' });
+            if (error.message === 'sessao_expirada') return;
+            Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível carregar os dados agora.', background: '#1e1e1e', color: '#fff' });
         }
+    }
+
+    function formatarData(dataISO) {
+        if (!dataISO) return '--';
+        const partes = dataISO.split('-');
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
     function renderizarTabela(lista) {
@@ -128,13 +253,13 @@
             tr.innerHTML = `
                 <td data-label="Data / Hora">
                     <span class="info-principal info-destaque">${formatarData(ag.data)}</span>
-                    <span class="info-secundaria"><i class="far fa-clock"></i> ${RodAuth.esc(ag.hora)}</span>
+                    <span class="info-secundaria"><i class="far fa-clock"></i> ${esc(ag.hora)}</span>
                 </td>
                 <td data-label="Cliente">
-                    <span class="info-principal">${RodAuth.esc(ag.nome)}</span>
-                    <span class="info-secundaria">${RodAuth.esc(ag.email)}</span>
+                    <span class="info-principal">${esc(ag.nome)}</span>
+                    <span class="info-secundaria">${esc(ag.email)}</span>
                 </td>
-                <td data-label="Serviço">${RodAuth.esc(ag.servico)}</td>
+                <td data-label="Serviço">${esc(ag.servico)}</td>
                 <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">R$ ${Number(ag.valor) || 0},00</td>
                 <td data-label="Status">
                     <span class="badge ${isPago ? 'bg-pago' : 'bg-pendente'}">
@@ -142,7 +267,7 @@
                     </span>
                 </td>
                 <td data-label="Ação" style="text-align: center;">
-                    <button class="btn-lixeira" onclick="deletarAgendamento('${RodAuth.esc(ag._id)}')" title="Excluir" aria-label="Excluir agendamento">
+                    <button class="btn-lixeira" onclick="deletarAgendamento('${esc(ag._id)}')" title="Excluir" aria-label="Excluir agendamento">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
@@ -151,47 +276,239 @@
         });
     }
 
-    function calcularResumo(lista) {
-        document.getElementById('total-geral').innerText = lista.length;
-        const hojeISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-        const qtdHoje = lista.filter(item => item.data === hojeISO).length;
-        document.getElementById('total-hoje').innerText = qtdHoje;
-        const totalGrana = lista.filter(item => item.statusPagamento === 'approved').reduce((acc, item) => acc + (item.valor || 0), 0);
-        document.getElementById('total-faturamento').innerText = `R$ ${totalGrana.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    function renderizarBalcao(lista) {
+        const tbody = document.getElementById('lista-balcao');
+        tbody.innerHTML = '';
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#555;"><i class="fas fa-store" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum atendimento de balcão registrado.<br><span style="font-size:.85em;">Use "Registrar atendimento" para lançar um corte feito na barbearia.</span></td></tr>';
+            return;
+        }
+
+        lista.forEach(at => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td data-label="Data / Hora">
+                    <span class="info-principal info-destaque">${formatarData(at.data)}</span>
+                    <span class="info-secundaria"><i class="far fa-clock"></i> ${esc(at.hora)}</span>
+                </td>
+                <td data-label="Cliente">
+                    <span class="info-principal">${esc(at.nome) || 'Não informado'}</span>
+                    ${at.observacao ? `<span class="info-secundaria">${esc(at.observacao)}</span>` : ''}
+                </td>
+                <td data-label="Serviço">${esc(at.servico)}</td>
+                <td data-label="Pagamento"><span class="badge bg-forma">${esc(FORMAS[at.forma] || 'Outro')}</span></td>
+                <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">${brl(at.valor)}</td>
+                <td data-label="Ação" style="text-align: center;">
+                    <button class="btn-lixeira" onclick="deletarAtendimento('${esc(at._id)}')" title="Excluir" aria-label="Excluir atendimento">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    function formatarData(dataISO) {
-        if(!dataISO) return "--";
-        const partes = dataISO.split('-');
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    // caixa = agendamentos pagos pelo site + atendimentos de balcão
+    function calcularResumo() {
+        const hoje = hojeSP(), mes = hoje.slice(0, 7);
+        const pagos = todosAgendamentos.filter(a => a.statusPagamento === 'approved');
+        const soma = lista => lista.reduce((s, x) => s + (Number(x.valor) || 0), 0);
+        const doDia = l => l.filter(x => x.data === hoje), doMes = l => l.filter(x => String(x.data).startsWith(mes));
+
+        document.getElementById('total-hoje').innerText = todosAgendamentos.filter(a => a.data === hoje).length;
+        document.getElementById('caixa-hoje').innerText = brl(soma(doDia(pagos)) + soma(doDia(todosAtendimentos)));
+        document.getElementById('fat-mes').innerText = brl(soma(doMes(pagos)) + soma(doMes(todosAtendimentos)));
+        document.getElementById('atend-mes').innerText = doMes(pagos).length + doMes(todosAtendimentos).length;
     }
 
     function filtrarTabela() {
         const dataFiltro = document.getElementById('filtro-data').value;
-        if (!dataFiltro) { renderizarTabela(todosAgendamentos); return; }
-        const filtrados = todosAgendamentos.filter(ag => ag.data === dataFiltro);
-        renderizarTabela(filtrados);
+        const filtra = lista => dataFiltro ? lista.filter(x => x.data === dataFiltro) : lista;
+        renderizarTabela(filtra(todosAgendamentos));
+        renderizarBalcao(filtra(todosAtendimentos));
+    }
+
+    function mudarAba(nome) {
+        ['agendamentos', 'balcao', 'relatorio'].forEach(a => {
+            document.getElementById('aba-' + a).hidden = a !== nome;
+            document.getElementById('btn-aba-' + a).classList.toggle('ativa', a === nome);
+        });
+        document.getElementById('filtro-wrap').style.display = nome === 'relatorio' ? 'none' : '';
+        if (nome === 'relatorio') carregarRelatorio();
+    }
+
+    // --- excluir ---
+    async function confirmarExclusao(titulo, texto) {
+        const r = await Swal.fire({
+            title: titulo, text: texto, icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#e62e2e', cancelButtonColor: '#333', confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#fff'
+        });
+        return r.isConfirmed;
     }
 
     async function deletarAgendamento(id) {
-        const confirm = await Swal.fire({
-            title: 'Excluir registro?', text: "Isso apaga o agendamento para sempre.", icon: 'warning', 
-            showCancelButton: true, confirmButtonColor: '#e62e2e', cancelButtonColor: '#333', 
-            confirmButtonText: 'Sim, excluir', background: '#1e1e1e', color: '#fff'
-        });
+        if (!(await confirmarExclusao('Excluir registro?', 'Isso apaga o agendamento para sempre.'))) return;
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('falha');
+            toast('success', 'Excluído!');
+            carregarDados();
+        } catch (error) { Swal.fire('Erro', 'Falha ao deletar.', 'error'); }
+    }
 
-        if (confirm.isConfirmed) {
-            try {
-                const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
-                if (!res.ok) throw new Error('falha');
-                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#1e1e1e', color: '#fff' });
-                Toast.fire({ icon: 'success', title: 'Excluído!' });
-                carregarDados(); 
-            } catch (error) { Swal.fire('Erro', 'Falha ao deletar.', 'error'); }
+    async function deletarAtendimento(id) {
+        if (!(await confirmarExclusao('Excluir atendimento?', 'O valor sai do caixa e do relatório.'))) return;
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/atendimentos/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('falha');
+            toast('success', 'Excluído!');
+            carregarDados();
+        } catch (error) { Swal.fire('Erro', 'Falha ao deletar.', 'error'); }
+    }
+
+    // --- registrar atendimento avulso ---
+    function montarServicos() {
+        const sel = document.getElementById('at-servico');
+        sel.innerHTML = Object.keys(PRECOS).map(n => `<option value="${esc(n)}">${esc(n)} - ${brl(PRECOS[n])}</option>`).join('') +
+            '<option value="__outro">Outro serviço...</option>';
+    }
+
+    function aoMudarServico() {
+        const sel = document.getElementById('at-servico'), outro = document.getElementById('at-servico-outro');
+        const ehOutro = sel.value === '__outro';
+        outro.style.display = ehOutro ? '' : 'none';
+        outro.required = ehOutro;
+        if (!ehOutro) document.getElementById('at-valor').value = PRECOS[sel.value];
+        else { document.getElementById('at-valor').value = ''; outro.focus(); }
+    }
+
+    function abrirModalAtendimento() {
+        document.getElementById('form-atendimento').reset();
+        montarServicos();
+        const hoje = hojeSP();
+        const data = document.getElementById('at-data');
+        data.max = hoje; data.value = hoje;
+        document.getElementById('at-hora').value = horaSP();
+        document.getElementById('at-servico-outro').style.display = 'none';
+        document.getElementById('at-servico-outro').required = false;
+        document.getElementById('at-valor').value = PRECOS[document.getElementById('at-servico').value];
+        document.getElementById('modal-atendimento').style.display = 'flex';
+        document.getElementById('at-valor').focus();
+    }
+
+    function fecharModalAtendimento() { document.getElementById('modal-atendimento').style.display = 'none'; }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalAtendimento(); });
+
+    async function salvarAtendimento(evento) {
+        evento.preventDefault();
+        const sel = document.getElementById('at-servico').value;
+        const corpo = {
+            servico: sel === '__outro' ? document.getElementById('at-servico-outro').value.trim() : sel,
+            valor: document.getElementById('at-valor').value,
+            forma: document.querySelector('input[name="forma"]:checked').value,
+            nome: document.getElementById('at-nome').value.trim(),
+            data: document.getElementById('at-data').value,
+            hora: document.getElementById('at-hora').value,
+            observacao: document.getElementById('at-obs').value.trim()
+        };
+        const btn = document.getElementById('btn-salvar-atendimento');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/atendimentos`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo)
+            });
+            const dados = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(dados.erro || 'Não foi possível salvar.');
+            fecharModalAtendimento();
+            toast('success', 'Atendimento registrado!');
+            mudarAba('balcao');
+            await carregarDados();
+        } catch (error) {
+            if (error.message !== 'sessao_expirada') Swal.fire({ icon: 'error', title: 'Não salvou', text: error.message, background: '#1e1e1e', color: '#fff' });
+        } finally {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Salvar atendimento';
         }
     }
 
-    document.addEventListener('DOMContentLoaded', carregarDados);
+    // --- relatório do mês ---
+    function barra(valor, maximo) {
+        const pct = maximo > 0 ? Math.max(4, Math.round(valor / maximo * 100)) : 0;
+        return `<span class="rel-barra"><span style="width:${pct}%"></span></span>`;
+    }
+
+    function listaRelatorio(titulo, icone, itens) {
+        const max = Math.max(0, ...itens.map(i => i.total));
+        const linhas = itens.length ? itens.map(i => `
+            <div class="rel-linha">
+                <div class="rel-linha-topo"><span>${esc(i.nome)}</span><strong>${brl(i.total)}</strong></div>
+                ${barra(i.total, max)}
+                <small>${i.qtd} atendimento${i.qtd === 1 ? '' : 's'}</small>
+            </div>`).join('') : '<p class="rel-vazio">Sem movimento neste mês.</p>';
+        return `<div class="rel-bloco"><h4><i class="${icone}"></i> ${titulo}</h4>${linhas}</div>`;
+    }
+
+    async function carregarRelatorio() {
+        const campo = document.getElementById('rel-mes');
+        if (!campo.value) campo.value = hojeSP().slice(0, 7);
+        const alvo = document.getElementById('rel-conteudo');
+        alvo.innerHTML = '<p class="rel-vazio"><i class="fas fa-spinner fa-spin"></i> Calculando...</p>';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/relatorio?mes=${encodeURIComponent(campo.value)}`);
+            const r = await res.json();
+            if (!res.ok) throw new Error(r.erro || 'falha');
+
+            const v = r.variacaoPercentual;
+            const comparacao = v === null ? '<span class="rel-neutro">sem mês anterior para comparar</span>'
+                : `<span class="${v >= 0 ? 'rel-alta' : 'rel-baixa'}">${v >= 0 ? '▲' : '▼'} ${Math.abs(v).toLocaleString('pt-BR')}% vs mês anterior (${brl(r.totalMesAnterior)})</span>`;
+            const totalSplit = r.totalOnline + r.totalBalcao;
+            const pctOnline = totalSplit > 0 ? Math.round(r.totalOnline / totalSplit * 100) : 0;
+
+            alvo.innerHTML = `
+                <div class="rel-kpis">
+                    <div class="rel-kpi destaque"><span>Faturamento de ${esc(r.nomeMes)}</span><strong>${brl(r.total)}</strong>${comparacao}</div>
+                    <div class="rel-kpi"><span>Atendimentos</span><strong>${r.atendimentos}</strong><small>${r.atendimentosOnline} site · ${r.atendimentosBalcao} balcão</small></div>
+                    <div class="rel-kpi"><span>Ticket médio</span><strong>${brl(r.ticketMedio)}</strong><small>${r.diasComMovimento} dia${r.diasComMovimento === 1 ? '' : 's'} com movimento</small></div>
+                    <div class="rel-kpi"><span>Melhor dia</span><strong>${r.melhorDia ? formatarData(r.melhorDia.data) : '--'}</strong><small>${r.melhorDia ? brl(r.melhorDia.total) : 'sem movimento'}</small></div>
+                </div>
+                <div class="rel-split">
+                    <div class="rel-split-barra"><span style="width:${pctOnline}%"></span></div>
+                    <div class="rel-split-legenda"><span><i class="fas fa-globe"></i> Site ${brl(r.totalOnline)}</span><span><i class="fas fa-store"></i> Balcão ${brl(r.totalBalcao)}</span></div>
+                </div>
+                <div class="rel-grade">
+                    ${listaRelatorio('Por serviço', 'fas fa-scissors', r.porServico)}
+                    ${listaRelatorio('Forma de pagamento', 'fas fa-wallet', r.porForma)}
+                </div>
+                ${r.aguardandoPagamento.qtd ? `<p class="rel-aviso"><i class="fas fa-triangle-exclamation"></i> ${r.aguardandoPagamento.qtd} reserva${r.aguardandoPagamento.qtd === 1 ? '' : 's'} sem pagamento (${brl(r.aguardandoPagamento.total)}) não entram no faturamento.</p>` : ''}
+            `;
+        } catch (error) {
+            alvo.innerHTML = `<p class="rel-vazio">Não foi possível carregar o relatório. ${esc(error.message === 'sessao_expirada' ? '' : error.message)}</p>`;
+        }
+    }
+
+    async function enviarRelatorio() {
+        const mes = document.getElementById('rel-mes').value || hojeSP().slice(0, 7);
+        const btn = document.getElementById('btn-enviar-relatorio');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/relatorio/enviar`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mes })
+            });
+            const dados = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(dados.erro || 'falha');
+            Swal.fire({ icon: 'success', title: 'Relatório enviado!', text: dados.mensagem, background: '#1e1e1e', color: '#fff', confirmButtonColor: '#c7a04a' });
+        } catch (error) {
+            if (error.message !== 'sessao_expirada') Swal.fire({ icon: 'error', title: 'Não enviou', text: error.message, background: '#1e1e1e', color: '#fff' });
+        } finally {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-envelope"></i> Enviar por e-mail';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('rel-mes').value = hojeSP().slice(0, 7);
+        carregarDados();
+    });
 </script>
 </body>
 </html>

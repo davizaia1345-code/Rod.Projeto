@@ -315,6 +315,121 @@ function garantirLiberacao() {
 }
 setInterval(garantirLiberacao, 5 * 60 * 1000).unref();
 
+// ---------------------------------------------------------------------------
+// Caixa: atendimentos avulsos (balcão) e relatório mensal
+// ---------------------------------------------------------------------------
+
+const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX', debito: 'Cartão de débito', credito: 'Cartão de crédito', outro: 'Outro' };
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+const Atendimento = mongoose.model('Atendimento', new mongoose.Schema({
+    nome: String, servico: String, valor: Number, forma: String, data: String, hora: String, observacao: String
+}, { timestamps: true }));
+const Relatorio = mongoose.model('Relatorio', new mongoose.Schema({ mes: { type: String, unique: true }, enviadoEm: Date }));
+
+const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
+const brl = v => 'R$ ' + r2(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const mesValido = m => typeof m === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(m);
+const mesAnterior = mes => { let [a, m] = mes.split('-').map(Number); m--; if (m === 0) { m = 12; a--; } return `${a}-${String(m).padStart(2, '0')}`; };
+const nomeDoMes = mes => { const [a, m] = mes.split('-').map(Number); return `${MESES[m - 1]} de ${a}`; };
+const limpar = (v, max) => str(v, max).replace(/[\u0000-\u001f<>]/g, '');
+
+async function lancamentosDoMes(mes) {
+    const faixa = { $gte: `${mes}-01`, $lte: `${mes}-31` };
+    const [online, balcao, pendentes] = await Promise.all([
+        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data servico valor'),
+        Atendimento.find({ data: faixa }).select('data servico valor forma'),
+        Agendamento.find({ statusPagamento: 'pendente', data: faixa }).select('valor')
+    ]);
+    return { online, balcao, pendentes };
+}
+
+async function calcularRelatorio(mes) {
+    const { online, balcao, pendentes } = await lancamentosDoMes(mes);
+    const soma = lista => lista.reduce((s, x) => s + (Number(x.valor) || 0), 0);
+    const porServico = {}, porForma = {}, porDia = {};
+    const somar = (obj, chave, v) => { const o = obj[chave] || (obj[chave] = { qtd: 0, total: 0 }); o.qtd++; o.total += v; };
+    online.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, 'Online (site)', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
+    balcao.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, FORMAS[x.forma] || 'Outro', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
+    const lista = obj => Object.entries(obj).map(([nome, o]) => ({ nome, qtd: o.qtd, total: r2(o.total) })).sort((a, b) => b.total - a.total);
+
+    const total = soma(online) + soma(balcao);
+    const qtd = online.length + balcao.length;
+    const dias = Object.entries(porDia).sort((a, b) => b[1] - a[1]);
+    const ant = await lancamentosDoMes(mesAnterior(mes));
+    const totalAnterior = soma(ant.online) + soma(ant.balcao);
+
+    return {
+        mes, nomeMes: nomeDoMes(mes),
+        total: r2(total), totalOnline: r2(soma(online)), totalBalcao: r2(soma(balcao)),
+        atendimentos: qtd, atendimentosOnline: online.length, atendimentosBalcao: balcao.length,
+        ticketMedio: qtd ? r2(total / qtd) : 0,
+        porServico: lista(porServico), porForma: lista(porForma),
+        melhorDia: dias[0] ? { data: dias[0][0], total: r2(dias[0][1]) } : null,
+        diasComMovimento: dias.length,
+        totalMesAnterior: r2(totalAnterior),
+        variacaoPercentual: totalAnterior > 0 ? Math.round((total - totalAnterior) / totalAnterior * 1000) / 10 : null,
+        aguardandoPagamento: { qtd: pendentes.length, total: r2(soma(pendentes)) }
+    };
+}
+
+function emailRelatorio(r) {
+    const secao = titulo => `<tr><td colspan="2" style="padding:22px 0 4px;color:#c7a04a;font-size:11px;letter-spacing:2px;font-weight:700;text-transform:uppercase;">${titulo}</td></tr>`;
+    const variacao = r.variacaoPercentual === null ? 'sem dados do mês anterior para comparar'
+        : `${r.variacaoPercentual >= 0 ? '▲' : '▼'} ${Math.abs(r.variacaoPercentual).toLocaleString('pt-BR')}% em relação ao mês anterior (${brl(r.totalMesAnterior)})`;
+    let detalhes =
+        linhaEmail('Faturamento total', brl(r.total), '#2fae6b') +
+        linhaEmail('Pelo site (PIX/cartão)', `${brl(r.totalOnline)} · ${r.atendimentosOnline}`) +
+        linhaEmail('No balcão (avulsos)', `${brl(r.totalBalcao)} · ${r.atendimentosBalcao}`) +
+        linhaEmail('Atendimentos', String(r.atendimentos)) +
+        linhaEmail('Ticket médio', brl(r.ticketMedio)) +
+        linhaEmail('Dias com movimento', String(r.diasComMovimento)) +
+        (r.melhorDia ? linhaEmail('Melhor dia', `${formatarData(r.melhorDia.data)} · ${brl(r.melhorDia.total)}`) : '');
+    if (r.porServico.length) detalhes += secao('Por serviço') + r.porServico.map(s => linhaEmail(escapeHtml(s.nome), `${s.qtd}× · ${brl(s.total)}`)).join('');
+    if (r.porForma.length) detalhes += secao('Forma de pagamento') + r.porForma.map(f => linhaEmail(escapeHtml(f.nome), `${f.qtd}× · ${brl(f.total)}`)).join('');
+    if (r.aguardandoPagamento.qtd) detalhes += secao('Atenção') + linhaEmail('Reservas sem pagamento', `${r.aguardandoPagamento.qtd} · ${brl(r.aguardandoPagamento.total)}`, '#e8ca8c');
+    return {
+        subject: `Relatório de ${r.nomeMes} - RodBarber`,
+        html: gerarEmailBonito(`Relatório de ${r.nomeMes}`, `Faturamento de ${brl(r.total)}. ${variacao}.`, detalhes, '#c7a04a', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
+    };
+}
+
+// Envio automático no começo de cada mês (o serviço grátis dorme: a checagem roda a cada acesso e de hora em hora)
+const INTERVALO_RELATORIO_S = Number(process.env.RELATORIO_INTERVALO_S ?? 3600);
+let relatorioUltimo = 0, relatorioEmCurso = null;
+
+async function verificarRelatorioMensal() {
+    const hoje = agoraSP().data;
+    const anterior = mesAnterior(hoje.slice(0, 7));
+    // primeira execução: só registra o mês anterior como referência, sem mandar um relatório "surpresa" no deploy
+    if (await Relatorio.estimatedDocumentCount() === 0) {
+        await Relatorio.create({ mes: anterior, enviadoEm: null });
+        console.log(`📊 Relatório mensal: referência inicial registrada (${anterior}). O primeiro envio automático será no mês que vem.`);
+        return;
+    }
+    try { await Relatorio.create({ mes: anterior }); } catch (err) { if (err.code === 11000) return; throw err; }
+    try {
+        const { subject, html } = emailRelatorio(await calcularRelatorio(anterior));
+        await enviarEmail({ to: OWNER_EMAIL, subject, html });
+        await Relatorio.updateOne({ mes: anterior }, { enviadoEm: new Date() });
+        console.log(`📊 Relatório de ${anterior} enviado ao proprietário.`);
+    } catch (err) {
+        await Relatorio.deleteOne({ mes: anterior });   // libera para tentar de novo na próxima checagem
+        console.error(`⚠️  Relatório de ${anterior} não enviado; tentará de novo:`, err.message);
+    }
+}
+
+function garantirRelatorioMensal() {
+    if (relatorioEmCurso || Date.now() - relatorioUltimo < INTERVALO_RELATORIO_S * 1000) return;
+    relatorioUltimo = Date.now();
+    relatorioEmCurso = verificarRelatorioMensal()
+        .catch(err => console.error('Erro na checagem do relatório mensal:', err.message))
+        .finally(() => { relatorioEmCurso = null; });
+}
+setInterval(garantirRelatorioMensal, 60 * 60 * 1000).unref();
+mongoose.connection.once('open', () => setTimeout(garantirRelatorioMensal, 3000).unref());
+app.use((req, res, next) => { garantirRelatorioMensal(); next(); });
+
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.post('/cadastro', limitadorAuth, async (req, res) => {
@@ -571,6 +686,90 @@ app.get('/meus-agendamentos', exigirLogin, async (req, res) => {
     } catch (err) {
         console.error('ERRO AO LISTAR MEUS AGENDAMENTOS:', err.message);
         erro(res, 500, 'Erro ao listar seus agendamentos.');
+    }
+});
+
+// --- caixa (somente o proprietário) ---
+
+const limitadorRelatorio = rateLimit({
+    windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false,
+    handler: (req, res) => erro(res, 429, 'Limite de envios de relatório atingido. Tente em uma hora.')
+});
+
+app.post('/atendimentos', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const b = req.body || {};
+        const servico = limpar(b.servico, 60);
+        const valor = typeof b.valor === 'number' || typeof b.valor === 'string' ? Number(b.valor) : NaN;
+        const forma = typeof b.forma === 'string' ? b.forma : '';
+        if (!servico) return erro(res, 400, 'Informe o serviço.');
+        if (!Number.isFinite(valor) || valor <= 0 || valor > 10000) return erro(res, 400, 'Informe um valor entre R$ 0,01 e R$ 10.000,00.');
+        if (!Object.prototype.hasOwnProperty.call(FORMAS, forma)) return erro(res, 400, 'Forma de pagamento inválida.');
+
+        const agora = agoraSP();
+        const data = b.data === undefined || b.data === '' ? agora.data : str(b.data, 10);
+        if (!dataReal(data)) return erro(res, 400, 'Data inválida.');
+        const limiteAntigo = new Date(`${agora.data}T00:00:00Z`); limiteAntigo.setUTCDate(limiteAntigo.getUTCDate() - 366);
+        if (data > agora.data) return erro(res, 400, 'Atendimento não pode estar no futuro.');
+        if (data < limiteAntigo.toISOString().slice(0, 10)) return erro(res, 400, 'Data muito antiga.');
+        const horaPadrao = `${String(Math.floor(agora.minutos / 60)).padStart(2, '0')}:${String(agora.minutos % 60).padStart(2, '0')}`;
+        const hora = b.hora === undefined || b.hora === '' ? horaPadrao : str(b.hora, 5);
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return erro(res, 400, 'Hora inválida.');
+
+        const doc = await Atendimento.create({
+            nome: limpar(b.nome, 80), servico, valor: r2(valor), forma, data, hora, observacao: limpar(b.observacao, 120)
+        });
+        logSeg('atendimento_registrado', req, { valor: doc.valor, forma, data });
+        res.status(201).json(doc);
+    } catch (err) {
+        console.error('ERRO AO REGISTRAR ATENDIMENTO:', err.message);
+        erro(res, 500, 'Erro ao registrar o atendimento.');
+    }
+});
+
+app.get('/atendimentos', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        res.json(await Atendimento.find().sort({ data: -1, hora: -1 }).limit(1000));
+    } catch (err) {
+        console.error('ERRO AO LISTAR ATENDIMENTOS:', err.message);
+        erro(res, 500, 'Erro ao listar os atendimentos.');
+    }
+});
+
+app.delete('/atendimentos/:id', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const doc = await Atendimento.findByIdAndDelete(req.params.id);
+        if (!doc) return erro(res, 404, 'Atendimento não encontrado.');
+        logSeg('atendimento_excluido', req, { valor: doc.valor, data: doc.data });
+        res.json({ mensagem: 'Ok' });
+    } catch (err) {
+        console.error('ERRO AO EXCLUIR ATENDIMENTO:', err.message);
+        erro(res, 500, 'Erro ao excluir o atendimento.');
+    }
+});
+
+app.get('/relatorio', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const mes = req.query.mes === undefined ? agoraSP().data.slice(0, 7) : req.query.mes;
+        if (!mesValido(mes)) return erro(res, 400, 'Mês inválido. Use o formato AAAA-MM.');
+        res.json(await calcularRelatorio(mes));
+    } catch (err) {
+        console.error('ERRO AO CALCULAR RELATÓRIO:', err.message);
+        erro(res, 500, 'Erro ao calcular o relatório.');
+    }
+});
+
+app.post('/relatorio/enviar', exigirLogin, exigirDono, limitadorRelatorio, async (req, res) => {
+    try {
+        const mes = req.body && req.body.mes !== undefined ? req.body.mes : agoraSP().data.slice(0, 7);
+        if (!mesValido(mes)) return erro(res, 400, 'Mês inválido. Use o formato AAAA-MM.');
+        const { subject, html } = emailRelatorio(await calcularRelatorio(mes));
+        await enviarEmail({ to: OWNER_EMAIL, subject, html });
+        res.json({ mensagem: `Relatório de ${nomeDoMes(mes)} enviado para ${mascarar(OWNER_EMAIL)}.` });
+    } catch (err) {
+        console.error('ERRO AO ENVIAR RELATÓRIO:', err.message);
+        erro(res, 502, 'Não foi possível enviar o e-mail agora. Tente novamente em instantes.');
     }
 });
 

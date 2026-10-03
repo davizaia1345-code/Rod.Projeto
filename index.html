@@ -312,6 +312,7 @@
                                 <div class="summary-row"><span><i class="far fa-clock"></i> Horário</span><strong>${hora}</strong></div>
                                 <div class="summary-row total"><span>Total</span><strong>R$ ${preco},00</strong></div>
                             </div>
+                            <p class="success-prazo"><i class="far fa-hourglass-half"></i> ${result.pagarAte ? 'Pague até ' + new Date(result.pagarAte).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(', ', ' às ') + ' para manter a vaga.' : 'Pague para manter a vaga.'}</p>
                             <p class="success-mail"><i class="far fa-envelope"></i> Enviamos os detalhes para ${String(email).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}</p>
                             <div class="btn-choice-container" id="area-escolha">
                                 <button type="button" class="btn-pay-now" onclick="mostrarAreaPix('${result.idPagamento}')"><i class="fa-brands fa-pix"></i> Pagar com PIX</button>
@@ -372,6 +373,9 @@
         const hoje = new Date().toISOString().split('T')[0];
         const inputData = document.getElementById('data');
         if(inputData) inputData.setAttribute('min', hoje);
+
+        // a conta do proprietário só usa o painel
+        if (RodAuth.papel() === 'owner') { window.location.replace('/admin'); return; }
 
         // sem token válido guardado (ex.: sessão antiga), trata como deslogado
         if (!RodAuth.token()) { localStorage.removeItem('usuarioNome'); localStorage.removeItem('usuarioEmail'); }

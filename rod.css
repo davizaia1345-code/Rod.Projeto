@@ -1128,3 +1128,8 @@ body.dashboard-page { background-color: var(--bg); color: var(--text); padding: 
     .dashboard-page .modal-content { padding: 24px; }
     .dashboard-page .pix-img { width: 190px; height: 190px; }
 }
+
+/* Prazo de pagamento */
+.success-prazo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 10px 12px; background: var(--gold-dim); border: 1px solid rgba(199,160,74,.28); border-radius: var(--radius-sm); color: var(--gold-light); font-size: .82rem; font-weight: 600; }
+.pagar-ate { display: flex; align-items: center; gap: 7px; margin-top: 8px; color: var(--gold-light); font-size: .82rem; font-weight: 600; }
+.pagar-ate i { color: var(--gold); }

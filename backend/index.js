@@ -176,7 +176,8 @@ mongoose.connect(process.env.MONGO_URI)
 
 const agendamentoSchema = new mongoose.Schema({
     nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
-    pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String
+    pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String,
+    referencia: String
 });
 agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
 const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
@@ -247,6 +248,73 @@ setInterval(() => {
 // Rotas
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Pagamento pendente: o horário é liberado se não for pago a tempo
+// ---------------------------------------------------------------------------
+
+const HORAS_ANTECEDENCIA = Number(process.env.LIBERAR_PENDENTES_HORAS ?? 2);   // libera X horas antes do corte
+const CARENCIA_MIN = Number(process.env.LIBERAR_CARENCIA_MIN ?? 30);            // tempo mínimo para pagar após reservar
+const INTERVALO_LIBERACAO_S = Number(process.env.LIBERAR_INTERVALO_S ?? 60);
+
+const inicioDoAgendamento = ag => Date.parse(`${ag.data}T${ag.hora}:00-03:00`); // Brasília (UTC-3, sem horário de verão)
+const limiteDePagamento = ag => Math.max(
+    inicioDoAgendamento(ag) - HORAS_ANTECEDENCIA * 3600e3,
+    ag._id.getTimestamp().getTime() + CARENCIA_MIN * 60e3
+);
+
+async function confirmarPagamento(ag) {
+    await Agendamento.findOneAndUpdate({ _id: ag._id }, { statusPagamento: 'approved' });
+    const detalhes =
+        linhaEmail('Serviço', escapeHtml(ag.servico)) +
+        linhaEmail('Data', formatarData(ag.data)) +
+        linhaEmail('Horário', escapeHtml(ag.hora)) +
+        linhaEmail('Valor', `R$ ${ag.valor},00`, '#2fae6b');
+    notificar({ to: ag.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes, '#2fae6b') });
+    notificar({
+        to: OWNER_EMAIL, subject: `Pagamento recebido: ${ag.nome}`,
+        html: gerarEmailBonito('Pagamento recebido', `${escapeHtml(ag.nome)} pagou o agendamento.`, linhaEmail('Cliente', escapeHtml(ag.nome)) + detalhes, '#2fae6b', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
+    });
+}
+
+// Só apaga se o Mercado Pago confirmar que NÃO existe pagamento aprovado (PIX ou cartão). Na dúvida, mantém.
+async function liberarPendentesVencidos() {
+    const agora = Date.now();
+    const pendentes = await Agendamento.find({ statusPagamento: 'pendente', referencia: { $type: 'string' } });
+    for (const ag of pendentes) {
+        if (agora < limiteDePagamento(ag)) continue;
+        try {
+            try { await payment.cancel({ id: ag.pagamentoId }); } catch (e) { /* já pago, expirado ou cancelado: a consulta abaixo decide */ }
+            const busca = await payment.search({ options: { external_reference: ag.referencia } });
+            if ((busca.results || []).some(p => p.status === 'approved')) {
+                console.log(`💰 Pagamento aprovado encontrado ao liberar pendente (${ag.data} ${ag.hora}); confirmando.`);
+                await confirmarPagamento(ag);
+                continue;
+            }
+            await ag.deleteOne();
+            console.log(JSON.stringify({ tipo: 'agenda', evento: 'pendente_liberado', data: ag.data, hora: ag.hora, cliente: mascarar(ag.email) }));
+            notificar({
+                to: ag.email, subject: 'Horário liberado - RodBarber',
+                html: gerarEmailBonito('Horário liberado', 'O pagamento não foi identificado a tempo, então a vaga voltou para a agenda. Você pode agendar de novo quando quiser.',
+                    linhaEmail('Serviço', escapeHtml(ag.servico)) + linhaEmail('Data', formatarData(ag.data)) + linhaEmail('Horário', escapeHtml(ag.hora)),
+                    '#c7a04a', { texto: 'AGENDAR NOVAMENTE', link: FRONTEND_URL })
+            });
+        } catch (err) {
+            console.error(`⚠️  Não foi possível conferir o pagamento de ${ag.data} ${ag.hora}; horário mantido:`, err.message);
+        }
+    }
+}
+
+let liberacaoEmCurso = null, liberacaoUltima = 0;
+function garantirLiberacao() {
+    if (liberacaoEmCurso) return liberacaoEmCurso;
+    if (Date.now() - liberacaoUltima < INTERVALO_LIBERACAO_S * 1000) return Promise.resolve();
+    liberacaoEmCurso = liberarPendentesVencidos()
+        .catch(err => console.error('Erro ao liberar pendentes:', err.message))
+        .finally(() => { liberacaoUltima = Date.now(); liberacaoEmCurso = null; });
+    return liberacaoEmCurso;
+}
+setInterval(garantirLiberacao, 5 * 60 * 1000).unref();
+
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.post('/cadastro', limitadorAuth, async (req, res) => {
@@ -258,6 +326,8 @@ app.post('/cadastro', limitadorAuth, async (req, res) => {
         if (!emailValido(email)) return erro(res, 400, 'Informe um e-mail válido.');
         if (!senhaValida(senha)) return erro(res, 400, 'A senha precisa ter de 8 a 72 caracteres.');
 
+        // a conta do proprietário não pode ser criada pelo cadastro público
+        if (email === OWNER_EMAIL && process.env.ALLOW_OWNER_SIGNUP !== 'true') { logSeg('cadastro_email_do_dono', req); return erro(res, 409, 'E-mail já cadastrado.'); }
         if (await Usuario.findOne({ email }).collation(COLLATION)) return erro(res, 409, 'E-mail já cadastrado.');
         await new Usuario({ nome, email, senha: await bcrypt.hash(senha, BCRYPT_CUSTO) }).save();
         res.json({ mensagem: 'Usuário cadastrado!' });
@@ -359,6 +429,7 @@ app.get('/agendamentos/ocupados', async (req, res) => {
     try {
         const data = req.query.data;
         if (typeof data !== 'string' || !dataReal(data)) return erro(res, 400, 'Data inválida.');
+        await garantirLiberacao();
         const lista = await Agendamento.find({ data }).select('hora');
         res.json(lista.map(ag => ag.hora));
     } catch (err) {
@@ -369,8 +440,11 @@ app.get('/agendamentos/ocupados', async (req, res) => {
 
 app.post('/agendar', exigirLogin, async (req, res) => {
     try {
+        // a conta do proprietário só acessa o painel
+        if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário acessa apenas o painel.');
         // nome e e-mail vêm do token: ninguém agenda em nome de outra pessoa nem usa o sistema para mandar e-mail a terceiros
         const { nome, email } = req.usuario;
+        await garantirLiberacao();
         const servico = str(req.body && req.body.servico, 60);
         const data = str(req.body && req.body.data, 10);
         const hora = str(req.body && req.body.hora, 5);
@@ -392,34 +466,44 @@ app.post('/agendar', exigirLogin, async (req, res) => {
 
         const preco = PRECOS[servico];
         const descricao = `Corte ${servico} - ${data} ${hora}`;
+        // a referência liga o agendamento aos pagamentos no Mercado Pago (PIX e cartão)
+        const referencia = crypto.randomUUID();
         const pixResult = await payment.create({
-            body: { transaction_amount: preco, description: descricao, payment_method_id: 'pix', payer: { email, first_name: nome } }
+            body: { transaction_amount: preco, description: descricao, payment_method_id: 'pix', external_reference: referencia, payer: { email, first_name: nome } }
         });
         const codigoPix = pixResult.point_of_interaction.transaction_data.qr_code;
         const qrCodeBase64 = pixResult.point_of_interaction.transaction_data.qr_code_base64;
         const idPagamento = pixResult.id;
 
-        const prefResult = await preference.create({
-            body: {
-                items: [{ title: descricao, quantity: 1, unit_price: preco, currency_id: 'BRL' }],
-                payer: { email, name: nome },
-                back_urls: { success: `${FRONTEND_URL}/meus-agendamentos`, failure: `${FRONTEND_URL}/`, pending: `${FRONTEND_URL}/` }
-            }
-        });
+        const prefBase = {
+            items: [{ title: descricao, quantity: 1, unit_price: preco, currency_id: 'BRL' }],
+            payer: { email, name: nome },
+            external_reference: referencia,
+            back_urls: { success: `${FRONTEND_URL}/meus-agendamentos`, failure: `${FRONTEND_URL}/`, pending: `${FRONTEND_URL}/` }
+        };
+        const prazo = Math.max(inicioDoAgendamento({ data, hora }) - HORAS_ANTECEDENCIA * 3600e3, Date.now() + CARENCIA_MIN * 60e3);
+        let prefResult;
+        try {
+            // o link do cartão deixa de valer no mesmo prazo em que a vaga é liberada
+            prefResult = await preference.create({ body: { ...prefBase, expires: true, expiration_date_from: new Date().toISOString(), expiration_date_to: new Date(prazo).toISOString() } });
+        } catch (err) {
+            console.warn('⚠️  Preferência com prazo recusada; criando sem prazo:', err.message);
+            prefResult = await preference.create({ body: prefBase });
+        }
         const linkCartao = prefResult.init_point;
 
         try {
             await new Agendamento({
                 nome, email, data, hora, servico, valor: preco,
                 pagamentoId: idPagamento.toString(), statusPagamento: 'pendente',
-                pixCopiaCola: codigoPix, qrCodeBase64, urlPagamentoCartao: linkCartao
+                pixCopiaCola: codigoPix, qrCodeBase64, urlPagamentoCartao: linkCartao, referencia
             }).save();
         } catch (err) {
             if (err && err.code === 11000) return erro(res, 400, 'Horário já reservado!');
             throw err;
         }
 
-        res.status(201).json({ mensagem: 'Criado!', pixCopiaCola: codigoPix, qrCodeBase64, idPagamento, urlPagamentoCartao: linkCartao });
+        res.status(201).json({ mensagem: 'Criado!', pixCopiaCola: codigoPix, qrCodeBase64, idPagamento, urlPagamentoCartao: linkCartao, pagarAte: new Date(prazo).toISOString() });
 
         const nomeSeguro = escapeHtml(nome);
         const linhasTabela =
@@ -454,19 +538,7 @@ app.get('/status-pagamento/:id', limitadorPagamento, exigirLogin, async (req, re
         if (!donoDoAgendamento(req, agendamento)) { logSeg('acesso_negado_pagamento', req, { email: mascarar(req.usuario.email) }); return erro(res, 403, 'Acesso negado.'); }
 
         const status = (await payment.get({ id })).status;
-        if (status === 'approved' && agendamento.statusPagamento !== 'approved') {
-            await Agendamento.findOneAndUpdate({ pagamentoId: id }, { statusPagamento: 'approved' });
-            const detalhes =
-                linhaEmail('Serviço', escapeHtml(agendamento.servico)) +
-                linhaEmail('Data', formatarData(agendamento.data)) +
-                linhaEmail('Horário', escapeHtml(agendamento.hora)) +
-                linhaEmail('Valor', `R$ ${agendamento.valor},00`, '#2fae6b');
-            notificar({ to: agendamento.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes, '#2fae6b') });
-            notificar({
-                to: OWNER_EMAIL, subject: `Pagamento recebido: ${agendamento.nome}`,
-                html: gerarEmailBonito('Pagamento recebido', `${escapeHtml(agendamento.nome)} pagou o agendamento.`, linhaEmail('Cliente', escapeHtml(agendamento.nome)) + detalhes, '#2fae6b', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
-            });
-        }
+        if (status === 'approved' && agendamento.statusPagamento !== 'approved') await confirmarPagamento(agendamento);
         res.json({ status });
     } catch (err) {
         console.error('ERRO NO STATUS DO PAGAMENTO:', err.message);
@@ -476,7 +548,8 @@ app.get('/status-pagamento/:id', limitadorPagamento, exigirLogin, async (req, re
 
 app.get('/agendamentos', exigirLogin, exigirDono, async (req, res) => {
     try {
-        res.json(await Agendamento.find().select('-qrCodeBase64 -pixCopiaCola -urlPagamentoCartao'));
+        await garantirLiberacao();
+        res.json(await Agendamento.find().select('-qrCodeBase64 -pixCopiaCola -urlPagamentoCartao -referencia'));
     } catch (err) {
         console.error('ERRO AO LISTAR AGENDAMENTOS:', err.message);
         erro(res, 500, 'Erro ao listar os agendamentos.');
@@ -485,7 +558,16 @@ app.get('/agendamentos', exigirLogin, exigirDono, async (req, res) => {
 
 app.get('/meus-agendamentos', exigirLogin, async (req, res) => {
     try {
-        res.json(await Agendamento.find({ email: req.usuario.email }).collation(COLLATION));
+        if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário acessa apenas o painel.');
+        await garantirLiberacao();
+        const lista = await Agendamento.find({ email: req.usuario.email }).collation(COLLATION);
+        res.json(lista.map(ag => {
+            const item = ag.toObject();
+            // pagarAte: até quando a vaga fica reservada sem pagamento (só agendamentos ligados ao Mercado Pago)
+            if (ag.statusPagamento === 'pendente' && ag.referencia) item.pagarAte = new Date(limiteDePagamento(ag)).toISOString();
+            delete item.referencia;
+            return item;
+        }));
     } catch (err) {
         console.error('ERRO AO LISTAR MEUS AGENDAMENTOS:', err.message);
         erro(res, 500, 'Erro ao listar seus agendamentos.');

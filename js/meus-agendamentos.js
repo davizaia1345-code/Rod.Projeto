@@ -1,0 +1,174 @@
+(function () {
+    'use strict';
+    var API_URL = 'https://rodbarber-api-0jna.onrender.com';
+    var esc = RodAuth.esc;
+    var intervaloVerificacao = null;
+    var lista = [];
+    var Tema = Swal.mixin({ background: '#151310', color: '#f4efe4', confirmButtonColor: '#c7a04a', cancelButtonColor: '#2b2822' });
+    var Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 2200, background: '#1c1a16', color: '#f4efe4' });
+    var $ = function (id) { return document.getElementById(id); };
+
+    function fim(ag) { return RodUtil.instante(ag.data, ag.hora).getTime() + (RodUtil.duracoes[ag.servico] || 40) * 60000; }
+    function jaTerminou(ag) { return fim(ag) < Date.now(); }
+    function limiteId(id) { return String(id || '').replace(/[^a-f0-9]/gi, ''); }
+
+    function esqueleto() { return '<div class="skel-card skel"></div><div class="skel-card skel"></div>'; }
+
+    function vazio() {
+        return '<div class="estado-vazio"><i class="far fa-calendar-plus"></i>' +
+            '<h3>Você ainda não tem cortes marcados</h3><p>Escolha serviço, dia e horário em menos de 1 minuto.</p>' +
+            '<a href="/#agendamento" class="btn-novo grande"><i class="far fa-calendar-plus"></i> Agendar agora</a></div>';
+    }
+
+    function erroCarregar() {
+        return '<div class="estado-vazio"><i class="fas fa-triangle-exclamation"></i><h3>Não foi possível carregar</h3>' +
+            '<p>O servidor pode estar acordando. Tente de novo em alguns segundos.</p>' +
+            '<button type="button" class="btn-novo grande" id="btn-recarregar"><i class="fas fa-rotate-right"></i> Tentar de novo</button></div>';
+    }
+
+    function cartao(ag, destaque) {
+        var pago = ag.statusPagamento === 'approved';
+        var passou = jaTerminou(ag);
+        var d = new Date(ag.data + 'T12:00:00');
+        var mes = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+        var rotulo, classe;
+        if (pago) { rotulo = passou ? 'Concluído' : 'Pago'; classe = 'status-pago'; }
+        else { rotulo = passou ? 'Não pago' : 'Aguardando pagamento'; classe = passou ? 'status-expirado' : 'status-pendente'; }
+
+        var info = '';
+        if (!passou) info += '<p class="ag-quando"><i class="far fa-clock"></i> ' + esc(RodUtil.quando(ag.data, ag.hora)) + '</p>';
+        if (!pago && !passou && ag.pagarAte) info += '<p class="pagar-ate"><i class="far fa-hourglass-half"></i> Pague até ' + esc(RodUtil.prazoBR(ag.pagarAte)) + ' ou a vaga é liberada</p>';
+
+        var acoes = '';
+        if (!passou && !pago) {
+            if (ag.pixCopiaCola) acoes += '<button type="button" class="btn-pagar" data-acao="pix" data-id="' + esc(ag._id) + '"><i class="fa-brands fa-pix"></i> Pagar com PIX</button>';
+            if (/^https:\/\//.test(ag.urlPagamentoCartao || '')) acoes += '<a href="' + esc(ag.urlPagamentoCartao) + '" target="_blank" rel="noopener noreferrer" class="btn-card"><i class="far fa-credit-card"></i> Cartão</a>';
+            acoes += '<button type="button" class="btn-cancelar" data-acao="cancelar" data-id="' + esc(ag._id) + '"><i class="far fa-trash-can"></i> Cancelar</button>';
+        } else if (!passou && pago) {
+            acoes += '<button type="button" class="btn-sec" data-acao="ics" data-id="' + esc(ag._id) + '"><i class="far fa-calendar-plus"></i> Adicionar à agenda</button>';
+            acoes += '<a class="btn-sec" href="' + esc(RodUtil.linkMapa()) + '" target="_blank" rel="noopener noreferrer"><i class="fas fa-location-arrow"></i> Como chegar</a>';
+            acoes += '<a class="btn-sec discreto" href="' + esc(RodUtil.linkWhats('Olá! Preciso remarcar ou cancelar meu horário de ' + RodUtil.dataBR(ag.data) + ' às ' + ag.hora + ' (' + ag.servico + ').')) + '" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> Remarcar / cancelar</a>';
+        } else {
+            acoes += '<a class="btn-sec" href="/#agendamento"><i class="fas fa-rotate-right"></i> Agendar de novo</a>';
+        }
+
+        return '<article class="agendamento-card ' + (pago ? 'pago' : 'pendente') + (passou ? ' passado' : '') + (destaque ? ' destaque' : '') + '">' +
+            (destaque ? '<span class="ag-selo"><i class="fas fa-bolt"></i> Próximo corte</span>' : '') +
+            '<div class="ag-data" aria-hidden="true"><span class="ag-dia-sem">' + esc(RodUtil.diaDaSemana(ag.data, 'short')) + '</span><span class="ag-dia">' + esc(ag.data.slice(8)) + '</span><span class="ag-mes">' + esc(mes) + '</span></div>' +
+            '<div class="ag-corpo">' +
+            '<h3 class="card-service">' + esc(ag.servico) + '</h3>' +
+            '<p class="card-date"><i class="far fa-calendar-alt"></i> ' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '</p>' +
+            info + '</div>' +
+            '<div class="ag-lado"><span class="status-badge ' + classe + '">' + rotulo + '</span><strong class="ag-valor">' + esc(RodUtil.brl(ag.valor)) + '</strong></div>' +
+            (acoes ? '<div class="card-actions">' + acoes + '</div>' : '') +
+            '</article>';
+    }
+
+    function desenhar() {
+        var box = $('lista-agendamentos');
+        if (!lista.length) { box.innerHTML = vazio(); return; }
+        var proximos = lista.filter(function (a) { return !jaTerminou(a); }).sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; });
+        var passados = lista.filter(jaTerminou).sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? 1 : -1; });
+        var html = '';
+        if (proximos.length) {
+            html += '<h2 class="ag-secao"><i class="fas fa-calendar-day"></i> Próximos <span>' + proximos.length + '</span></h2>';
+            proximos.forEach(function (a, i) { html += cartao(a, i === 0); });
+        } else {
+            html += '<div class="proximos-vazio"><i class="far fa-calendar"></i> Nenhum corte futuro. <a href="/#agendamento">Agendar agora</a></div>';
+        }
+        if (passados.length) {
+            html += '<h2 class="ag-secao historico"><i class="fas fa-clock-rotate-left"></i> Histórico <span>' + passados.length + '</span></h2>';
+            passados.forEach(function (a) { html += cartao(a, false); });
+        }
+        box.innerHTML = html;
+    }
+
+    async function carregar() {
+        if (!RodAuth.token()) { window.location.href = '/login'; return; }
+        if (RodAuth.papel() === 'owner') { window.location.replace('/admin'); return; }
+        var box = $('lista-agendamentos');
+        var nome = ''; try { nome = (localStorage.getItem('usuarioNome') || '').split(' ')[0]; } catch (e) {}
+        if (nome) $('ola').textContent = 'Olá, ' + nome + '! Aqui estão os seus horários.';
+        try {
+            var res = await RodAuth.fetch(API_URL + '/meus-agendamentos');
+            if (!res.ok) throw new Error('falha');
+            lista = await res.json();
+            desenhar();
+        } catch (e) {
+            if (e && e.message === 'sessao_expirada') return;
+            box.innerHTML = erroCarregar();
+            var b = $('btn-recarregar'); if (b) b.addEventListener('click', function () { box.innerHTML = esqueleto(); carregar(); });
+        }
+    }
+
+    function achar(id) { return lista.filter(function (a) { return a._id === id; })[0]; }
+
+    // ----- delegação de cliques nos botões dos cartões
+    $('lista-agendamentos').addEventListener('click', function (ev) {
+        var el = ev.target.closest('[data-acao]'); if (!el) return;
+        var ag = achar(el.dataset.id); if (!ag) return;
+        if (el.dataset.acao === 'pix') abrirModal(ag);
+        else if (el.dataset.acao === 'cancelar') cancelar(ag);
+        else if (el.dataset.acao === 'ics') RodUtil.baixarIcs({ id: ag._id, servico: ag.servico, data: ag.data, hora: ag.hora });
+    });
+
+    // ----- PIX
+    function abrirModal(ag) {
+        if (/^[A-Za-z0-9+\/=]+$/.test(ag.qrCodeBase64 || '')) $('qr-image').src = 'data:image/png;base64,' + ag.qrCodeBase64;
+        $('pix-text').value = ag.pixCopiaCola || '';
+        $('modal-pix').style.display = 'flex';
+        $('modal-pix').querySelector('.modal-fechar').focus();
+        iniciarVerificacao(ag.pagamentoId);
+    }
+    window.fecharModal = function () { $('modal-pix').style.display = 'none'; clearInterval(intervaloVerificacao); };
+    window.copiarPix = function () {
+        RodUtil.copiar($('pix-text').value).then(function (ok) { Toast.fire({ icon: ok ? 'success' : 'error', title: ok ? 'Código copiado!' : 'Não consegui copiar. Selecione e copie o código.' }); });
+    };
+    $('modal-pix').addEventListener('click', function (e) { if (e.target === this) fecharModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('modal-pix').style.display === 'flex') fecharModal(); });
+
+    function iniciarVerificacao(id) {
+        clearInterval(intervaloVerificacao);
+        var ocupado = false, inicio = Date.now();
+        intervaloVerificacao = setInterval(async function () {
+            if (ocupado || document.hidden) return;
+            if (Date.now() - inicio > 30 * 60000) { clearInterval(intervaloVerificacao); return; }
+            ocupado = true;
+            try {
+                var res = await RodAuth.fetch(API_URL + '/status-pagamento/' + encodeURIComponent(id));
+                var data = await res.json();
+                if (data.status === 'approved') {
+                    clearInterval(intervaloVerificacao);
+                    fecharModal();
+                    await Tema.fire({ icon: 'success', title: 'Pagamento confirmado!', text: 'Seu horário está garantido. Enviamos a confirmação por e-mail.', confirmButtonText: 'Ótimo' });
+                    carregar();
+                }
+            } catch (e) { /* tenta de novo */ }
+            ocupado = false;
+        }, 3000);
+    }
+
+    // ----- cancelar (só horários ainda não pagos)
+    async function cancelar(ag) {
+        var r = await Tema.fire({
+            title: 'Cancelar este horário?', icon: 'warning',
+            html: '<b>' + esc(ag.servico) + '</b><br>' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '<br><small style="color:#b2a996">A vaga será liberada e o PIX deixa de valer.</small>',
+            showCancelButton: true, confirmButtonColor: '#cf4a40', confirmButtonText: 'Sim, cancelar', cancelButtonText: 'Voltar'
+        });
+        if (!r.isConfirmed) return;
+        try {
+            var resp = await RodAuth.fetch(API_URL + '/agendamentos/' + encodeURIComponent(ag._id), { method: 'DELETE' });
+            var corpo = await resp.json().catch(function () { return {}; });
+            if (!resp.ok) { await Tema.fire({ icon: resp.status === 409 ? 'info' : 'error', title: resp.status === 409 ? 'Pagamento já confirmado' : 'Não foi possível cancelar', text: corpo.mensagem || 'Tente novamente em instantes.' }); carregar(); return; }
+            Toast.fire({ icon: 'success', title: 'Horário cancelado.' });
+            carregar();
+        } catch (e) {
+            if (e && e.message === 'sessao_expirada') return;
+            Tema.fire({ icon: 'error', title: 'Sem conexão', text: 'Confira sua internet e tente de novo.' });
+        }
+    }
+
+    // atualiza prazos/estados quando a pessoa volta para a aba
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && lista.length) carregar(); });
+    document.addEventListener('DOMContentLoaded', carregar);
+})();

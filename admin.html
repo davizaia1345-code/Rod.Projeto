@@ -26,7 +26,7 @@
         </h1>
         <div class="header-acoes">
             <span class="atualizado" id="atualizado" title="Os dados se atualizam sozinhos a cada minuto"><i class="fas fa-circle-notch"></i> <span id="atualizado-txt">Carregando...</span></span>
-            <button type="button" class="btn-voltar" onclick="RodAuth.sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
+            <button type="button" class="btn-voltar" data-click="RodAuth.sair"><i class="fas fa-right-from-bracket"></i> Sair</button>
         </div>
     </div>
 
@@ -57,25 +57,25 @@
 
     <div class="controles-bar">
         <div class="acoes-grupo">
-            <button type="button" onclick="abrirModalAtendimento()" class="btn-atualizar">
+            <button type="button" data-click="abrirModalAtendimento" class="btn-atualizar">
                 <i class="fas fa-plus"></i> Registrar atendimento
             </button>
-            <button type="button" onclick="carregarDados()" class="btn-secundario">
+            <button type="button" data-click="carregarDados" class="btn-secundario">
                 <i class="fas fa-sync-alt"></i> Atualizar
             </button>
         </div>
         <div class="filtro-group" id="filtro-wrap">
             <label for="filtro-data" style="color:#aaa; font-size:0.9em;"><i class="fas fa-filter"></i> Data:</label>
-            <input type="date" id="filtro-data" onchange="aoMudarData()">
-            <button type="button" class="btn-limpar" id="btn-limpar-data" onclick="limparData()" hidden aria-label="Limpar data"><i class="fas fa-xmark"></i></button>
+            <input type="date" id="filtro-data" data-change="aoMudarData">
+            <button type="button" class="btn-limpar" id="btn-limpar-data" data-click="limparData" hidden aria-label="Limpar data"><i class="fas fa-xmark"></i></button>
         </div>
     </div>
 
     <div class="abas" role="tablist">
-        <button type="button" class="aba ativa" id="btn-aba-agendamentos" role="tab" onclick="mudarAba('agendamentos')"><i class="fas fa-globe"></i> Agendamentos <span class="aba-n" id="n-pend-aba" hidden></span></button>
-        <button type="button" class="aba" id="btn-aba-balcao" role="tab" onclick="mudarAba('balcao')"><i class="fas fa-store"></i> Balcão</button>
-        <button type="button" class="aba" id="btn-aba-folgas" role="tab" onclick="mudarAba('folgas')"><i class="fas fa-umbrella-beach"></i> Folgas</button>
-        <button type="button" class="aba" id="btn-aba-relatorio" role="tab" onclick="mudarAba('relatorio')"><i class="fas fa-chart-line"></i> Relatório</button>
+        <button type="button" class="aba ativa" id="btn-aba-agendamentos" role="tab" data-click="mudarAba" data-arg="agendamentos"><i class="fas fa-globe"></i> Agendamentos <span class="aba-n" id="n-pend-aba" hidden></span></button>
+        <button type="button" class="aba" id="btn-aba-balcao" role="tab" data-click="mudarAba" data-arg="balcao"><i class="fas fa-store"></i> Balcão</button>
+        <button type="button" class="aba" id="btn-aba-folgas" role="tab" data-click="mudarAba" data-arg="folgas"><i class="fas fa-umbrella-beach"></i> Folgas</button>
+        <button type="button" class="aba" id="btn-aba-relatorio" role="tab" data-click="mudarAba" data-arg="relatorio"><i class="fas fa-chart-line"></i> Relatório</button>
     </div>
 
     <div class="filtros-lista" id="filtros-lista">
@@ -137,7 +137,7 @@
 
     <section id="aba-folgas" class="aba-painel" hidden>
         <p class="aba-dica"><i class="fas fa-circle-info"></i> Bloqueie um dia inteiro ou um horário (folga, compromisso). Os clientes não conseguem agendar nesses momentos.</p>
-        <form id="form-folga" class="form-folga" onsubmit="salvarFolga(event)">
+        <form id="form-folga" class="form-folga" data-submit="salvarFolga">
             <div class="campo"><label for="fg-data">Data</label><input type="date" id="fg-data" required></div>
             <div class="campo"><label for="fg-hora">Quando</label><select id="fg-hora"></select></div>
             <div class="campo campo-largo"><label for="fg-motivo">Motivo (opcional)</label><input type="text" id="fg-motivo" maxlength="80" placeholder="Ex.: consulta, feriado"></div>
@@ -150,11 +150,11 @@
         <div class="relatorio-topo">
             <div class="filtro-group">
                 <label for="rel-mes" style="color:#aaa; font-size:0.9em;"><i class="far fa-calendar"></i> Mês:</label>
-                <input type="month" id="rel-mes" onchange="carregarRelatorio()">
+                <input type="month" id="rel-mes" data-change="carregarRelatorio">
             </div>
             <div class="acoes-grupo">
-                <button type="button" onclick="exportarCsv()" class="btn-secundario"><i class="fas fa-file-arrow-down"></i> Baixar planilha</button>
-                <button type="button" id="btn-enviar-relatorio" onclick="enviarRelatorio()" class="btn-atualizar">
+                <button type="button" data-click="exportarCsv" class="btn-secundario"><i class="fas fa-file-arrow-down"></i> Baixar planilha</button>
+                <button type="button" id="btn-enviar-relatorio" data-click="enviarRelatorio" class="btn-atualizar">
                     <i class="fas fa-envelope"></i> Enviar por e-mail
                 </button>
             </div>
@@ -165,15 +165,15 @@
 </main>
 
 <!-- Registrar atendimento avulso -->
-<div id="modal-atendimento" class="modal-overlay" onclick="if (event.target === this) fecharModalAtendimento()">
+<div id="modal-atendimento" class="modal-overlay" data-click="fecharModalAtendimentoFundo">
     <div class="modal-content modal-form" role="dialog" aria-modal="true" aria-labelledby="titulo-atendimento">
-        <button type="button" class="modal-fechar" aria-label="Fechar" onclick="fecharModalAtendimento()">&times;</button>
+        <button type="button" class="modal-fechar" aria-label="Fechar" data-click="fecharModalAtendimento">&times;</button>
         <h3 id="titulo-atendimento"><i class="fas fa-cash-register"></i> Registrar atendimento</h3>
         <p class="modal-sub">Cliente que não passou pelo site? Lance aqui para manter o caixa em dia.</p>
 
-        <form id="form-atendimento" onsubmit="salvarAtendimento(event)">
+        <form id="form-atendimento" data-submit="salvarAtendimento">
             <label for="at-servico">Serviço</label>
-            <select id="at-servico" onchange="aoMudarServico()"></select>
+            <select id="at-servico" data-change="aoMudarServico"></select>
             <input type="text" id="at-servico-outro" placeholder="Nome do serviço" maxlength="60" style="display:none">
 
             <div class="linha-2">
@@ -216,544 +216,7 @@
 
 <script src="auth.js"></script>
 <script src="util.js"></script>
-<script>
-(function () {
-    'use strict';
-    const API_URL = 'https://rodbarber-api-0jna.onrender.com';
-    const PRECOS = { 'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60, 'Progressiva + Corte': 120, 'Luzes + Corte': 100, 'Sobrancelha': 10 };
-    const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX', debito: 'Cartão de débito', credito: 'Cartão de crédito', outro: 'Outro' };
-    const esc = v => RodAuth.esc(v);
-    const $ = id => document.getElementById(id);
-    const Tema = Swal.mixin({ background: '#151310', color: '#f4efe4', confirmButtonColor: '#c7a04a', cancelButtonColor: '#2b2822' });
-    const toast = (icon, title) => Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3200, timerProgressBar: true, background: '#1c1a16', color: '#f4efe4' });
-
-    let todosAgendamentos = [];
-    let todosAtendimentos = [];
-    let folgas = [];
-    let idsConhecidos = null;
-    let filtroChip = 'proximos';
-    let abaAtual = 'agendamentos';
-
-    const brl = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const hojeSP = () => RodUtil.hojeSP(0);
-    const horaSP = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
-    const formatarData = d => RodUtil.dataBR(d);
-    const chave = a => a.data + ' ' + a.hora;
-
-    // --- só decide o que mostrar: o servidor recusa (403) qualquer pedido que não seja do dono ---
-    function verificarPermissao() {
-        if (RodAuth.papel() !== 'owner') {
-            document.body.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#e62e2e; text-align:center;">
-                    <i class="fas fa-ban" style="font-size: 5em; margin-bottom: 20px;"></i>
-                    <h1 style="text-transform:uppercase; font-size:2em;">Acesso Negado</h1>
-                    <p style="color:var(--text-faint); margin-top:10px;">Esta área é restrita apenas ao proprietário.</p>
-                    <a href="/" style="color:#fff; margin-top:20px; text-decoration:underline;">Voltar ao início</a>
-                </div>
-            `;
-            setTimeout(() => window.location.href = '/', 3000);
-            return false;
-        }
-        return true;
-    }
-
-    async function carregarDados(silencioso) {
-        if (!verificarPermissao()) return;
-        const icone = $('atualizado').firstElementChild;
-        icone.classList.add('fa-spin');
-        try {
-            const [rAg, rAt] = await Promise.all([
-                RodAuth.fetch(`${API_URL}/agendamentos`),
-                RodAuth.fetch(`${API_URL}/atendimentos`)
-            ]);
-            if (rAg.status === 403 || rAt.status === 403) { localStorage.removeItem('token'); return verificarPermissao(); }
-            if (!rAg.ok || !rAt.ok) throw new Error('falha');
-            const novos = (await rAg.json());
-            todosAtendimentos = await rAt.json();
-
-            // avisa de reservas que chegaram desde a última atualização
-            if (idsConhecidos) {
-                novos.filter(a => !idsConhecidos.has(a._id)).forEach(a => toast('info', `Novo agendamento: ${a.nome} · ${formatarData(a.data)} ${a.hora}`));
-            }
-            idsConhecidos = new Set(novos.map(a => a._id));
-            todosAgendamentos = novos;
-
-            $('atualizado-txt').textContent = 'Atualizado às ' + horaSP();
-            desenharTudo();
-            if (abaAtual === 'folgas') carregarFolgas();
-            if (abaAtual === 'relatorio') carregarRelatorio();
-        } catch (error) {
-            if (error.message === 'sessao_expirada') return;
-            $('atualizado-txt').textContent = 'Sem conexão';
-            if (!silencioso) Tema.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível carregar os dados agora.' });
-        } finally { icone.classList.remove('fa-spin'); }
-    }
-
-    function desenharTudo() {
-        filtrarTabela();
-        calcularResumo();
-        desenharProximo();
-    }
-
-    // --- próximo cliente ---
-    function desenharProximo() {
-        const box = $('proximo-cliente');
-        const agora = Date.now();
-        const lista = todosAgendamentos
-            .map(a => ({ a, t: RodUtil.instante(a.data, a.hora).getTime() }))
-            .filter(x => x.t + (RodUtil.duracoes[x.a.servico] || 40) * 60000 >= agora)
-            .sort((x, y) => x.t - y.t);
-        if (!lista.length) { box.hidden = true; return; }
-        const { a } = lista[0];
-        const pago = a.statusPagamento === 'approved';
-        const hoje = hojeSP();
-        const restantesHoje = lista.filter(x => x.a.data === hoje).length;
-        box.hidden = false;
-        box.innerHTML = `
-            <span class="pc-selo"><i class="fas fa-bolt"></i> Próximo cliente</span>
-            <div class="pc-corpo">
-                <strong>${esc(a.nome)}</strong>
-                <span>${esc(a.servico)} · ${esc(RodUtil.quando(a.data, a.hora))}</span>
-            </div>
-            <span class="badge ${pago ? 'bg-pago' : 'bg-pendente'}">${pago ? 'Pago' : 'Pendente'}</span>
-            ${restantesHoje > 1 ? `<span class="pc-extra">${restantesHoje - 1} outro${restantesHoje - 1 === 1 ? '' : 's'} hoje</span>` : ''}`;
-    }
-
-    function badgeStatus(ag) {
-        if (ag.statusPagamento === 'approved') {
-            const manual = ag.pagamentoManual ? ` · ${esc(FORMAS[ag.pagamentoManual] || '')}` : '';
-            return `<span class="badge bg-pago"><i class="fas fa-check"></i> PAGO${manual}</span>`;
-        }
-        return '<span class="badge bg-pendente"><i class="fas fa-clock"></i> PENDENTE</span>';
-    }
-
-    function renderizarTabela(lista) {
-        const tbody = $('lista-admin');
-        tbody.innerHTML = '';
-
-        if (lista.length === 0) {
-            tbody.innerHTML = '<tr class="linha-vazia"><td colspan="6" style="text-align:center; padding:40px; color:var(--text-faint); display:table-cell;"><i class="fas fa-box-open" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum agendamento encontrado neste filtro.</td></tr>';
-            return;
-        }
-
-        const hoje = hojeSP();
-        lista.forEach(ag => {
-            const pago = ag.statusPagamento === 'approved';
-            const tr = document.createElement('tr');
-            if (ag.data === hoje) tr.classList.add('hoje');
-            tr.innerHTML = `
-                <td data-label="Data / Hora">
-                    <span class="info-principal info-destaque">${formatarData(ag.data)}${ag.data === hoje ? ' <em class="tag-hoje">hoje</em>' : ''}</span>
-                    <span class="info-secundaria"><i class="far fa-clock"></i> ${esc(ag.hora)} · ${esc(RodUtil.diaDaSemana(ag.data, 'short'))}</span>
-                </td>
-                <td data-label="Cliente">
-                    <span class="info-principal">${esc(ag.nome)}</span>
-                    <span class="info-secundaria"><a class="link-email" href="mailto:${esc(ag.email)}">${esc(ag.email)}</a></span>
-                </td>
-                <td data-label="Serviço">${esc(ag.servico)}</td>
-                <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">${brl(ag.valor)}</td>
-                <td data-label="Status">${badgeStatus(ag)}</td>
-                <td data-label="Ações" style="text-align: center;">
-                    <div class="acoes-linha">
-                        ${pago ? '' : `<button type="button" class="btn-recebi" data-acao="pago" data-id="${esc(ag._id)}" title="Recebi o pagamento em mãos"><i class="fas fa-hand-holding-dollar"></i> Recebi</button>`}
-                        <button type="button" class="btn-lixeira" data-acao="excluir" data-id="${esc(ag._id)}" title="Excluir" aria-label="Excluir agendamento"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function renderizarBalcao(lista) {
-        const tbody = $('lista-balcao');
-        tbody.innerHTML = '';
-
-        if (lista.length === 0) {
-            tbody.innerHTML = '<tr class="linha-vazia"><td colspan="6" style="text-align:center; padding:40px; color:var(--text-faint); display:table-cell;"><i class="fas fa-store" style="font-size:2em; margin-bottom:10px;"></i><br>Nenhum atendimento de balcão encontrado.<br><span style="font-size:.85em;">Use "Registrar atendimento" para lançar um corte feito na barbearia.</span></td></tr>';
-            return;
-        }
-
-        lista.forEach(at => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td data-label="Data / Hora">
-                    <span class="info-principal info-destaque">${formatarData(at.data)}</span>
-                    <span class="info-secundaria"><i class="far fa-clock"></i> ${esc(at.hora)}</span>
-                </td>
-                <td data-label="Cliente">
-                    <span class="info-principal">${esc(at.nome) || 'Não informado'}</span>
-                    ${at.observacao ? `<span class="info-secundaria">${esc(at.observacao)}</span>` : ''}
-                </td>
-                <td data-label="Serviço">${esc(at.servico)}</td>
-                <td data-label="Pagamento"><span class="badge bg-forma">${esc(FORMAS[at.forma] || 'Outro')}</span></td>
-                <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">${brl(at.valor)}</td>
-                <td data-label="Ação" style="text-align: center;">
-                    <div class="acoes-linha"><button type="button" class="btn-lixeira" data-acao="excluir-atendimento" data-id="${esc(at._id)}" title="Excluir" aria-label="Excluir atendimento"><i class="fas fa-trash-alt"></i></button></div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // caixa = agendamentos pagos pelo site + atendimentos de balcão
-    function calcularResumo() {
-        const hoje = hojeSP(), mes = hoje.slice(0, 7);
-        const pagos = todosAgendamentos.filter(a => a.statusPagamento === 'approved');
-        const soma = lista => lista.reduce((s, x) => s + (Number(x.valor) || 0), 0);
-        const doDia = l => l.filter(x => x.data === hoje), doMes = l => l.filter(x => String(x.data).startsWith(mes));
-
-        $('total-hoje').innerText = todosAgendamentos.filter(a => a.data === hoje).length;
-        $('caixa-hoje').innerText = brl(soma(doDia(pagos)) + soma(doDia(todosAtendimentos)));
-        $('fat-mes').innerText = brl(soma(doMes(pagos)) + soma(doMes(todosAtendimentos)));
-        $('atend-mes').innerText = doMes(pagos).length + doMes(todosAtendimentos).length;
-
-        const pend = todosAgendamentos.filter(a => a.statusPagamento !== 'approved' && a.data >= hoje).length;
-        for (const id of ['n-pendentes', 'n-pend-aba']) { $(id).hidden = !pend; $(id).textContent = pend; }
-    }
-
-    // --- filtros da lista ---
-    function aplicarChip(lista) {
-        const hoje = hojeSP(), amanha = RodUtil.hojeSP(1);
-        const asc = (a, b) => chave(a) < chave(b) ? -1 : 1, desc = (a, b) => -asc(a, b);
-        switch (filtroChip) {
-            case 'hoje': return lista.filter(a => a.data === hoje).sort(asc);
-            case 'amanha': return lista.filter(a => a.data === amanha).sort(asc);
-            case 'pendentes': return lista.filter(a => a.statusPagamento !== 'approved').sort(asc);
-            case 'passados': return lista.filter(a => a.data < hoje).sort(desc);
-            case 'todos': return lista.slice().sort(desc);
-            default: return lista.filter(a => a.data >= hoje).sort(asc);
-        }
-    }
-
-    function filtrarTabela() {
-        const dataFiltro = $('filtro-data').value;
-        const termo = $('busca').value.trim().toLowerCase();
-        const porTermo = (lista, campos) => termo ? lista.filter(x => campos.some(c => String(x[c] || '').toLowerCase().includes(termo))) : lista;
-
-        let ags = todosAgendamentos;
-        ags = dataFiltro ? ags.filter(a => a.data === dataFiltro).sort((a, b) => chave(a) < chave(b) ? -1 : 1) : aplicarChip(ags);
-        renderizarTabela(porTermo(ags, ['nome', 'email', 'servico']));
-
-        let ats = dataFiltro ? todosAtendimentos.filter(a => a.data === dataFiltro) : todosAtendimentos;
-        renderizarBalcao(porTermo(ats, ['nome', 'servico', 'observacao']));
-
-        document.querySelectorAll('#chips .chip').forEach(c => c.classList.toggle('ativo', !dataFiltro && c.dataset.f === filtroChip));
-        $('btn-limpar-data').hidden = !dataFiltro;
-    }
-
-    window.aoMudarData = filtrarTabela;
-    window.limparData = () => { $('filtro-data').value = ''; filtrarTabela(); };
-    window.carregarDados = carregarDados;
-    window.filtrarTabela = filtrarTabela;
-
-    $('chips').addEventListener('click', e => {
-        const b = e.target.closest('.chip'); if (!b) return;
-        filtroChip = b.dataset.f; $('filtro-data').value = ''; filtrarTabela();
-    });
-    let esperaBusca = null;
-    $('busca').addEventListener('input', () => { clearTimeout(esperaBusca); esperaBusca = setTimeout(filtrarTabela, 150); });
-
-    window.mudarAba = function (nome) {
-        abaAtual = nome;
-        ['agendamentos', 'balcao', 'folgas', 'relatorio'].forEach(a => {
-            $('aba-' + a).hidden = a !== nome;
-            $('btn-aba-' + a).classList.toggle('ativa', a === nome);
-        });
-        $('filtro-wrap').style.display = (nome === 'relatorio' || nome === 'folgas') ? 'none' : '';
-        $('filtros-lista').style.display = (nome === 'relatorio' || nome === 'folgas') ? 'none' : '';
-        document.querySelector('.chips').style.display = nome === 'agendamentos' ? '' : 'none';
-        if (nome === 'relatorio') carregarRelatorio();
-        if (nome === 'folgas') carregarFolgas();
-    };
-
-    // --- ações nas linhas (excluir / marcar como pago) ---
-    async function confirmarExclusao(titulo, texto) {
-        const r = await Tema.fire({
-            title: titulo, text: texto, icon: 'warning', showCancelButton: true,
-            confirmButtonColor: '#cf4a40', confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar'
-        });
-        return r.isConfirmed;
-    }
-
-    async function deletarAgendamento(id) {
-        const ag = todosAgendamentos.find(a => a._id === id);
-        const pago = ag && ag.statusPagamento === 'approved';
-        if (!(await confirmarExclusao('Excluir agendamento?', pago ? 'ATENÇÃO: este horário já foi pago. Excluir não devolve o dinheiro automaticamente.' : 'O horário volta a ficar livre e o PIX é cancelado.'))) return;
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}`, { method: 'DELETE' });
-            const corpo = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(corpo.mensagem || 'falha');
-            toast('success', 'Excluído!');
-            carregarDados(true);
-        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não foi possível excluir', text: error.message === 'falha' ? 'Tente novamente.' : error.message }); carregarDados(true); }
-    }
-
-    async function marcarComoPago(id) {
-        const ag = todosAgendamentos.find(a => a._id === id); if (!ag) return;
-        const r = await Tema.fire({
-            title: 'Recebi o pagamento', icon: 'question',
-            html: `<b>${esc(ag.nome)}</b> · ${esc(ag.servico)}<br>${formatarData(ag.data)} às ${esc(ag.hora)} · <b>${brl(ag.valor)}</b><br><small style="color:#b2a996">Como o cliente pagou?</small>`,
-            input: 'radio', inputValue: 'dinheiro', inputOptions: { dinheiro: 'Dinheiro', pix: 'PIX direto', debito: 'Cartão de débito', credito: 'Cartão de crédito' },
-            showCancelButton: true, confirmButtonText: 'Confirmar pagamento', cancelButtonText: 'Voltar'
-        });
-        if (!r.isConfirmed || !r.value) return;
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}/pago`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forma: r.value }) });
-            const corpo = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(corpo.mensagem || 'falha');
-            toast('success', 'Pagamento registrado!');
-            carregarDados(true);
-        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não foi possível registrar', text: error.message === 'falha' ? 'Tente novamente.' : error.message }); }
-    }
-
-    async function deletarAtendimento(id) {
-        if (!(await confirmarExclusao('Excluir atendimento?', 'O valor sai do caixa e do relatório.'))) return;
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/atendimentos/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('falha');
-            toast('success', 'Excluído!');
-            carregarDados(true);
-        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Falha ao excluir' }); }
-    }
-
-    document.addEventListener('click', e => {
-        const b = e.target.closest('[data-acao]'); if (!b) return;
-        const id = b.dataset.id;
-        if (b.dataset.acao === 'excluir') deletarAgendamento(id);
-        else if (b.dataset.acao === 'pago') marcarComoPago(id);
-        else if (b.dataset.acao === 'excluir-atendimento') deletarAtendimento(id);
-        else if (b.dataset.acao === 'remover-folga') removerFolga(id);
-    });
-
-    // --- folgas e horários bloqueados ---
-    function horariosDoDia() {
-        const lista = [];
-        [[9 * 60, 11 * 60 + 30], [13 * 60, 21 * 60 + 30]].forEach(([ini, fim]) => {
-            for (let t = ini; t <= fim; t += 35) lista.push(String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'));
-        });
-        return lista;
-    }
-
-    function prepararFormFolga() {
-        const d = $('fg-data'); d.min = hojeSP(); if (!d.value) d.value = hojeSP();
-        $('fg-hora').innerHTML = '<option value="">Dia inteiro</option>' + horariosDoDia().map(h => `<option value="${h}">${h}</option>`).join('');
-    }
-
-    async function carregarFolgas() {
-        prepararFormFolga();
-        const alvo = $('lista-folgas');
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/bloqueios`);
-            if (!res.ok) throw new Error('falha');
-            folgas = await res.json();
-            if (!folgas.length) { alvo.innerHTML = '<p class="rel-vazio"><i class="fas fa-umbrella-beach"></i> Nenhum bloqueio. A agenda está toda aberta.</p>'; return; }
-            alvo.innerHTML = folgas.map(f => `
-                <div class="folga-item">
-                    <div class="folga-data"><strong>${formatarData(f.data)}</strong><span>${esc(RodUtil.diaDaSemana(f.data, 'long'))}</span></div>
-                    <div class="folga-info"><span class="badge ${f.hora ? 'bg-forma' : 'bg-pendente'}">${f.hora ? esc(f.hora) : 'Dia inteiro'}</span>${f.motivo ? `<span class="folga-motivo">${esc(f.motivo)}</span>` : ''}</div>
-                    <button type="button" class="btn-lixeira" data-acao="remover-folga" data-id="${esc(f._id)}" title="Liberar" aria-label="Remover bloqueio"><i class="fas fa-lock-open"></i></button>
-                </div>`).join('');
-        } catch (error) { if (error.message !== 'sessao_expirada') alvo.innerHTML = '<p class="rel-vazio">Não foi possível carregar os bloqueios.</p>'; }
-    }
-
-    window.salvarFolga = async function (ev) {
-        ev.preventDefault();
-        const btn = $('btn-salvar-folga');
-        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bloqueando...';
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/bloqueios`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: $('fg-data').value, hora: $('fg-hora').value, motivo: $('fg-motivo').value.trim() })
-            });
-            const dados = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(dados.erro || 'Não foi possível bloquear.');
-            $('fg-motivo').value = '';
-            if (dados.agendamentosNoDia) Tema.fire({ icon: 'info', title: 'Dia bloqueado', text: `Atenção: já existem ${dados.agendamentosNoDia} agendamento(s) nesse dia. Eles continuam valendo; só novos agendamentos foram bloqueados.` });
-            else toast('success', 'Bloqueado!');
-            carregarFolgas();
-        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não bloqueou', text: error.message }); }
-        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-ban"></i> Bloquear'; }
-    };
-
-    async function removerFolga(id) {
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/bloqueios/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('falha');
-            toast('success', 'Liberado!');
-            carregarFolgas();
-        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Falha ao liberar' }); }
-    }
-
-    // --- registrar atendimento avulso ---
-    function montarServicos() {
-        const sel = $('at-servico');
-        sel.innerHTML = Object.keys(PRECOS).map(n => `<option value="${esc(n)}">${esc(n)} - ${brl(PRECOS[n])}</option>`).join('') +
-            '<option value="__outro">Outro serviço...</option>';
-    }
-
-    window.aoMudarServico = function () {
-        const sel = $('at-servico'), outro = $('at-servico-outro');
-        const ehOutro = sel.value === '__outro';
-        outro.style.display = ehOutro ? '' : 'none';
-        outro.required = ehOutro;
-        if (!ehOutro) $('at-valor').value = PRECOS[sel.value];
-        else { $('at-valor').value = ''; outro.focus(); }
-    };
-
-    window.abrirModalAtendimento = function () {
-        $('form-atendimento').reset();
-        montarServicos();
-        const hoje = hojeSP();
-        const data = $('at-data');
-        data.max = hoje; data.value = hoje;
-        $('at-hora').value = horaSP();
-        $('at-servico-outro').style.display = 'none';
-        $('at-servico-outro').required = false;
-        $('at-valor').value = PRECOS[$('at-servico').value];
-        $('modal-atendimento').style.display = 'flex';
-        $('at-valor').focus();
-    };
-
-    window.fecharModalAtendimento = function () { $('modal-atendimento').style.display = 'none'; };
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') window.fecharModalAtendimento(); });
-
-    window.salvarAtendimento = async function (evento) {
-        evento.preventDefault();
-        const sel = $('at-servico').value;
-        const corpo = {
-            servico: sel === '__outro' ? $('at-servico-outro').value.trim() : sel,
-            valor: $('at-valor').value,
-            forma: document.querySelector('input[name="forma"]:checked').value,
-            nome: $('at-nome').value.trim(),
-            data: $('at-data').value,
-            hora: $('at-hora').value,
-            observacao: $('at-obs').value.trim()
-        };
-        const btn = $('btn-salvar-atendimento');
-        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/atendimentos`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo)
-            });
-            const dados = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(dados.erro || 'Não foi possível salvar.');
-            window.fecharModalAtendimento();
-            toast('success', 'Atendimento registrado!');
-            window.mudarAba('balcao');
-            await carregarDados(true);
-        } catch (error) {
-            if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não salvou', text: error.message });
-        } finally {
-            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Salvar atendimento';
-        }
-    };
-
-    // --- relatório do mês ---
-    function barra(valor, maximo) {
-        const pct = maximo > 0 ? Math.max(4, Math.round(valor / maximo * 100)) : 0;
-        return `<span class="rel-barra"><span style="width:${pct}%"></span></span>`;
-    }
-
-    function listaRelatorio(titulo, icone, itens) {
-        const max = Math.max(0, ...itens.map(i => i.total));
-        const linhas = itens.length ? itens.map(i => `
-            <div class="rel-linha">
-                <div class="rel-linha-topo"><span>${esc(i.nome)}</span><strong>${brl(i.total)}</strong></div>
-                ${barra(i.total, max)}
-                <small>${i.qtd} atendimento${i.qtd === 1 ? '' : 's'}</small>
-            </div>`).join('') : '<p class="rel-vazio">Sem movimento neste mês.</p>';
-        return `<div class="rel-bloco"><h2><i class="${icone}"></i> ${titulo}</h2>${linhas}</div>`;
-    }
-
-    window.carregarRelatorio = async function () {
-        const campo = $('rel-mes');
-        if (!campo.value) campo.value = hojeSP().slice(0, 7);
-        const alvo = $('rel-conteudo');
-        alvo.innerHTML = '<p class="rel-vazio"><i class="fas fa-spinner fa-spin"></i> Calculando...</p>';
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/relatorio?mes=${encodeURIComponent(campo.value)}`);
-            const r = await res.json();
-            if (!res.ok) throw new Error(r.erro || 'falha');
-
-            const v = r.variacaoPercentual;
-            const comparacao = v === null ? '<span class="rel-neutro">sem mês anterior para comparar</span>'
-                : `<span class="${v >= 0 ? 'rel-alta' : 'rel-baixa'}">${v >= 0 ? '▲' : '▼'} ${Math.abs(v).toLocaleString('pt-BR')}% vs mês anterior (${brl(r.totalMesAnterior)})</span>`;
-            const totalSplit = r.totalOnline + r.totalBalcao;
-            const pctOnline = totalSplit > 0 ? Math.round(r.totalOnline / totalSplit * 100) : 0;
-
-            alvo.innerHTML = `
-                <div class="rel-kpis">
-                    <div class="rel-kpi destaque"><span>Faturamento de ${esc(r.nomeMes)}</span><strong>${brl(r.total)}</strong>${comparacao}</div>
-                    <div class="rel-kpi"><span>Atendimentos</span><strong>${r.atendimentos}</strong><small>${r.atendimentosOnline} site · ${r.atendimentosBalcao} balcão</small></div>
-                    <div class="rel-kpi"><span>Ticket médio</span><strong>${brl(r.ticketMedio)}</strong><small>${r.diasComMovimento} dia${r.diasComMovimento === 1 ? '' : 's'} com movimento</small></div>
-                    <div class="rel-kpi"><span>Melhor dia</span><strong>${r.melhorDia ? formatarData(r.melhorDia.data) : '--'}</strong><small>${r.melhorDia ? brl(r.melhorDia.total) : 'sem movimento'}</small></div>
-                </div>
-                <div class="rel-split">
-                    <div class="rel-split-barra"><span style="width:${pctOnline}%"></span></div>
-                    <div class="rel-split-legenda"><span><i class="fas fa-globe"></i> Site ${brl(r.totalOnline)}</span><span><i class="fas fa-store"></i> Balcão ${brl(r.totalBalcao)}</span></div>
-                </div>
-                <div class="rel-grade">
-                    ${listaRelatorio('Por serviço', 'fas fa-scissors', r.porServico)}
-                    ${listaRelatorio('Forma de pagamento', 'fas fa-wallet', r.porForma)}
-                </div>
-                ${r.aguardandoPagamento.qtd ? `<p class="rel-aviso"><i class="fas fa-triangle-exclamation"></i> ${r.aguardandoPagamento.qtd} reserva${r.aguardandoPagamento.qtd === 1 ? '' : 's'} sem pagamento (${brl(r.aguardandoPagamento.total)}) não entram no faturamento.</p>` : ''}
-            `;
-        } catch (error) {
-            alvo.innerHTML = `<p class="rel-vazio">Não foi possível carregar o relatório. ${esc(error.message === 'sessao_expirada' ? '' : error.message)}</p>`;
-        }
-    };
-
-    window.enviarRelatorio = async function () {
-        const mes = $('rel-mes').value || hojeSP().slice(0, 7);
-        const btn = $('btn-enviar-relatorio');
-        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-        try {
-            const res = await RodAuth.fetch(`${API_URL}/relatorio/enviar`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mes })
-            });
-            const dados = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(dados.erro || 'falha');
-            Tema.fire({ icon: 'success', title: 'Relatório enviado!', text: dados.mensagem });
-        } catch (error) {
-            if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não enviou', text: error.message });
-        } finally {
-            btn.disabled = false; btn.innerHTML = '<i class="fas fa-envelope"></i> Enviar por e-mail';
-        }
-    };
-
-    // planilha (CSV com ; e BOM: abre direto no Excel em português)
-    function celula(v) {
-        let s = String(v == null ? '' : v);
-        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;          // evita fórmulas vindas de nomes digitados por clientes
-        return '"' + s.replace(/"/g, '""') + '"';
-    }
-
-    window.exportarCsv = function () {
-        const mes = $('rel-mes').value || hojeSP().slice(0, 7);
-        const linhas = [['Data', 'Hora', 'Origem', 'Cliente', 'Serviço', 'Pagamento', 'Valor (R$)']];
-        todosAgendamentos.filter(a => a.statusPagamento === 'approved' && a.data.startsWith(mes))
-            .forEach(a => linhas.push([formatarData(a.data), a.hora, 'Site', a.nome, a.servico, a.pagamentoManual ? FORMAS[a.pagamentoManual] : 'Online (PIX/cartão)', Number(a.valor).toFixed(2).replace('.', ',')]));
-        todosAtendimentos.filter(a => a.data.startsWith(mes))
-            .forEach(a => linhas.push([formatarData(a.data), a.hora, 'Balcão', a.nome || '', a.servico, FORMAS[a.forma] || 'Outro', Number(a.valor).toFixed(2).replace('.', ',')]));
-        if (linhas.length === 1) { toast('info', 'Sem movimento neste mês.'); return; }
-        const dados = linhas.slice(1).sort((a, b) => (a[0].split('/').reverse().join('') + a[1]) < (b[0].split('/').reverse().join('') + b[1]) ? -1 : 1);
-        const csv = '﻿' + [linhas[0]].concat(dados).map(l => l.map(celula).join(';')).join('\r\n');
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-        a.download = `rodbarber-${mes}.csv`;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-        toast('success', 'Planilha baixada!');
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        $('rel-mes').value = hojeSP().slice(0, 7);
-        carregarDados();
-        // atualização automática (a cada minuto e ao voltar para a aba)
-        setInterval(() => { if (!document.hidden) carregarDados(true); }, 60000);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) carregarDados(true); });
-    });
-})();
-</script>
+<script src="js/acoes.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>

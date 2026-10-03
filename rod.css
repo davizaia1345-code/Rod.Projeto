@@ -1854,3 +1854,39 @@ body.doc-page { background: var(--bg); padding: 40px 16px 60px; text-align: left
 @media (max-width: 700px) { .admin-page .av-resumo { grid-template-columns: 1fr; } }
 
 .sel-janela > * { flex-shrink: 0; }
+
+/* ==========================================================================
+   Fotos discretas de fundo nas seções (Sobre, Preços, Depoimentos)
+   ========================================================================== */
+
+.secao-foto { position: relative; isolation: isolate; }
+.secao-foto::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 100vw; margin-left: -50vw; z-index: -1; pointer-events: none;
+    background-repeat: no-repeat; background-size: 100% 100%, 46vw auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%);
+}
+.secao-foto.foto-dir::before { background-position: 0 0, right center; }
+.secao-foto.foto-esq::before { background-position: 0 0, left center; }
+#sobre::before { background-image: linear-gradient(to right, rgba(10, 9, 8, .58) 0%, rgba(10, 9, 8, .9) 32%, var(--bg) 52%), url('fundo-sobre.jpg'); }
+#precos::before { background-image: linear-gradient(to left, rgba(10, 9, 8, .58) 0%, rgba(10, 9, 8, .9) 32%, var(--bg) 52%), url('fundo-precos.jpg'); }
+#depoimentos::before { background-image: linear-gradient(to right, rgba(10, 9, 8, .58) 0%, rgba(10, 9, 8, .9) 32%, var(--bg) 52%), url('fundo-depoimentos.jpg'); }
+
+@media (max-width: 768px) {
+    .secao-foto::before { background-size: 100% 100%, cover; background-position: 0 0, center 30% !important; }
+    #sobre::before, #precos::before, #depoimentos::before { background-image: linear-gradient(rgba(10, 9, 8, .82), rgba(10, 9, 8, .82)), var(--foto); }
+    #sobre { --foto: url('fundo-sobre.jpg'); }
+    #precos { --foto: url('fundo-precos.jpg'); }
+    #depoimentos { --foto: url('fundo-depoimentos.jpg'); }
+}
+/* cartões levemente translúcidos para a foto aparecer por trás */
+.secao-foto .about-container, .secao-foto .precos-grid, .secao-foto .aviso-precos, .secao-foto .depoimento-card {
+    background: linear-gradient(145deg, rgba(21, 19, 16, .86), rgba(15, 14, 12, .80));
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+
+/* menu do celular fechado fica dentro da tela (invisível); antes, fora da tela, ele alargava a página e permitia "dar zoom para fora" */
+@media (max-width: 768px) {
+    .nav-links { right: 0; opacity: 0; visibility: hidden; pointer-events: none; transform: scale(.97); transform-origin: right center; transition: opacity .3s ease, transform .35s ease, visibility 0s linear .35s; }
+    .menu-toggle:checked ~ nav .nav-links { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .3s ease, transform .35s ease, visibility 0s; }
+}

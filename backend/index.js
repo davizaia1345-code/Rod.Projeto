@@ -34,6 +34,11 @@ const PRECOS = {
     'Progressiva + Corte': 120, 'Luzes + Corte': 100, 'Sobrancelha': 10
 };
 
+const DURACOES = {
+    'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60,
+    'Progressiva + Corte': 120, 'Luzes + Corte': 90, 'Sobrancelha': 10
+};
+
 const HORARIOS = new Set();
 [[9 * 60, 11 * 60 + 30], [13 * 60, 21 * 60 + 30]].forEach(([ini, fim]) => {
     for (let t = ini; t <= fim; t += 35) {
@@ -127,6 +132,21 @@ function gerarEmailBonito(titulo, subtitulo, detalhes, corDestaque = '#c7a04a', 
 </div></div>`;
 }
 
+const ENDERECO = 'Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, São Paulo - SP';
+
+function linkGoogleAgenda(ag) {
+    const dia = String(ag.data).replace(/-/g, '');
+    const [h, m] = String(ag.hora).split(':').map(Number);
+    const fim = h * 60 + m + (DURACOES[ag.servico] || 40);
+    const q = new URLSearchParams({
+        action: 'TEMPLATE', text: `${ag.servico} - Barbearia do Rod`,
+        dates: `${dia}T${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00/${dia}T${String(Math.floor(fim / 60) % 24).padStart(2, '0')}${String(fim % 60).padStart(2, '0')}00`,
+        ctz: 'America/Sao_Paulo', location: ENDERECO, details: 'Agendamento na Barbearia do Rod.'
+    });
+    return `https://calendar.google.com/calendar/render?${q}`;
+}
+const linhaAgenda = ag => linhaEmail('Lembrete', `<a href="${escapeHtml(linkGoogleAgenda(ag))}" style="color:#e8ca8c;text-decoration:none;">Adicionar ao Google Agenda</a>`);
+
 // ---------------------------------------------------------------------------
 // Configuração do Express (A02: headers, CORS restrito, limites)
 // ---------------------------------------------------------------------------
@@ -177,11 +197,17 @@ mongoose.connect(process.env.MONGO_URI)
 const agendamentoSchema = new mongoose.Schema({
     nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
     pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String,
-    referencia: String
+    referencia: String, pagamentoManual: String
 });
 agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
 const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
 Agendamento.init().catch(err => console.error('⚠️  Índice único de horários não criado:', err.message));
+
+// folgas e horários bloqueados pelo proprietário (hora vazia = dia inteiro)
+const bloqueioSchema = new mongoose.Schema({ data: String, hora: { type: String, default: '' }, motivo: String }, { timestamps: true });
+bloqueioSchema.index({ data: 1, hora: 1 }, { unique: true });
+const Bloqueio = mongoose.model('Bloqueio', bloqueioSchema);
+Bloqueio.init().catch(err => console.error('⚠️  Índice de bloqueios não criado:', err.message));
 
 const Usuario = mongoose.model('Usuario', {
     nome: String, email: { type: String, unique: true }, senha: String,
@@ -262,18 +288,27 @@ const limiteDePagamento = ag => Math.max(
     ag._id.getTimestamp().getTime() + CARENCIA_MIN * 60e3
 );
 
-async function confirmarPagamento(ag) {
+async function confirmarPagamento(ag, { avisarDono = true } = {}) {
     await Agendamento.findOneAndUpdate({ _id: ag._id }, { statusPagamento: 'approved' });
     const detalhes =
         linhaEmail('Serviço', escapeHtml(ag.servico)) +
         linhaEmail('Data', formatarData(ag.data)) +
         linhaEmail('Horário', escapeHtml(ag.hora)) +
         linhaEmail('Valor', `R$ ${ag.valor},00`, '#2fae6b');
-    notificar({ to: ag.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes, '#2fae6b') });
-    notificar({
+    notificar({ to: ag.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes + linhaAgenda(ag), '#2fae6b') });
+    if (avisarDono) notificar({
         to: OWNER_EMAIL, subject: `Pagamento recebido: ${ag.nome}`,
         html: gerarEmailBonito('Pagamento recebido', `${escapeHtml(ag.nome)} pagou o agendamento.`, linhaEmail('Cliente', escapeHtml(ag.nome)) + detalhes, '#2fae6b', { texto: 'ABRIR PAINEL', link: `${FRONTEND_URL}/admin` })
     });
+}
+
+// Encerra o PIX pendente e diz se o Mercado Pago tem algum pagamento aprovado (PIX ou cartão) para a reserva.
+// Se a consulta falhar, lança erro: quem chama deve manter a reserva.
+async function pagamentoAprovado(ag) {
+    if (ag.pagamentoId) { try { await payment.cancel({ id: ag.pagamentoId }); } catch (e) { /* já pago, expirado ou cancelado: a consulta abaixo decide */ } }
+    if (!ag.referencia) return false;
+    const busca = await payment.search({ options: { external_reference: ag.referencia } });
+    return (busca.results || []).some(p => p.status === 'approved');
 }
 
 // Só apaga se o Mercado Pago confirmar que NÃO existe pagamento aprovado (PIX ou cartão). Na dúvida, mantém.
@@ -283,9 +318,7 @@ async function liberarPendentesVencidos() {
     for (const ag of pendentes) {
         if (agora < limiteDePagamento(ag)) continue;
         try {
-            try { await payment.cancel({ id: ag.pagamentoId }); } catch (e) { /* já pago, expirado ou cancelado: a consulta abaixo decide */ }
-            const busca = await payment.search({ options: { external_reference: ag.referencia } });
-            if ((busca.results || []).some(p => p.status === 'approved')) {
+            if (await pagamentoAprovado(ag)) {
                 console.log(`💰 Pagamento aprovado encontrado ao liberar pendente (${ag.data} ${ag.hora}); confirmando.`);
                 await confirmarPagamento(ag);
                 continue;
@@ -337,7 +370,7 @@ const limpar = (v, max) => str(v, max).replace(/[\u0000-\u001f<>]/g, '');
 async function lancamentosDoMes(mes) {
     const faixa = { $gte: `${mes}-01`, $lte: `${mes}-31` };
     const [online, balcao, pendentes] = await Promise.all([
-        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data servico valor'),
+        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data servico valor pagamentoManual'),
         Atendimento.find({ data: faixa }).select('data servico valor forma'),
         Agendamento.find({ statusPagamento: 'pendente', data: faixa }).select('valor')
     ]);
@@ -349,7 +382,7 @@ async function calcularRelatorio(mes) {
     const soma = lista => lista.reduce((s, x) => s + (Number(x.valor) || 0), 0);
     const porServico = {}, porForma = {}, porDia = {};
     const somar = (obj, chave, v) => { const o = obj[chave] || (obj[chave] = { qtd: 0, total: 0 }); o.qtd++; o.total += v; };
-    online.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, 'Online (site)', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
+    online.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, x.pagamentoManual ? (FORMAS[x.pagamentoManual] || 'Outro') : 'Online (site)', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
     balcao.forEach(x => { const v = Number(x.valor) || 0; somar(porServico, x.servico, v); somar(porForma, FORMAS[x.forma] || 'Outro', v); porDia[x.data] = (porDia[x.data] || 0) + v; });
     const lista = obj => Object.entries(obj).map(([nome, o]) => ({ nome, qtd: o.qtd, total: r2(o.total) })).sort((a, b) => b.total - a.total);
 
@@ -545,10 +578,34 @@ app.get('/agendamentos/ocupados', async (req, res) => {
         const data = req.query.data;
         if (typeof data !== 'string' || !dataReal(data)) return erro(res, 400, 'Data inválida.');
         await garantirLiberacao();
-        const lista = await Agendamento.find({ data }).select('hora');
-        res.json(lista.map(ag => ag.hora));
+        const [lista, bloqueios] = await Promise.all([Agendamento.find({ data }).select('hora'), Bloqueio.find({ data }).select('hora')]);
+        const horas = new Set(lista.map(ag => ag.hora));
+        if (bloqueios.some(b => b.hora === '')) HORARIOS.forEach(h => horas.add(h));
+        else bloqueios.forEach(b => horas.add(b.hora));
+        res.json([...horas]);
     } catch (err) {
         console.error('ERRO AO BUSCAR HORÁRIOS:', err.message);
+        erro(res, 500, 'Erro ao buscar a agenda.');
+    }
+});
+
+// agenda de um dia para a tela de agendamento: usa o relógio do servidor (Brasília) para esconder horários que já passaram
+app.get('/agenda', async (req, res) => {
+    try {
+        const data = req.query.data;
+        if (typeof data !== 'string' || !dataReal(data)) return erro(res, 400, 'Data inválida.');
+        await garantirLiberacao();
+        const [lista, bloqueios] = await Promise.all([Agendamento.find({ data }).select('hora'), Bloqueio.find({ data }).select('hora motivo')]);
+        const diaBloqueado = bloqueios.find(b => b.hora === '');
+        const agora = agoraSP();
+        res.json({
+            data, hoje: agora.data, minutosAgora: agora.minutos,
+            ocupados: lista.map(ag => ag.hora),
+            bloqueados: diaBloqueado ? [...HORARIOS] : bloqueios.map(b => b.hora),
+            diaFechado: Boolean(diaBloqueado)
+        });
+    } catch (err) {
+        console.error('ERRO AO BUSCAR AGENDA:', err.message);
         erro(res, 500, 'Erro ao buscar a agenda.');
     }
 });
@@ -578,6 +635,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         if (pendentes >= 3) return erro(res, 429, 'Você já tem 3 agendamentos aguardando pagamento. Pague ou cancele algum para marcar outro.');
 
         if (await Agendamento.findOne({ data, hora })) return erro(res, 400, 'Horário já reservado!');
+        if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário não está disponível.');
 
         const preco = PRECOS[servico];
         const descricao = `Corte ${servico} - ${data} ${hora}`;
@@ -635,7 +693,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         });
         notificar({
             to: email, subject: 'Agendamento recebido - RodBarber',
-            html: gerarEmailBonito('Agendamento recebido', 'Recebemos o seu pedido. Finalize o pagamento para confirmar o horário.', linhasTabela)
+            html: gerarEmailBonito('Agendamento recebido', 'Recebemos o seu pedido. Finalize o pagamento para confirmar o horário.', linhasTabela + linhaAgenda({ data, hora, servico }))
         });
     } catch (err) {
         console.error('ERRO NO AGENDAMENTO:', err.message);
@@ -773,12 +831,93 @@ app.post('/relatorio/enviar', exigirLogin, exigirDono, limitadorRelatorio, async
     }
 });
 
+// dono recebeu em mãos (dinheiro, maquininha, PIX direto): marca a reserva como paga
+app.post('/agendamentos/:id/pago', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const forma = req.body && typeof req.body.forma === 'string' ? req.body.forma : 'dinheiro';
+        if (!Object.prototype.hasOwnProperty.call(FORMAS, forma)) return erro(res, 400, 'Forma de pagamento inválida.');
+        const ag = await Agendamento.findById(req.params.id);
+        if (!ag) return erro(res, 404, 'Agendamento não encontrado.');
+        if (ag.statusPagamento === 'approved') return erro(res, 400, 'Esse agendamento já está pago.');
+        try { await pagamentoAprovado(ag); } catch (err) { /* só tenta encerrar o PIX; o pagamento em mãos vale de qualquer forma */ }
+        await Agendamento.updateOne({ _id: ag._id }, { pagamentoManual: forma });
+        await confirmarPagamento(ag, { avisarDono: false });
+        logSeg('pagamento_manual', req, { forma, data: ag.data, hora: ag.hora });
+        res.json({ mensagem: 'Ok' });
+    } catch (err) {
+        console.error('ERRO AO MARCAR COMO PAGO:', err.message);
+        erro(res, 500, 'Erro ao marcar como pago.');
+    }
+});
+
+// --- folgas e horários bloqueados (somente o proprietário) ---
+
+app.get('/bloqueios', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const hoje = agoraSP().data;
+        res.json(await Bloqueio.find({ data: { $gte: hoje } }).sort({ data: 1, hora: 1 }).limit(500));
+    } catch (err) {
+        console.error('ERRO AO LISTAR BLOQUEIOS:', err.message);
+        erro(res, 500, 'Erro ao listar os bloqueios.');
+    }
+});
+
+app.post('/bloqueios', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const b = req.body || {};
+        const data = str(b.data, 10);
+        const hora = b.hora === undefined || b.hora === null ? '' : str(b.hora, 5);
+        if (!dataReal(data)) return erro(res, 400, 'Data inválida.');
+        if (hora !== '' && !HORARIOS.has(hora)) return erro(res, 400, 'Horário inválido.');
+        if (data < agoraSP().data) return erro(res, 400, 'Escolha hoje ou uma data futura.');
+        const emConflito = await Agendamento.countDocuments(hora ? { data, hora } : { data });
+        if (hora && emConflito) return erro(res, 400, 'Já existe um agendamento nesse horário.');
+        try {
+            const doc = await Bloqueio.create({ data, hora, motivo: limpar(b.motivo, 80) });
+            logSeg('bloqueio_criado', req, { data, hora: hora || 'dia inteiro' });
+            res.status(201).json({ ...doc.toObject(), agendamentosNoDia: hora ? 0 : emConflito });
+        } catch (err) {
+            if (err && err.code === 11000) return erro(res, 400, 'Esse bloqueio já existe.');
+            throw err;
+        }
+    } catch (err) {
+        console.error('ERRO AO CRIAR BLOQUEIO:', err.message);
+        erro(res, 500, 'Erro ao criar o bloqueio.');
+    }
+});
+
+app.delete('/bloqueios/:id', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const doc = await Bloqueio.findByIdAndDelete(req.params.id);
+        if (!doc) return erro(res, 404, 'Bloqueio não encontrado.');
+        logSeg('bloqueio_removido', req, { data: doc.data, hora: doc.hora || 'dia inteiro' });
+        res.json({ mensagem: 'Ok' });
+    } catch (err) {
+        console.error('ERRO AO REMOVER BLOQUEIO:', err.message);
+        erro(res, 500, 'Erro ao remover o bloqueio.');
+    }
+});
+
 app.delete('/agendamentos/:id', exigirLogin, async (req, res) => {
     try {
         if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
         const agendamento = await Agendamento.findById(req.params.id);
         if (!agendamento) return erro(res, 404, 'Agendamento não encontrado.');
         if (!donoDoAgendamento(req, agendamento)) { logSeg('exclusao_negada', req, { email: mascarar(req.usuario.email) }); return erro(res, 403, 'Acesso negado.'); }
+
+        // cliente não cancela sozinho um horário já pago (não há estorno automático): fala com o Rod
+        if (agendamento.statusPagamento === 'approved' && !req.usuario.dono) {
+            return erro(res, 403, 'Horários já pagos são cancelados pelo Rod. Fale com ele pelo WhatsApp.');
+        }
+        // horário pendente: encerra o PIX (para ninguém pagar uma vaga já cancelada) e confere se não foi pago nesse meio tempo
+        if (agendamento.statusPagamento !== 'approved') {
+            let pago;
+            try { pago = await pagamentoAprovado(agendamento); }
+            catch (err) { console.error('⚠️  Não foi possível conferir o pagamento antes de cancelar:', err.message); return erro(res, 502, 'Não foi possível conferir o pagamento agora. Tente de novo em instantes.'); }
+            if (pago) { await confirmarPagamento(agendamento); return erro(res, 409, 'O pagamento acabou de ser confirmado, então o horário foi mantido.'); }
+        }
 
         await agendamento.deleteOne();
         logSeg('agendamento_excluido', req, { por: mascarar(req.usuario.email), data: agendamento.data, hora: agendamento.hora });

@@ -1725,3 +1725,31 @@ form button[type="submit"].incompleto:hover { transform: none; box-shadow: none;
     .admin-page .srv-campo, .admin-page .srv-switch, .admin-page .btn-salvar-srv { grid-column: 1 / -1; }
     .admin-page .form-servico { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Privacidade, exclusão de conta
+   ========================================================================== */
+
+.link-discreto { color: var(--text-faint); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-light); }
+.link-discreto:hover { color: var(--gold-light); }
+.dica-campo.termos { text-align: center; margin-top: 2px; }
+.dica-campo.termos a { color: var(--gold-light); }
+
+.conta-rodape { margin-top: 44px; padding-top: 22px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; align-items: center; gap: 14px; font-size: .82rem; }
+.btn-excluir-conta { background: none; border: 1px solid var(--border); color: var(--text-faint); padding: 9px 16px; border-radius: var(--radius-sm); cursor: pointer; font: inherit; font-size: .8rem; display: inline-flex; gap: 8px; align-items: center; transition: .2s; }
+.btn-excluir-conta:hover { border-color: var(--red-light); color: var(--red-light); background: var(--red-dim); }
+
+body.doc-page { background: var(--bg); padding: 40px 16px 60px; text-align: left; min-height: 100vh; }
+.doc-container { max-width: 720px; margin: 0 auto; background: linear-gradient(165deg, var(--surface), var(--bg-soft)); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 44px; box-shadow: var(--shadow-lg); line-height: 1.7; color: var(--text-muted); }
+.doc-container .logo { justify-content: center; margin-bottom: 22px; font-size: 1.3rem; letter-spacing: 2.5px; display: flex; gap: 8px; text-transform: uppercase; text-decoration: none; color: var(--text); }
+.doc-container .logo span { color: var(--gold); }
+.doc-container h1 { font-family: var(--font-display); color: var(--text); text-transform: uppercase; letter-spacing: .03em; font-size: 1.9rem; margin-bottom: 4px; text-align: center; }
+.doc-container .doc-data { text-align: center; color: var(--text-faint); font-size: .82rem; margin-bottom: 28px; }
+.doc-container h2 { font-size: 1.1rem; margin: 28px 0 10px; color: var(--gold-light); letter-spacing: .04em; }
+.doc-container p { margin-bottom: 12px; }
+.doc-container ul { margin: 0 0 12px 20px; }
+.doc-container li { margin-bottom: 6px; }
+.doc-container strong { color: var(--text); }
+.doc-container a:not(.btn-login-cta) { color: var(--gold-light); }
+.doc-voltar { margin-top: 24px; display: inline-flex; gap: 9px; align-items: center; text-decoration: none; }
+@media (max-width: 600px) { .doc-container { padding: 28px 20px; } .doc-container h1 { font-size: 1.5rem; } }

@@ -670,6 +670,43 @@ app.post('/resetar-senha', limitadorAuth, async (req, res) => {
     }
 });
 
+// LGPD: o cliente pode excluir a própria conta e os dados pessoais
+app.delete('/minha-conta', limitadorAuth, exigirLogin, async (req, res) => {
+    try {
+        if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário não pode ser excluída por aqui.');
+        const senha = req.body && typeof req.body.senha === 'string' ? req.body.senha : '';
+        const usuario = await Usuario.findOne({ email: req.usuario.email }).collation(COLLATION);
+        if (!usuario) return erro(res, 404, 'Conta não encontrada.');
+        if (!senha || !(await bcrypt.compare(senha, usuario.senha))) {
+            logSeg('exclusao_conta_senha_incorreta', req, { email: mascarar(req.usuario.email) });
+            return erro(res, 403, 'Senha incorreta.');
+        }
+        const meus = await Agendamento.find({ email: usuario.email }).collation(COLLATION);
+        const pagos = meus.filter(a => a.statusPagamento === 'approved');
+        const pendentes = meus.filter(a => a.statusPagamento !== 'approved');
+        const agora = Date.now();
+        if (pagos.some(a => inicioDoAgendamento(a) + 60 * 60e3 > agora)) {
+            return erro(res, 409, 'Você tem horários já pagos que ainda não aconteceram. Fale com o Rod pelo WhatsApp para cancelá-los antes de excluir a conta.');
+        }
+        // encerra os PIX pendentes; se algum já foi pago, não exclui
+        for (const a of pendentes) {
+            let pago;
+            try { pago = await pagamentoAprovado(a); }
+            catch (err) { return erro(res, 502, 'Não foi possível conferir seus pagamentos agora. Tente de novo em instantes.'); }
+            if (pago) { await confirmarPagamento(a); return erro(res, 409, 'Um pagamento seu acabou de ser confirmado. Tente excluir a conta depois do atendimento.'); }
+        }
+        await Agendamento.deleteMany({ _id: { $in: pendentes.map(a => a._id) } });
+        // atendimentos pagos e já realizados ficam no caixa, sem identificar a pessoa
+        await Agendamento.updateMany({ _id: { $in: pagos.map(a => a._id) } }, { nome: 'Cliente removido', email: 'removido@anonimo.invalid' });
+        await Usuario.deleteOne({ _id: usuario._id });
+        logSeg('conta_excluida', req, { email: mascarar(usuario.email), pendentesRemovidos: pendentes.length, anonimizados: pagos.length });
+        res.json({ mensagem: 'Conta excluída. Seus dados pessoais foram removidos.' });
+    } catch (err) {
+        console.error('ERRO AO EXCLUIR CONTA:', err.message);
+        erro(res, 500, 'Erro ao excluir a conta. Tente novamente.');
+    }
+});
+
 app.get('/agendamentos/ocupados', async (req, res) => {
     try {
         const data = req.query.data;
@@ -711,6 +748,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
     try {
         // a conta do proprietário só acessa o painel
         if (req.usuario.dono) return erro(res, 403, 'A conta do proprietário acessa apenas o painel.');
+        if (!(await Usuario.exists({ email: req.usuario.email }).collation(COLLATION))) return erro(res, 401, 'Conta não encontrada. Faça login novamente.');
         // nome e e-mail vêm do token: ninguém agenda em nome de outra pessoa nem usa o sistema para mandar e-mail a terceiros
         const { nome, email } = req.usuario;
         await garantirLiberacao();

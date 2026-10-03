@@ -168,6 +168,30 @@
         }
     }
 
+    // ----- excluir a própria conta (LGPD)
+    async function excluirConta() {
+        var r = await Tema.fire({
+            title: 'Excluir minha conta?', icon: 'warning',
+            html: 'Seus dados pessoais serão removidos e as reservas ainda não pagas serão canceladas.<br><small style="color:#b2a996">Essa ação não pode ser desfeita. Digite sua senha para confirmar.</small>',
+            input: 'password', inputPlaceholder: 'Sua senha', inputAttributes: { autocomplete: 'current-password', maxlength: 72 },
+            showCancelButton: true, confirmButtonColor: '#cf4a40', confirmButtonText: 'Excluir definitivamente', cancelButtonText: 'Voltar',
+            preConfirm: function (v) { if (!v) { Swal.showValidationMessage('Digite sua senha.'); return false; } return v; }
+        });
+        if (!r.isConfirmed) return;
+        try {
+            var resp = await RodAuth.fetch(API_URL + '/minha-conta', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ senha: r.value }) });
+            var corpo = await resp.json().catch(function () { return {}; });
+            if (!resp.ok) { await Tema.fire({ icon: 'error', title: 'Não foi possível excluir', text: corpo.mensagem || 'Tente novamente em instantes.' }); return; }
+            await Tema.fire({ icon: 'success', title: 'Conta excluída', text: corpo.mensagem || 'Seus dados foram removidos.', confirmButtonText: 'Ok' });
+            try { localStorage.clear(); } catch (e) {}
+            window.location.href = '/';
+        } catch (e) {
+            if (e && e.message === 'sessao_expirada') return;
+            Tema.fire({ icon: 'error', title: 'Sem conexão', text: 'Confira sua internet e tente de novo.' });
+        }
+    }
+    $('btn-excluir-conta').addEventListener('click', excluirConta);
+
     // atualiza prazos/estados quando a pessoa volta para a aba
     document.addEventListener('visibilitychange', function () { if (!document.hidden && lista.length) carregar(); });
     // durações atuais (usadas para saber quando o corte termina e no arquivo do calendário)

@@ -20,6 +20,7 @@
     var Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true, background: '#1c1a16', color: '#f4efe4' });
 
     function duracao(min) { return min < 60 ? min + ' min' : (min % 60 ? Math.floor(min / 60) + 'h ' + (min % 60) + 'min' : (min / 60) + 'h'); }
+    function precoCurto(p) { return Number.isInteger(p) ? 'R$ ' + p : RodUtil.brl(p); }
     function servicoPorNome(n) { return SERVICOS.filter(function (s) { return s.nome === n; })[0]; }
     function minutos(hhmm) { var p = hhmm.split(':'); return +p[0] * 60 + +p[1]; }
 
@@ -43,6 +44,7 @@
     // ---------------------------------------------------------------- serviços e preços (uma só fonte)
     function desenharServicos() {
         var lista = $('lista-servicos');
+        lista.innerHTML = '';
         SERVICOS.forEach(function (s) {
             var b = document.createElement('button');
             b.type = 'button'; b.className = 'service-card'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
@@ -50,18 +52,33 @@
             b.innerHTML = '<i class="fas ' + s.icone + ' service-icon" aria-hidden="true"></i>' +
                 '<span class="service-info"><span class="service-name">' + esc(s.nome) + '</span>' +
                 '<span class="service-time"><i class="far fa-clock" aria-hidden="true"></i> ' + duracao(s.min) + '</span></span>' +
-                '<span class="service-price">R$ ' + s.preco + '</span>';
+                '<span class="service-price">' + precoCurto(s.preco) + '</span>';
             b.addEventListener('click', function () { selecionarServico(s.nome); });
             lista.appendChild(b);
         });
         var precos = $('lista-precos');
+        precos.innerHTML = '';
         SERVICOS.forEach(function (s) {
             var d = document.createElement('div');
             d.className = 'preco-item';
             d.innerHTML = '<span class="nome-servico"><i class="fas ' + s.icone + '" aria-hidden="true"></i><span>' + esc(s.nome) + '<small>' + duracao(s.min) + '</small></span></span>' +
-                '<span class="preco-valor">R$ ' + s.preco + ',00</span>';
+                '<span class="preco-valor">' + RodUtil.brl(s.preco) + '</span>';
             precos.appendChild(d);
         });
+    }
+
+    // preços e serviços vêm do servidor (o dono edita no painel); os valores acima são só o plano B
+    function aplicarServicos(lista) {
+        SERVICOS = lista.map(function (x) { return { nome: x.nome, preco: Number(x.preco), min: Number(x.minutos), icone: /^fa-[a-z-]+$/.test(x.icone || '') ? x.icone : 'fa-scissors' }; });
+        SERVICOS.forEach(function (s) { RodUtil.duracoes[s.nome] = s.min; });
+        desenharServicos();
+        if (estado.servico && !servicoPorNome(estado.servico)) { estado.servico = null; $('servico-selecionado').value = ''; }
+        else if (estado.servico) selecionarServico(estado.servico);
+        atualizarResumo();
+    }
+    function carregarServicos() {
+        fetch(API_URL + '/servicos').then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .then(function (lista) { if (Array.isArray(lista) && lista.length) aplicarServicos(lista); }).catch(function () { /* mantém os padrões */ });
     }
 
     function selecionarServico(nome) {
@@ -225,7 +242,7 @@
                 '<div class="rs-linha"><i class="fas ' + (s ? s.icone : 'fa-scissors') + '" aria-hidden="true"></i><span>' + (s ? esc(s.nome) : '<em>Escolha o serviço</em>') + '</span></div>' +
                 '<div class="rs-linha"><i class="far fa-calendar" aria-hidden="true"></i><span>' + (estado.data ? esc(RodUtil.dataExtenso(estado.data)) : '<em>Escolha o dia</em>') + '</span></div>' +
                 '<div class="rs-linha"><i class="far fa-clock" aria-hidden="true"></i><span>' + (estado.hora ? esc(estado.hora) : '<em>Escolha o horário</em>') + '</span></div>' +
-                (s ? '<div class="rs-total"><span>Total</span><strong>R$ ' + s.preco + ',00</strong></div>' : '');
+                (s ? '<div class="rs-total"><span>Total</span><strong>' + RodUtil.brl(s.preco) + '</strong></div>' : '');
         }
         btn.classList.toggle('incompleto', f.length > 0);
         btn.setAttribute('aria-disabled', f.length ? 'true' : 'false');
@@ -295,7 +312,7 @@
             '<div class="summary-row"><span><i class="fas fa-scissors"></i> Serviço</span><strong>' + esc(serv.nome) + '</strong></div>' +
             '<div class="summary-row"><span><i class="far fa-calendar"></i> Data</span><strong>' + esc(RodUtil.dataBR(reserva.data)) + ' · ' + esc(RodUtil.diaDaSemana(reserva.data, 'short')) + '</strong></div>' +
             '<div class="summary-row"><span><i class="far fa-clock"></i> Horário</span><strong>' + esc(reserva.hora) + '</strong></div>' +
-            '<div class="summary-row total"><span>Total</span><strong>R$ ' + serv.preco + ',00</strong></div></div>';
+            '<div class="summary-row total"><span>Total</span><strong>' + RodUtil.brl(serv.preco) + '</strong></div></div>';
     }
 
     function mostrarReserva(r, serv) {
@@ -510,6 +527,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         desenharServicos();
+        carregarServicos();
         iniciarNavegacao();
         iniciarGaleria();
         iniciarRevelar();

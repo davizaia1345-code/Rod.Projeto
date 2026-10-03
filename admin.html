@@ -75,6 +75,7 @@
         <button type="button" class="aba ativa" id="btn-aba-agendamentos" role="tab" data-click="mudarAba" data-arg="agendamentos"><i class="fas fa-globe"></i> Agendamentos <span class="aba-n" id="n-pend-aba" hidden></span></button>
         <button type="button" class="aba" id="btn-aba-balcao" role="tab" data-click="mudarAba" data-arg="balcao"><i class="fas fa-store"></i> Balcão</button>
         <button type="button" class="aba" id="btn-aba-folgas" role="tab" data-click="mudarAba" data-arg="folgas"><i class="fas fa-umbrella-beach"></i> Folgas</button>
+        <button type="button" class="aba" id="btn-aba-servicos" role="tab" data-click="mudarAba" data-arg="servicos"><i class="fas fa-tags"></i> Serviços</button>
         <button type="button" class="aba" id="btn-aba-relatorio" role="tab" data-click="mudarAba" data-arg="relatorio"><i class="fas fa-chart-line"></i> Relatório</button>
     </div>
 
@@ -144,6 +145,19 @@
             <button type="submit" id="btn-salvar-folga" class="btn-atualizar"><i class="fas fa-ban"></i> Bloquear</button>
         </form>
         <div id="lista-folgas" class="lista-folgas"></div>
+    </section>
+
+    <section id="aba-servicos" class="aba-painel" hidden>
+        <p class="aba-dica"><i class="fas fa-circle-info"></i> Altere preços e durações quando quiser: vale na hora para novos agendamentos. Quem já agendou mantém o valor da época. Serviços desativados somem do site, mas ficam no histórico.</p>
+        <div id="lista-servicos-admin" class="lista-servicos-admin"></div>
+        <form id="form-servico" class="form-servico" data-submit="criarServico">
+            <h3><i class="fas fa-plus"></i> Novo serviço</h3>
+            <div class="campo campo-largo"><label for="sv-nome">Nome</label><input type="text" id="sv-nome" maxlength="40" placeholder="Ex.: Corte Infantil" required></div>
+            <div class="campo"><label for="sv-preco">Preço (R$)</label><input type="number" id="sv-preco" min="0.5" max="5000" step="0.5" inputmode="decimal" required></div>
+            <div class="campo"><label for="sv-min">Duração (min)</label><input type="number" id="sv-min" min="5" max="480" step="5" inputmode="numeric" value="30" required></div>
+            <div class="campo"><label for="sv-icone">Ícone</label><select id="sv-icone"></select></div>
+            <button type="submit" id="btn-criar-servico" class="btn-atualizar"><i class="fas fa-plus"></i> Adicionar</button>
+        </form>
     </section>
 
     <section id="aba-relatorio" class="aba-painel" hidden>

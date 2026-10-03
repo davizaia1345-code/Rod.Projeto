@@ -137,7 +137,7 @@ const ENDERECO = 'Rua Mário Ferraz de Souza, 889, Cidade Tiradentes, São Paulo
 function linkGoogleAgenda(ag) {
     const dia = String(ag.data).replace(/-/g, '');
     const [h, m] = String(ag.hora).split(':').map(Number);
-    const fim = h * 60 + m + (DURACOES[ag.servico] || 40);
+    const fim = h * 60 + m + duracaoDe(ag.servico);
     const q = new URLSearchParams({
         action: 'TEMPLATE', text: `${ag.servico} - Barbearia do Rod`,
         dates: `${dia}T${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00/${dia}T${String(Math.floor(fim / 60) % 24).padStart(2, '0')}${String(fim % 60).padStart(2, '0')}00`,
@@ -161,7 +161,7 @@ if (process.env.ALLOW_DEV_ORIGINS === 'true') {
 
 app.use(cors({
     origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)),
-    methods: ['GET', 'POST', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200
 }));
@@ -202,6 +202,33 @@ const agendamentoSchema = new mongoose.Schema({
 agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
 const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
 Agendamento.init().catch(err => console.error('⚠️  Índice único de horários não criado:', err.message));
+
+// serviços e preços editáveis pelo proprietário (os valores acima são o padrão inicial)
+const ICONES = ['fa-scissors', 'fa-user-tie', 'fa-star', 'fa-eye', 'fa-wind', 'fa-wand-magic-sparkles', 'fa-spray-can-sparkles', 'fa-child', 'fa-crown', 'fa-gem', 'fa-bolt', 'fa-fire'];
+const Servico = mongoose.model('Servico', new mongoose.Schema({
+    nome: { type: String, unique: true }, preco: Number, minutos: Number, icone: String, ativo: { type: Boolean, default: true }, ordem: Number
+}));
+let servicosCache = new Map();
+const ICONES_PADRAO = { 'Corte Masculino': 'fa-scissors', 'Barba Completa': 'fa-user-tie', 'Corte + Barba': 'fa-star', 'Sobrancelha': 'fa-eye', 'Progressiva + Corte': 'fa-wind', 'Luzes + Corte': 'fa-wand-magic-sparkles' };
+const ORDEM_PADRAO = ['Corte Masculino', 'Barba Completa', 'Corte + Barba', 'Sobrancelha', 'Progressiva + Corte', 'Luzes + Corte'];
+
+async function carregarServicos() {
+    if (await Servico.estimatedDocumentCount() === 0) {
+        await Servico.insertMany(ORDEM_PADRAO.map((nome, i) => ({ nome, preco: PRECOS[nome], minutos: DURACOES[nome], icone: ICONES_PADRAO[nome], ativo: true, ordem: i + 1 })), { ordered: false }).catch(err => { if (!err || err.code !== 11000) throw err; });
+    }
+    const lista = await Servico.find().sort({ ordem: 1, nome: 1 }).lean();
+    servicosCache = new Map(lista.map(x => [x.nome, x]));
+}
+// enquanto o cache não carrega (ou se o banco falhar), valem os padrões
+const precoAtivo = nome => {
+    if (!servicosCache.size) return Object.prototype.hasOwnProperty.call(PRECOS, nome) ? PRECOS[nome] : undefined;
+    const x = servicosCache.get(nome);
+    return x && x.ativo ? x.preco : undefined;
+};
+const duracaoDe = nome => (servicosCache.get(nome) && servicosCache.get(nome).minutos) || DURACOES[nome] || 40;
+const listaServicosPadrao = () => ORDEM_PADRAO.map(nome => ({ nome, preco: PRECOS[nome], minutos: DURACOES[nome], icone: ICONES_PADRAO[nome] }));
+mongoose.connection.once('open', () => { carregarServicos().catch(err => console.error('⚠️  Serviços não carregados (valem os padrões):', err.message)); });
+setInterval(() => carregarServicos().catch(() => {}), 5 * 60 * 1000).unref();
 
 // folgas e horários bloqueados pelo proprietário (hora vazia = dia inteiro)
 const bloqueioSchema = new mongoose.Schema({ data: String, hora: { type: String, default: '' }, motivo: String }, { timestamps: true });
@@ -294,7 +321,7 @@ async function confirmarPagamento(ag, { avisarDono = true } = {}) {
         linhaEmail('Serviço', escapeHtml(ag.servico)) +
         linhaEmail('Data', formatarData(ag.data)) +
         linhaEmail('Horário', escapeHtml(ag.hora)) +
-        linhaEmail('Valor', `R$ ${ag.valor},00`, '#2fae6b');
+        linhaEmail('Valor', brl(ag.valor), '#2fae6b');
     notificar({ to: ag.email, subject: 'Pagamento confirmado - RodBarber', html: gerarEmailBonito('Pagamento confirmado', 'Seu horário está garantido. Te esperamos!', detalhes + linhaAgenda(ag), '#2fae6b') });
     if (avisarDono) notificar({
         to: OWNER_EMAIL, subject: `Pagamento recebido: ${ag.nome}`,
@@ -692,7 +719,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         const hora = str(req.body && req.body.hora, 5);
 
         if (!servico || !data || !hora) return erro(res, 400, 'Faltam dados.');
-        if (!Object.prototype.hasOwnProperty.call(PRECOS, servico)) return erro(res, 400, 'Serviço inválido.');
+        if (precoAtivo(servico) === undefined) return erro(res, 400, 'Serviço inválido ou indisponível.');
         if (!dataReal(data) || !HORARIOS.has(hora)) return erro(res, 400, 'Data ou horário inválido.');
 
         const agora = agoraSP();
@@ -707,7 +734,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         if (await Agendamento.findOne({ data, hora })) return erro(res, 400, 'Horário já reservado!');
         if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário não está disponível.');
 
-        const preco = PRECOS[servico];
+        const preco = precoAtivo(servico);
         const descricao = `Corte ${servico} - ${data} ${hora}`;
         // a referência liga o agendamento aos pagamentos no Mercado Pago (PIX e cartão)
         const referencia = crypto.randomUUID();
@@ -754,7 +781,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
             linhaEmail('Serviço', escapeHtml(servico)) +
             linhaEmail('Data', formatarData(data)) +
             linhaEmail('Horário', escapeHtml(hora)) +
-            linhaEmail('Valor', `R$ ${preco},00`, '#2fae6b');
+            linhaEmail('Valor', brl(preco), '#2fae6b');
         notificar({
             to: OWNER_EMAIL, subject: `Novo agendamento: ${nome} - ${formatarData(data)} ${hora}`,
             html: gerarEmailBonito('Novo agendamento', `${nomeSeguro} reservou um horário.`,
@@ -918,6 +945,91 @@ app.post('/agendamentos/:id/pago', exigirLogin, exigirDono, async (req, res) => 
     } catch (err) {
         console.error('ERRO AO MARCAR COMO PAGO:', err.message);
         erro(res, 500, 'Erro ao marcar como pago.');
+    }
+});
+
+// --- serviços e preços ---
+
+app.get('/servicos', (req, res) => {
+    const ativos = [...servicosCache.values()].filter(x => x.ativo);
+    res.set('Cache-Control', 'no-cache');
+    res.json(servicosCache.size ? ativos.map(x => ({ nome: x.nome, preco: x.preco, minutos: x.minutos, icone: x.icone })) : listaServicosPadrao());
+});
+
+app.get('/servicos/todos', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        res.json(await Servico.find().sort({ ordem: 1, nome: 1 }));
+    } catch (err) {
+        console.error('ERRO AO LISTAR SERVIÇOS:', err.message);
+        erro(res, 500, 'Erro ao listar os serviços.');
+    }
+});
+
+function validarServico(b, parcial) {
+    const out = {};
+    if (!parcial || b.preco !== undefined) {
+        const preco = typeof b.preco === 'number' || typeof b.preco === 'string' ? Number(b.preco) : NaN;
+        if (!Number.isFinite(preco) || preco < 0.5 || preco > 5000) return { erro: 'Informe um preço entre R$ 0,50 e R$ 5.000,00.' };
+        out.preco = r2(preco);
+    }
+    if (!parcial || b.minutos !== undefined) {
+        const min = typeof b.minutos === 'number' || typeof b.minutos === 'string' ? Number(b.minutos) : NaN;
+        if (!Number.isInteger(min) || min < 5 || min > 480) return { erro: 'A duração deve ser de 5 a 480 minutos.' };
+        out.minutos = min;
+    }
+    if (!parcial || b.icone !== undefined) {
+        const icone = typeof b.icone === 'string' ? b.icone : 'fa-scissors';
+        if (!ICONES.includes(icone)) return { erro: 'Ícone inválido.' };
+        out.icone = icone;
+    }
+    if (b.ativo !== undefined) {
+        if (typeof b.ativo !== 'boolean') return { erro: 'Valor inválido para ativo.' };
+        out.ativo = b.ativo;
+    }
+    return { dados: out };
+}
+
+app.post('/servicos', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const b = req.body || {};
+        const nome = limpar(b.nome, 40);
+        if (nome.length < 2) return erro(res, 400, 'Informe o nome do serviço.');
+        const v = validarServico(b, false);
+        if (v.erro) return erro(res, 400, v.erro);
+        const ultimo = await Servico.findOne().sort({ ordem: -1 }).select('ordem');
+        try {
+            const doc = await Servico.create({ nome, ...v.dados, ativo: true, ordem: ((ultimo && ultimo.ordem) || 0) + 1 });
+            await carregarServicos();
+            logSeg('servico_criado', req, { nome, preco: doc.preco });
+            res.status(201).json(doc);
+        } catch (err) {
+            if (err && err.code === 11000) return erro(res, 400, 'Já existe um serviço com esse nome.');
+            throw err;
+        }
+    } catch (err) {
+        console.error('ERRO AO CRIAR SERVIÇO:', err.message);
+        erro(res, 500, 'Erro ao criar o serviço.');
+    }
+});
+
+app.put('/servicos/:id', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const v = validarServico(req.body || {}, true);
+        if (v.erro) return erro(res, 400, v.erro);
+        if (!Object.keys(v.dados).length) return erro(res, 400, 'Nada para atualizar.');
+        if (v.dados.ativo === false && [...servicosCache.values()].filter(x => x.ativo).length <= 1) {
+            const alvo = await Servico.findById(req.params.id);
+            if (alvo && alvo.ativo) return erro(res, 400, 'Mantenha pelo menos um serviço ativo.');
+        }
+        const doc = await Servico.findByIdAndUpdate(req.params.id, v.dados, { new: true });
+        if (!doc) return erro(res, 404, 'Serviço não encontrado.');
+        await carregarServicos();
+        logSeg('servico_atualizado', req, { nome: doc.nome, ...v.dados });
+        res.json(doc);
+    } catch (err) {
+        console.error('ERRO AO ATUALIZAR SERVIÇO:', err.message);
+        erro(res, 500, 'Erro ao atualizar o serviço.');
     }
 });
 

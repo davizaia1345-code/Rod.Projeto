@@ -1,7 +1,8 @@
 (function () {
     'use strict';
     const API_URL = 'https://rodbarber-api-0jna.onrender.com';
-    const PRECOS = { 'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60, 'Progressiva + Corte': 120, 'Luzes + Corte': 100, 'Sobrancelha': 10 };
+    let PRECOS = { 'Corte Masculino': 40, 'Barba Completa': 20, 'Corte + Barba': 60, 'Sobrancelha': 10, 'Progressiva + Corte': 120, 'Luzes + Corte': 100 };
+    const ICONES = { 'fa-scissors': 'Tesoura', 'fa-user-tie': 'Barba', 'fa-star': 'Estrela', 'fa-eye': 'Sobrancelha', 'fa-wind': 'Progressiva', 'fa-wand-magic-sparkles': 'Mágica', 'fa-spray-can-sparkles': 'Spray', 'fa-child': 'Criança', 'fa-crown': 'Coroa', 'fa-gem': 'Premium', 'fa-bolt': 'Raio', 'fa-fire': 'Fogo' };
     const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX', debito: 'Cartão de débito', credito: 'Cartão de crédito', outro: 'Outro' };
     const esc = v => RodAuth.esc(v);
     const $ = id => document.getElementById(id);
@@ -236,15 +237,17 @@
 
     window.mudarAba = function (nome) {
         abaAtual = nome;
-        ['agendamentos', 'balcao', 'folgas', 'relatorio'].forEach(a => {
+        ['agendamentos', 'balcao', 'folgas', 'servicos', 'relatorio'].forEach(a => {
             $('aba-' + a).hidden = a !== nome;
             $('btn-aba-' + a).classList.toggle('ativa', a === nome);
         });
-        $('filtro-wrap').style.display = (nome === 'relatorio' || nome === 'folgas') ? 'none' : '';
-        $('filtros-lista').style.display = (nome === 'relatorio' || nome === 'folgas') ? 'none' : '';
+        const semFiltros = nome === 'relatorio' || nome === 'folgas' || nome === 'servicos';
+        $('filtro-wrap').style.display = semFiltros ? 'none' : '';
+        $('filtros-lista').style.display = semFiltros ? 'none' : '';
         document.querySelector('.chips').style.display = nome === 'agendamentos' ? '' : 'none';
         if (nome === 'relatorio') carregarRelatorio();
         if (nome === 'folgas') carregarFolgas();
+        if (nome === 'servicos') carregarServicosAdmin();
     };
 
     // --- ações nas linhas (excluir / marcar como pago) ---
@@ -304,7 +307,94 @@
         else if (b.dataset.acao === 'pago') marcarComoPago(id);
         else if (b.dataset.acao === 'excluir-atendimento') deletarAtendimento(id);
         else if (b.dataset.acao === 'remover-folga') removerFolga(id);
+        else if (b.dataset.acao === 'salvar-servico') salvarServico(id);
     });
+
+    // --- serviços e preços ---
+    let servicosAdmin = [];
+
+    function aplicarServicosNaPagina(lista) {
+        const ativos = lista.filter(s => s.ativo !== false);
+        if (ativos.length) PRECOS = Object.fromEntries(ativos.map(s => [s.nome, Number(s.preco)]));
+        lista.forEach(s => { RodUtil.duracoes[s.nome] = Number(s.minutos) || 40; });
+    }
+
+    async function carregarServicosPublicos() {
+        try { const r = await fetch(`${API_URL}/servicos`); if (r.ok) aplicarServicosNaPagina(await r.json()); } catch (e) { /* ficam os padrões */ }
+    }
+
+    function opcoesIcone(atual) {
+        return Object.entries(ICONES).map(([v, nome]) => `<option value="${v}"${v === atual ? ' selected' : ''}>${nome}</option>`).join('');
+    }
+
+    function renderServicosAdmin() {
+        const alvo = $('lista-servicos-admin');
+        alvo.innerHTML = servicosAdmin.map(s => `
+            <div class="srv-item${s.ativo ? '' : ' inativo'}" data-id="${esc(s._id)}">
+                <span class="srv-icone"><i class="fas ${esc(s.icone)}"></i></span>
+                <div class="srv-nome"><strong>${esc(s.nome)}</strong>${s.ativo ? '' : '<span class="badge bg-forma">Desativado</span>'}</div>
+                <label class="srv-campo"><span>Preço (R$)</span><input type="number" class="srv-preco" min="0.5" max="5000" step="0.5" inputmode="decimal" value="${Number(s.preco)}"></label>
+                <label class="srv-campo"><span>Duração (min)</span><input type="number" class="srv-min" min="5" max="480" step="5" inputmode="numeric" value="${Number(s.minutos)}"></label>
+                <label class="srv-campo"><span>Ícone</span><select class="srv-icone-sel">${opcoesIcone(s.icone)}</select></label>
+                <label class="srv-switch" title="Aparece no site"><input type="checkbox" class="srv-ativo"${s.ativo ? ' checked' : ''}><span class="srv-trilho"></span><em>${s.ativo ? 'Ativo' : 'Inativo'}</em></label>
+                <button type="button" class="btn-salvar-srv" data-acao="salvar-servico" data-id="${esc(s._id)}" disabled><i class="fas fa-check"></i> Salvar</button>
+            </div>`).join('') || '<p class="rel-vazio">Nenhum serviço cadastrado.</p>';
+    }
+
+    async function carregarServicosAdmin() {
+        $('sv-icone').innerHTML = opcoesIcone('fa-scissors');
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/servicos/todos`);
+            if (!res.ok) throw new Error('falha');
+            servicosAdmin = await res.json();
+            aplicarServicosNaPagina(servicosAdmin);
+            renderServicosAdmin();
+        } catch (error) { if (error.message !== 'sessao_expirada') $('lista-servicos-admin').innerHTML = '<p class="rel-vazio">Não foi possível carregar os serviços.</p>'; }
+    }
+
+    // habilita "Salvar" na linha assim que algo muda
+    function marcarSujo(ev) {
+        const linha = ev.target.closest('.srv-item'); if (!linha) return;
+        linha.querySelector('.btn-salvar-srv').disabled = false;
+        if (ev.target.classList.contains('srv-ativo')) linha.querySelector('.srv-switch em').textContent = ev.target.checked ? 'Ativo' : 'Inativo';
+    }
+    document.addEventListener('input', marcarSujo);
+    document.addEventListener('change', marcarSujo);
+
+    async function salvarServico(id) {
+        const linha = document.querySelector(`.srv-item[data-id="${id}"]`); if (!linha) return;
+        const btn = linha.querySelector('.btn-salvar-srv');
+        const corpo = { preco: linha.querySelector('.srv-preco').value, minutos: linha.querySelector('.srv-min').value, icone: linha.querySelector('.srv-icone-sel').value, ativo: linha.querySelector('.srv-ativo').checked };
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/servicos/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+            const dados = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(dados.erro || 'Não foi possível salvar.');
+            toast('success', 'Serviço atualizado!');
+            await carregarServicosAdmin();
+        } catch (error) {
+            if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não salvou', text: error.message });
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Salvar';
+        }
+    }
+
+    window.criarServico = async function (ev) {
+        ev.preventDefault();
+        const btn = $('btn-criar-servico');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/servicos`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: $('sv-nome').value.trim(), preco: $('sv-preco').value, minutos: $('sv-min').value, icone: $('sv-icone').value })
+            });
+            const dados = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(dados.erro || 'Não foi possível adicionar.');
+            $('form-servico').reset(); $('sv-min').value = 30;
+            toast('success', 'Serviço adicionado!');
+            await carregarServicosAdmin();
+        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não adicionou', text: error.message }); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Adicionar'; }
+    };
 
     // --- folgas e horários bloqueados ---
     function horariosDoDia() {
@@ -530,6 +620,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         $('rel-mes').value = hojeSP().slice(0, 7);
+        carregarServicosPublicos();
         carregarDados();
         // atualização automática (a cada minuto e ao voltar para a aba)
         setInterval(() => { if (!document.hidden) carregarDados(true); }, 60000);

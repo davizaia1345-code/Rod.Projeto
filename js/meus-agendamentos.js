@@ -170,5 +170,7 @@
 
     // atualiza prazos/estados quando a pessoa volta para a aba
     document.addEventListener('visibilitychange', function () { if (!document.hidden && lista.length) carregar(); });
+    // durações atuais (usadas para saber quando o corte termina e no arquivo do calendário)
+    fetch(API_URL + '/servicos').then(function (r) { return r.ok ? r.json() : []; }).then(function (l) { (l || []).forEach(function (s) { RodUtil.duracoes[s.nome] = Number(s.minutos) || 40; }); if (lista.length) desenhar(); }).catch(function () {});
     document.addEventListener('DOMContentLoaded', carregar);
 })();

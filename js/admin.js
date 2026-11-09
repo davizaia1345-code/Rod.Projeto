@@ -12,6 +12,9 @@
     let todosAgendamentos = [];
     let todosAtendimentos = [];
     let folgas = [];
+    let barbeiros = [];                       // todos (ativos e inativos), do painel
+    const ativos = () => barbeiros.filter(b => b.ativo);
+    const nomeBarb = id => { const b = barbeiros.find(x => x._id === id); return b ? b.nome : ''; };
     let idsConhecidos = null;
     let filtroChip = 'proximos';
     let abaAtual = 'agendamentos';
@@ -96,7 +99,7 @@
             <span class="pc-selo"><i class="fas fa-bolt"></i> Próximo cliente</span>
             <div class="pc-corpo">
                 <strong>${esc(a.nome)}</strong>
-                <span>${esc(a.servico)} · ${esc(RodUtil.quando(a.data, a.hora))}</span>
+                <span>${esc(a.servico)}${a.barbeiroNome ? ' com ' + esc(a.barbeiroNome) : ''} · ${esc(RodUtil.quando(a.data, a.hora))}</span>
             </div>
             <span class="badge ${pago ? 'bg-pago' : 'bg-pendente'}">${pago ? 'Pago' : 'Pendente'}</span>
             ${restantesHoje > 1 ? `<span class="pc-extra">${restantesHoje - 1} outro${restantesHoje - 1 === 1 ? '' : 's'} hoje</span>` : ''}`;
@@ -134,7 +137,7 @@
                     ${ag.email ? `<span class="info-secundaria"><a class="link-email" href="mailto:${esc(ag.email)}">${esc(ag.email)}</a></span>` : ''}
                     ${ag.telefone ? `<span class="info-secundaria"><a class="link-whats" href="https://wa.me/55${esc(ag.telefone)}?text=${encodeURIComponent('Olá, ' + String(ag.nome).split(' ')[0] + '! Aqui é o Rod, sobre seu horário de ' + formatarData(ag.data) + ' às ' + ag.hora + '.')}" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> ${esc(telBR(ag.telefone))}</a></span>` : ''}
                 </td>
-                <td data-label="Serviço">${esc(ag.servico)}</td>
+                <td data-label="Serviço">${esc(ag.servico)}${ag.barbeiroNome ? `<span class="info-secundaria tag-barb"><i class="fas fa-user"></i> ${esc(ag.barbeiroNome)}</span>` : ''}</td>
                 <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">${brl(ag.valor)}</td>
                 <td data-label="Status">${badgeStatus(ag)}</td>
                 <td data-label="Ações" style="text-align: center;">
@@ -169,7 +172,7 @@
                     <span class="info-principal">${esc(at.nome) || 'Não informado'}</span>
                     ${at.observacao ? `<span class="info-secundaria">${esc(at.observacao)}</span>` : ''}
                 </td>
-                <td data-label="Serviço">${esc(at.servico)}</td>
+                <td data-label="Serviço">${esc(at.servico)}${at.barbeiroNome ? `<span class="info-secundaria tag-barb"><i class="fas fa-user"></i> ${esc(at.barbeiroNome)}</span>` : ''}</td>
                 <td data-label="Pagamento"><span class="badge bg-forma">${esc(FORMAS[at.forma] || 'Outro')}</span></td>
                 <td data-label="Valor" style="font-weight:bold; color: #2ecc71;">${brl(at.valor)}</td>
                 <td data-label="Ação" style="text-align: center;">
@@ -215,11 +218,13 @@
         const termo = $('busca').value.trim().toLowerCase();
         const porTermo = (lista, campos) => termo ? lista.filter(x => campos.some(c => String(x[c] || '').toLowerCase().includes(termo))) : lista;
 
-        let ags = todosAgendamentos;
+        const fb = $('filtro-barb').hidden ? '' : $('filtro-barb').value;
+        const porBarb = l => fb ? l.filter(x => String(x.barbeiro || '') === fb) : l;
+        let ags = porBarb(todosAgendamentos);
         ags = dataFiltro ? ags.filter(a => a.data === dataFiltro).sort((a, b) => chave(a) < chave(b) ? -1 : 1) : aplicarChip(ags);
         renderizarTabela(porTermo(ags, ['nome', 'email', 'servico']));
 
-        let ats = dataFiltro ? todosAtendimentos.filter(a => a.data === dataFiltro) : todosAtendimentos;
+        let ats = porBarb(dataFiltro ? todosAtendimentos.filter(a => a.data === dataFiltro) : todosAtendimentos);
         renderizarBalcao(porTermo(ats, ['nome', 'servico', 'observacao']));
 
         document.querySelectorAll('#chips .chip').forEach(c => c.classList.toggle('ativo', !dataFiltro && c.dataset.f === filtroChip));
@@ -235,16 +240,17 @@
         const b = e.target.closest('.chip'); if (!b) return;
         filtroChip = b.dataset.f; $('filtro-data').value = ''; filtrarTabela();
     });
+    $('filtro-barb').addEventListener('change', filtrarTabela);
     let esperaBusca = null;
     $('busca').addEventListener('input', () => { clearTimeout(esperaBusca); esperaBusca = setTimeout(filtrarTabela, 150); });
 
     window.mudarAba = function (nome) {
         abaAtual = nome;
-        ['agendamentos', 'balcao', 'folgas', 'servicos', 'avaliacoes', 'relatorio'].forEach(a => {
+        ['agendamentos', 'balcao', 'folgas', 'servicos', 'barbeiros', 'avaliacoes', 'relatorio'].forEach(a => {
             $('aba-' + a).hidden = a !== nome;
             $('btn-aba-' + a).classList.toggle('ativa', a === nome);
         });
-        const semFiltros = ['relatorio', 'folgas', 'servicos', 'avaliacoes'].includes(nome);
+        const semFiltros = ['relatorio', 'folgas', 'servicos', 'barbeiros', 'avaliacoes'].includes(nome);
         $('filtro-wrap').style.display = semFiltros ? 'none' : '';
         $('filtros-lista').style.display = semFiltros ? 'none' : '';
         document.querySelector('.chips').style.display = nome === 'agendamentos' ? '' : 'none';
@@ -252,6 +258,7 @@
         if (nome === 'folgas') carregarFolgas();
         if (nome === 'servicos') carregarServicosAdmin();
         if (nome === 'avaliacoes') carregarAvaliacoesAdmin();
+        if (nome === 'barbeiros') carregarBarbeiros();
     };
 
     // --- ações nas linhas (excluir / marcar como pago) ---
@@ -312,6 +319,7 @@
         else if (b.dataset.acao === 'excluir-atendimento') deletarAtendimento(id);
         else if (b.dataset.acao === 'remover-folga') removerFolga(id);
         else if (b.dataset.acao === 'salvar-servico') salvarServico(id);
+        else if (b.dataset.acao === 'salvar-barbeiro') salvarBarbeiro(id);
         else if (b.dataset.acao === 'remarcar') remarcarAgendamento(id);
         else if (b.dataset.acao === 'ocultar-avaliacao') alternarAvaliacao(id, true);
         else if (b.dataset.acao === 'mostrar-avaliacao') alternarAvaliacao(id, false);
@@ -325,18 +333,20 @@
             subtitulo: 'Para clientes que pediram pelo WhatsApp ou pessoalmente. Fica como pendente até você marcar "Recebi".',
             extraHtml: '<div class="sel-campos"><label class="sel-rotulo" for="na-nome">Cliente</label><input id="na-nome" class="sel-input" maxlength="80" placeholder="Nome do cliente" autocomplete="off">' +
                 '<label class="sel-rotulo" for="na-tel">WhatsApp (opcional)</label><input id="na-tel" class="sel-input" type="tel" inputmode="tel" maxlength="16" placeholder="(11) 91234-5678">' +
-                '<label class="sel-rotulo" for="na-serv">Serviço</label><select id="na-serv" class="sel-input">' + opcoes + '</select></div>',
+                '<label class="sel-rotulo" for="na-serv">Serviço</label><select id="na-serv" class="sel-input">' + opcoes + '</select>' + campoBarbeiro('na-barb', '') + '</div>',
+            barbeiro: ov => { const s = ov.querySelector('#na-barb'); return s ? s.value : ''; }, recarregarAo: '#na-barb',
             coletarExtra: ov => {
                 const nome = ov.querySelector('#na-nome').value.trim(), tel = ov.querySelector('#na-tel').value.replace(/\D/g, '');
                 if (nome.length < 2) return 'Informe o nome do cliente.';
                 if (tel && tel.length !== 10 && tel.length !== 11) return 'WhatsApp incompleto: use DDD + número.';
-                return { nome, telefone: tel, servico: ov.querySelector('#na-serv').value };
+                const sb = ov.querySelector('#na-barb');
+                return { nome, telefone: tel, servico: ov.querySelector('#na-serv').value, barbeiro: sb ? sb.value : '' };
             },
             aoConfirmar: async sel => {
                 const res = await RodAuth.fetch(`${API_URL}/agendamentos/manual`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...sel.extra, data: sel.data, hora: sel.hora }) });
                 const d = await res.json().catch(() => ({}));
                 if (!res.ok) return d.mensagem || 'Não foi possível agendar.';
-                toast('success', `Agendado: ${sel.extra.nome} · ${formatarData(sel.data)} ${sel.hora}`);
+                toast('success', `Agendado: ${sel.extra.nome} · ${formatarData(sel.data)} ${sel.hora}${d.barbeiroNome ? ' com ' + d.barbeiroNome : ''}`);
                 window.mudarAba('agendamentos');
                 carregarDados(true);
                 return null;
@@ -353,9 +363,12 @@
         const ag = todosAgendamentos.find(a => a._id === id); if (!ag) return;
         RodSeletor.abrir({
             api: API_URL, titulo: 'Remarcar', textoBotao: 'Confirmar nova data', dataInicial: ag.data >= hojeSP() ? ag.data : '',
-            subtitulo: `<b>${esc(ag.nome)}</b> · ${esc(ag.servico)}<br>Marcado para ${formatarData(ag.data)} às ${esc(ag.hora)}${ag.email ? '<br><small>O cliente recebe um e-mail com a nova data.</small>' : ''}`,
+            subtitulo: `<b>${esc(ag.nome)}</b> · ${esc(ag.servico)}${ag.barbeiroNome ? ' com ' + esc(ag.barbeiroNome) : ''}<br>Marcado para ${formatarData(ag.data)} às ${esc(ag.hora)}${ag.email ? '<br><small>O cliente recebe um e-mail com a nova data.</small>' : ''}`,
+            extraHtml: ativos().length >= 2 ? '<div class="sel-campos">' + campoBarbeiro('rm-barb', ag.barbeiro || '') + '</div>' : '',
+            barbeiro: ov => { const s = ov.querySelector('#rm-barb'); return s ? s.value : (ag.barbeiro || ''); }, recarregarAo: '#rm-barb',
             aoConfirmar: async sel => {
-                const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}/remarcar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: sel.data, hora: sel.hora }) });
+                const s = document.querySelector('#rm-barb');
+                const res = await RodAuth.fetch(`${API_URL}/agendamentos/${id}/remarcar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: sel.data, hora: sel.hora, barbeiro: s ? s.value : undefined }) });
                 const d = await res.json().catch(() => ({}));
                 if (!res.ok) return d.mensagem || 'Não foi possível remarcar.';
                 toast('success', `Remarcado para ${formatarData(sel.data)} às ${sel.hora}`);
@@ -444,7 +457,7 @@
 
     // habilita "Salvar" na linha assim que algo muda
     function marcarSujo(ev) {
-        const linha = ev.target.closest('.srv-item'); if (!linha) return;
+        const linha = ev.target.closest('.srv-item'); if (!linha || linha.classList.contains('barb-item')) return;
         linha.querySelector('.btn-salvar-srv').disabled = false;
         if (ev.target.classList.contains('srv-ativo')) linha.querySelector('.srv-switch em').textContent = ev.target.checked ? 'Ativo' : 'Inativo';
     }
@@ -486,6 +499,91 @@
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Adicionar'; }
     };
 
+    // --- barbeiros ---
+    function campoBarbeiro(id, atual) {
+        const at = ativos();
+        if (at.length < 2) return '';
+        return `<label class="sel-rotulo" for="${id}">Barbeiro</label><select id="${id}" class="sel-input">` +
+            (atual ? '' : '<option value="">Sem preferência (primeiro livre)</option>') +
+            at.map(b => `<option value="${esc(b._id)}"${b._id === atual ? ' selected' : ''}>${esc(b.nome)}</option>`).join('') + '</select>';
+    }
+
+    function atualizarFiltroBarbeiro() {
+        const f = $('filtro-barb'), atual = f.value;
+        f.hidden = barbeiros.length < 2;
+        f.innerHTML = '<option value="">Todos os barbeiros</option>' + barbeiros.map(b => `<option value="${esc(b._id)}"${b._id === atual ? ' selected' : ''}>${esc(b.nome)}${b.ativo ? '' : ' (inativo)'}</option>`).join('');
+    }
+
+    function renderBarbeirosAdmin() {
+        $('lista-barbeiros-admin').innerHTML = barbeiros.map(b => `
+            <div class="srv-item barb-item${b.ativo ? '' : ' inativo'}" data-id="${esc(b._id)}">
+                <span class="srv-icone barb-ini">${esc(String(b.nome).trim().charAt(0).toUpperCase())}</span>
+                <label class="srv-campo barb-campo-nome"><span>Nome</span><input type="text" class="bb-nome" maxlength="40" value="${esc(b.nome)}"></label>
+                <label class="srv-campo"><span>Comissão (%)</span><input type="number" class="bb-com" min="0" max="100" step="1" inputmode="numeric" value="${Number(b.comissao) || 0}"></label>
+                <label class="srv-switch" title="Recebe agendamentos"><input type="checkbox" class="bb-ativo"${b.ativo ? ' checked' : ''}><span class="srv-trilho"></span><em>${b.ativo ? 'Ativo' : 'Inativo'}</em></label>
+                <button type="button" class="btn-salvar-srv" data-acao="salvar-barbeiro" data-id="${esc(b._id)}" disabled><i class="fas fa-check"></i> Salvar</button>
+            </div>`).join('') || '<p class="rel-vazio"><i class="fas fa-user-group"></i> Nenhum barbeiro cadastrado: o site funciona com agenda única. Cadastre a equipe abaixo para o cliente escolher com quem cortar.</p>';
+    }
+
+    async function carregarBarbeiros() {
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/barbeiros/todos`);
+            if (!res.ok) throw new Error('falha');
+            barbeiros = await res.json();
+            renderBarbeirosAdmin();
+            atualizarFiltroBarbeiro();
+            filtrarTabela();
+        } catch (error) { if (error.message !== 'sessao_expirada') $('lista-barbeiros-admin').innerHTML = '<p class="rel-vazio">Não foi possível carregar os barbeiros.</p>'; }
+    }
+
+    function marcarSujoBarbeiro(ev) {
+        const linha = ev.target.closest('.barb-item'); if (!linha) return;
+        linha.querySelector('.btn-salvar-srv').disabled = false;
+        if (ev.target.classList.contains('bb-ativo')) linha.querySelector('.srv-switch em').textContent = ev.target.checked ? 'Ativo' : 'Inativo';
+    }
+    document.addEventListener('input', marcarSujoBarbeiro);
+    document.addEventListener('change', marcarSujoBarbeiro);
+
+    async function salvarBarbeiro(id) {
+        const linha = document.querySelector(`.barb-item[data-id="${id}"]`); if (!linha) return;
+        const btn = linha.querySelector('.btn-salvar-srv');
+        const antes = barbeiros.find(b => b._id === id) || {};
+        const corpo = { nome: linha.querySelector('.bb-nome').value.trim(), comissao: linha.querySelector('.bb-com').value, ativo: linha.querySelector('.bb-ativo').checked };
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/barbeiros/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+            const dados = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(dados.erro || 'Não foi possível salvar.');
+            if (antes.ativo && !corpo.ativo && dados.agendamentosFuturos) Tema.fire({ icon: 'info', title: `${dados.nome} desativado`, text: `Ele ainda tem ${dados.agendamentosFuturos} agendamento(s) marcado(s). Eles continuam valendo: remarque com outro barbeiro ou avise os clientes.` });
+            else toast('success', 'Barbeiro atualizado!');
+            await carregarBarbeiros();
+            carregarDados(true);
+        } catch (error) {
+            if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não salvou', text: error.message });
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Salvar';
+        }
+    }
+
+    window.criarBarbeiro = async function (ev) {
+        ev.preventDefault();
+        const btn = $('btn-criar-barbeiro');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
+        try {
+            const res = await RodAuth.fetch(`${API_URL}/barbeiros`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: $('bb-nome').value.trim(), comissao: $('bb-com').value })
+            });
+            const dados = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(dados.erro || 'Não foi possível adicionar.');
+            $('form-barbeiro').reset(); $('bb-com').value = 0;
+            await carregarBarbeiros();
+            const n = ativos().length;
+            if (n === 2) Tema.fire({ icon: 'success', title: 'Pronto!', text: 'Agora o site mostra o passo "Barbeiro": o cliente escolhe com quem quer cortar, ou "sem preferência".' });
+            else toast('success', 'Barbeiro adicionado!');
+        } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não adicionou', text: error.message }); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Adicionar'; }
+    };
+
     // --- folgas e horários bloqueados ---
     function horariosDoDia() {
         const lista = [];
@@ -498,6 +596,9 @@
     function prepararFormFolga() {
         const d = $('fg-data'); d.min = hojeSP(); if (!d.value) d.value = hojeSP();
         $('fg-hora').innerHTML = '<option value="">Dia inteiro</option>' + horariosDoDia().map(h => `<option value="${h}">${h}</option>`).join('');
+        const atual = $('fg-barb').value;
+        $('fg-barb-wrap').hidden = ativos().length < 2;
+        $('fg-barb').innerHTML = '<option value="">Barbearia toda</option>' + ativos().map(b => `<option value="${esc(b._id)}"${b._id === atual ? ' selected' : ''}>Só ${esc(b.nome)}</option>`).join('');
     }
 
     async function carregarFolgas() {
@@ -511,7 +612,7 @@
             alvo.innerHTML = folgas.map(f => `
                 <div class="folga-item">
                     <div class="folga-data"><strong>${formatarData(f.data)}</strong><span>${esc(RodUtil.diaDaSemana(f.data, 'long'))}</span></div>
-                    <div class="folga-info"><span class="badge ${f.hora ? 'bg-forma' : 'bg-pendente'}">${f.hora ? esc(f.hora) : 'Dia inteiro'}</span>${f.motivo ? `<span class="folga-motivo">${esc(f.motivo)}</span>` : ''}</div>
+                    <div class="folga-info"><span class="badge ${f.hora ? 'bg-forma' : 'bg-pendente'}">${f.hora ? esc(f.hora) : 'Dia inteiro'}</span>${f.barbeiroNome ? `<span class="badge bg-barb"><i class="fas fa-user"></i> ${esc(f.barbeiroNome)}</span>` : (barbeiros.length >= 2 ? '<span class="badge bg-barb"><i class="fas fa-store"></i> Todos</span>' : '')}${f.motivo ? `<span class="folga-motivo">${esc(f.motivo)}</span>` : ''}</div>
                     <button type="button" class="btn-lixeira" data-acao="remover-folga" data-id="${esc(f._id)}" title="Liberar" aria-label="Remover bloqueio"><i class="fas fa-lock-open"></i></button>
                 </div>`).join('');
         } catch (error) { if (error.message !== 'sessao_expirada') alvo.innerHTML = '<p class="rel-vazio">Não foi possível carregar os bloqueios.</p>'; }
@@ -524,12 +625,12 @@
         try {
             const res = await RodAuth.fetch(`${API_URL}/bloqueios`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: $('fg-data').value, hora: $('fg-hora').value, motivo: $('fg-motivo').value.trim() })
+                body: JSON.stringify({ data: $('fg-data').value, hora: $('fg-hora').value, motivo: $('fg-motivo').value.trim(), barbeiro: $('fg-barb-wrap').hidden ? undefined : $('fg-barb').value || undefined })
             });
             const dados = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(dados.erro || 'Não foi possível bloquear.');
             $('fg-motivo').value = '';
-            if (dados.agendamentosNoDia) Tema.fire({ icon: 'info', title: 'Dia bloqueado', text: `Atenção: já existem ${dados.agendamentosNoDia} agendamento(s) nesse dia. Eles continuam valendo; só novos agendamentos foram bloqueados.` });
+            if (dados.agendamentosNoDia) Tema.fire({ icon: 'info', title: 'Dia bloqueado', text: `Atenção: já existem ${dados.agendamentosNoDia} agendamento(s) nesse dia${dados.barbeiroNome ? ' com ' + dados.barbeiroNome : ''}. Eles continuam valendo; só novos agendamentos foram bloqueados.` });
             else toast('success', 'Bloqueado!');
             carregarFolgas();
         } catch (error) { if (error.message !== 'sessao_expirada') Tema.fire({ icon: 'error', title: 'Não bloqueou', text: error.message }); }
@@ -571,6 +672,9 @@
         $('at-servico-outro').style.display = 'none';
         $('at-servico-outro').required = false;
         $('at-valor').value = PRECOS[$('at-servico').value];
+        $('at-barb-wrap').hidden = !ativos().length;
+        $('at-barbeiro').innerHTML = '<option value="">Não informar</option>' + ativos().map(b => `<option value="${esc(b._id)}">${esc(b.nome)}</option>`).join('');
+        if (ativos().length === 1) $('at-barbeiro').value = ativos()[0]._id;
         $('modal-atendimento').style.display = 'flex';
         $('at-valor').focus();
     };
@@ -589,7 +693,8 @@
             nome: $('at-nome').value.trim(),
             data: $('at-data').value,
             hora: $('at-hora').value,
-            observacao: $('at-obs').value.trim()
+            observacao: $('at-obs').value.trim(),
+            barbeiro: $('at-barb-wrap').hidden ? undefined : $('at-barbeiro').value || undefined
         };
         const btn = $('btn-salvar-atendimento');
         btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
@@ -627,6 +732,17 @@
         return `<div class="rel-bloco"><h2><i class="${icone}"></i> ${titulo}</h2>${linhas}</div>`;
     }
 
+    function blocoBarbeiros(itens) {
+        const max = Math.max(0, ...itens.map(i => i.total));
+        const totalCom = itens.reduce((s, i) => s + (Number(i.comissao) || 0), 0);
+        return `<div class="rel-bloco"><h2><i class="fas fa-user-group"></i> Por barbeiro</h2>${itens.map(i => `
+            <div class="rel-linha">
+                <div class="rel-linha-topo"><span>${esc(i.nome)}</span><strong>${brl(i.total)}</strong></div>
+                ${barra(i.total, max)}
+                <small>${i.qtd} atendimento${i.qtd === 1 ? '' : 's'}${i.comissaoPct ? ` · comissão ${i.comissaoPct}% = <b>${brl(i.comissao)}</b>` : ''}</small>
+            </div>`).join('')}${totalCom ? `<p class="rel-total-com">Total de comissões: <b>${brl(totalCom)}</b></p>` : ''}</div>`;
+    }
+
     window.carregarRelatorio = async function () {
         const campo = $('rel-mes');
         if (!campo.value) campo.value = hojeSP().slice(0, 7);
@@ -655,6 +771,7 @@
                     <div class="rel-split-legenda"><span><i class="fas fa-globe"></i> Site ${brl(r.totalOnline)}</span><span><i class="fas fa-store"></i> Balcão ${brl(r.totalBalcao)}</span></div>
                 </div>
                 <div class="rel-grade">
+                    ${(r.porBarbeiro || []).length ? blocoBarbeiros(r.porBarbeiro) : ''}
                     ${listaRelatorio('Por serviço', 'fas fa-scissors', r.porServico)}
                     ${listaRelatorio('Forma de pagamento', 'fas fa-wallet', r.porForma)}
                     ${listaRelatorio('Clientes que mais vieram', 'fas fa-user-group', r.topClientes || [])}
@@ -695,11 +812,11 @@
 
     window.exportarCsv = function () {
         const mes = $('rel-mes').value || hojeSP().slice(0, 7);
-        const linhas = [['Data', 'Hora', 'Origem', 'Cliente', 'Serviço', 'Pagamento', 'Valor (R$)']];
+        const linhas = [['Data', 'Hora', 'Origem', 'Cliente', 'Serviço', 'Barbeiro', 'Pagamento', 'Valor (R$)']];
         todosAgendamentos.filter(a => a.statusPagamento === 'approved' && a.data.startsWith(mes))
-            .forEach(a => linhas.push([formatarData(a.data), a.hora, 'Site', a.nome, a.servico, a.pagamentoManual ? FORMAS[a.pagamentoManual] : 'Online (PIX/cartão)', Number(a.valor).toFixed(2).replace('.', ',')]));
+            .forEach(a => linhas.push([formatarData(a.data), a.hora, a.origem === 'painel' ? 'Painel' : 'Site', a.nome, a.servico, a.barbeiroNome || '', a.pagamentoManual ? FORMAS[a.pagamentoManual] : 'Online (PIX/cartão)', Number(a.valor).toFixed(2).replace('.', ',')]));
         todosAtendimentos.filter(a => a.data.startsWith(mes))
-            .forEach(a => linhas.push([formatarData(a.data), a.hora, 'Balcão', a.nome || '', a.servico, FORMAS[a.forma] || 'Outro', Number(a.valor).toFixed(2).replace('.', ',')]));
+            .forEach(a => linhas.push([formatarData(a.data), a.hora, 'Balcão', a.nome || '', a.servico, a.barbeiroNome || '', FORMAS[a.forma] || 'Outro', Number(a.valor).toFixed(2).replace('.', ',')]));
         if (linhas.length === 1) { toast('info', 'Sem movimento neste mês.'); return; }
         const dados = linhas.slice(1).sort((a, b) => (a[0].split('/').reverse().join('') + a[1]) < (b[0].split('/').reverse().join('') + b[1]) ? -1 : 1);
         const csv = '﻿' + [linhas[0]].concat(dados).map(l => l.map(celula).join(';')).join('\r\n');
@@ -714,6 +831,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         $('rel-mes').value = hojeSP().slice(0, 7);
         carregarServicosPublicos();
+        carregarBarbeiros();
         carregarDados();
         // atualização automática (a cada minuto e ao voltar para a aba)
         setInterval(() => { if (!document.hidden) carregarDados(true); }, 60000);

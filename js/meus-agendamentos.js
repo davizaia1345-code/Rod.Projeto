@@ -59,6 +59,7 @@
             '<div class="ag-corpo">' +
             '<h3 class="card-service">' + esc(ag.servico) + '</h3>' +
             '<p class="card-date"><i class="far fa-calendar-alt"></i> ' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '</p>' +
+            (ag.barbeiroNome ? '<p class="card-date"><i class="fas fa-user"></i> com ' + esc(ag.barbeiroNome) + '</p>' : '') +
             info + '</div>' +
             '<div class="ag-lado"><span class="status-badge ' + classe + '">' + rotulo + '</span><strong class="ag-valor">' + esc(RodUtil.brl(ag.valor)) + '</strong></div>' +
             (acoes ? '<div class="card-actions">' + acoes + '</div>' : '') +
@@ -174,7 +175,8 @@
     function remarcar(ag) {
         RodSeletor.abrir({
             api: API_URL, titulo: 'Remarcar horário', textoBotao: 'Confirmar nova data',
-            subtitulo: '<b>' + esc(ag.servico) + '</b> · marcado para ' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '<br><small>Você pode remarcar até 2 vezes, até 2 horas antes.</small>',
+            barbeiro: ag.barbeiro || '',
+            subtitulo: '<b>' + esc(ag.servico) + '</b>' + (ag.barbeiroNome ? ' com ' + esc(ag.barbeiroNome) : '') + ' · marcado para ' + esc(RodUtil.dataBR(ag.data)) + ' às ' + esc(ag.hora) + '<br><small>Você pode remarcar até 2 vezes, até 2 horas antes.</small>',
             aoConfirmar: async function (sel) {
                 var resp = await RodAuth.fetch(API_URL + '/agendamentos/' + encodeURIComponent(ag._id) + '/remarcar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: sel.data, hora: sel.hora }) });
                 var corpo = await resp.json().catch(function () { return {}; });

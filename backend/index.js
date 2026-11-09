@@ -210,11 +210,14 @@ const agendamentoSchema = new mongoose.Schema({
     nome: String, email: String, data: String, hora: String, servico: String, valor: Number,
     pagamentoId: String, statusPagamento: String, pixCopiaCola: String, qrCodeBase64: String, urlPagamentoCartao: String,
     referencia: String, pagamentoManual: String, lembreteEnviado: Boolean,
-    telefone: String, origem: String, remarcacoes: Number, avaliacaoPedida: Boolean
+    telefone: String, origem: String, remarcacoes: Number, avaliacaoPedida: Boolean,
+    barbeiro: { type: mongoose.Schema.Types.ObjectId, default: null }, barbeiroNome: String
 });
-agendamentoSchema.index({ data: 1, hora: 1 }, { unique: true });
+// um cliente por horário POR BARBEIRO (sem barbeiros cadastrados, barbeiro = null e vale um por horário)
+agendamentoSchema.index({ data: 1, hora: 1, barbeiro: 1 }, { unique: true });
 const Agendamento = mongoose.model('Agendamento', agendamentoSchema);
-Agendamento.init().catch(err => console.error('⚠️  Índice único de horários não criado:', err.message));
+// syncIndexes troca o índice antigo (data+hora) pelo novo (data+hora+barbeiro)
+mongoose.connection.once('open', () => Agendamento.syncIndexes().catch(err => console.error('⚠️  Índices de horários não sincronizados:', err.message)));
 
 // serviços e preços editáveis pelo proprietário (os valores acima são o padrão inicial)
 const ICONES = ['fa-scissors', 'fa-user-tie', 'fa-star', 'fa-eye', 'fa-wind', 'fa-wand-magic-sparkles', 'fa-spray-can-sparkles', 'fa-child', 'fa-crown', 'fa-gem', 'fa-bolt', 'fa-fire'];
@@ -244,10 +247,45 @@ mongoose.connection.once('open', () => { carregarServicos().catch(err => console
 setInterval(() => carregarServicos().catch(() => {}), 5 * 60 * 1000).unref();
 
 // folgas e horários bloqueados pelo proprietário (hora vazia = dia inteiro)
-const bloqueioSchema = new mongoose.Schema({ data: String, hora: { type: String, default: '' }, motivo: String }, { timestamps: true });
-bloqueioSchema.index({ data: 1, hora: 1 }, { unique: true });
+const bloqueioSchema = new mongoose.Schema({
+    data: String, hora: { type: String, default: '' }, motivo: String,
+    barbeiro: { type: mongoose.Schema.Types.ObjectId, default: null }, barbeiroNome: String   // null = vale para a barbearia toda
+}, { timestamps: true });
+bloqueioSchema.index({ data: 1, hora: 1, barbeiro: 1 }, { unique: true });
 const Bloqueio = mongoose.model('Bloqueio', bloqueioSchema);
-Bloqueio.init().catch(err => console.error('⚠️  Índice de bloqueios não criado:', err.message));
+mongoose.connection.once('open', () => Bloqueio.syncIndexes().catch(err => console.error('⚠️  Índices de bloqueios não sincronizados:', err.message)));
+
+// barbeiros: cada um com a própria agenda. Sem nenhum cadastrado, o sistema funciona como agenda única.
+const Barbeiro = mongoose.model('Barbeiro', new mongoose.Schema({
+    nome: String, ativo: { type: Boolean, default: true }, ordem: Number, comissao: { type: Number, default: 0 }
+}, { timestamps: true }));
+let barbeirosAtivos = [];
+async function carregarBarbeiros() { barbeirosAtivos = await Barbeiro.find({ ativo: true }).sort({ ordem: 1, createdAt: 1 }).lean(); }
+mongoose.connection.once('open', () => { carregarBarbeiros().catch(err => console.error('⚠️  Barbeiros não carregados:', err.message)); });
+setInterval(() => carregarBarbeiros().catch(() => {}), 5 * 60 * 1000).unref();
+
+// Ocupação de um dia. Um agendamento sem barbeiro (antigo) ou um bloqueio geral ocupam o horário de todos.
+async function ocupacaoDoDia(data) {
+    const [ags, blqs] = await Promise.all([Agendamento.find({ data }).select('hora barbeiro'), Bloqueio.find({ data }).select('hora barbeiro')]);
+    const ids = barbeirosAtivos.length ? barbeirosAtivos.map(b => String(b._id)) : [''];
+    const agendado = (id, hora) => ags.some(a => a.hora === hora && (id === '' || !a.barbeiro || String(a.barbeiro) === id));
+    const bloqueado = (id, hora) => blqs.some(b => (b.hora === '' || b.hora === hora) && (id === '' || !b.barbeiro || String(b.barbeiro) === id));
+    const folgaDoDia = id => blqs.some(b => b.hora === '' && (id === '' || !b.barbeiro || String(b.barbeiro) === id));
+    return { ids, agendado, bloqueado, livre: (id, hora) => !agendado(id, hora) && !bloqueado(id, hora), folgaDoDia };
+}
+
+// Escolhe o barbeiro do agendamento: o pedido (se livre) ou o primeiro livre ("sem preferência").
+async function escolherBarbeiro(data, hora, pedido) {
+    const oc = await ocupacaoDoDia(data);
+    if (!barbeirosAtivos.length) return oc.livre('', hora) ? { id: null, nome: '' } : { erro: 'Horário já reservado!' };
+    if (pedido) {
+        const b = barbeirosAtivos.find(x => String(x._id) === String(pedido));
+        if (!b) return { erro: 'Barbeiro inválido ou indisponível.' };
+        return oc.livre(String(b._id), hora) ? { id: b._id, nome: b.nome } : { erro: `Esse horário não está disponível com ${b.nome}.` };
+    }
+    const b = barbeirosAtivos.find(x => oc.livre(String(x._id), hora));
+    return b ? { id: b._id, nome: b.nome } : { erro: 'Horário já reservado!' };
+}
 
 const Usuario = mongoose.model('Usuario', {
     nome: String, email: { type: String, unique: true }, senha: String, telefone: String,
@@ -396,7 +434,8 @@ const FORMAS = { dinheiro: 'Dinheiro', pix: 'PIX', debito: 'Cartão de débito',
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 const Atendimento = mongoose.model('Atendimento', new mongoose.Schema({
-    nome: String, servico: String, valor: Number, forma: String, data: String, hora: String, observacao: String
+    nome: String, servico: String, valor: Number, forma: String, data: String, hora: String, observacao: String,
+    barbeiro: { type: mongoose.Schema.Types.ObjectId, default: null }, barbeiroNome: String
 }, { timestamps: true }));
 const Relatorio = mongoose.model('Relatorio', new mongoose.Schema({ mes: { type: String, unique: true }, enviadoEm: Date }));
 
@@ -410,8 +449,8 @@ const limpar = (v, max) => str(v, max).replace(/[\u0000-\u001f<>]/g, '');
 async function lancamentosDoMes(mes) {
     const faixa = { $gte: `${mes}-01`, $lte: `${mes}-31` };
     const [online, balcao, pendentes] = await Promise.all([
-        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data hora nome email servico valor pagamentoManual'),
-        Atendimento.find({ data: faixa }).select('data hora nome servico valor forma'),
+        Agendamento.find({ statusPagamento: 'approved', data: faixa }).select('data hora nome email servico valor pagamentoManual barbeiro barbeiroNome'),
+        Atendimento.find({ data: faixa }).select('data hora nome servico valor forma barbeiro barbeiroNome'),
         Agendamento.find({ statusPagamento: 'pendente', data: faixa }).select('valor')
     ]);
     return { online, balcao, pendentes };
@@ -437,6 +476,17 @@ async function calcularRelatorio(mes) {
     balcao.forEach(x => contar(x, Number(x.valor) || 0, x.nome ? 'n:' + x.nome.toLowerCase() : '', x.nome));
     const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
+    // por barbeiro, com a comissão de cada um
+    const porBarb = {};
+    const todosBarbeiros = await Barbeiro.find().lean();
+    const comissaoDe = id => { const b = todosBarbeiros.find(x => String(x._id) === String(id)); return b ? Number(b.comissao) || 0 : 0; };
+    [...online, ...balcao].forEach(x => {
+        if (!x.barbeiro && !x.barbeiroNome) return;
+        const k = x.barbeiro ? String(x.barbeiro) : x.barbeiroNome;
+        const o = porBarb[k] || (porBarb[k] = { nome: x.barbeiroNome || 'Barbeiro', qtd: 0, total: 0, pct: comissaoDe(x.barbeiro) });
+        o.qtd++; o.total += Number(x.valor) || 0;
+    });
+
     const total = soma(online) + soma(balcao);
     const qtd = online.length + balcao.length;
     const dias = Object.entries(porDia).sort((a, b) => b[1] - a[1]);
@@ -456,7 +506,8 @@ async function calcularRelatorio(mes) {
         aguardandoPagamento: { qtd: pendentes.length, total: r2(soma(pendentes)) },
         topClientes: Object.values(clientes).sort((a, b) => b.qtd - a.qtd || b.total - a.total).slice(0, 5).map(c => ({ nome: c.nome, qtd: c.qtd, total: r2(c.total) })),
         porHorario: Object.entries(horarios).map(([nome, o]) => ({ nome, qtd: o.qtd, total: r2(o.total) })).sort((a, b) => b.qtd - a.qtd).slice(0, 6),
-        porDiaSemana: semana.map((o, i) => ({ nome: DIAS[i], qtd: o.qtd, total: r2(o.total) }))
+        porDiaSemana: semana.map((o, i) => ({ nome: DIAS[i], qtd: o.qtd, total: r2(o.total) })),
+        porBarbeiro: Object.values(porBarb).sort((a, b) => b.total - a.total).map(o => ({ nome: o.nome, qtd: o.qtd, total: r2(o.total), comissaoPct: o.pct, comissao: r2(o.total * o.pct / 100) }))
     };
 }
 
@@ -780,11 +831,9 @@ app.get('/agendamentos/ocupados', async (req, res) => {
         const data = req.query.data;
         if (typeof data !== 'string' || !dataReal(data)) return erro(res, 400, 'Data inválida.');
         await garantirLiberacao();
-        const [lista, bloqueios] = await Promise.all([Agendamento.find({ data }).select('hora'), Bloqueio.find({ data }).select('hora')]);
-        const horas = new Set(lista.map(ag => ag.hora));
-        if (bloqueios.some(b => b.hora === '')) HORARIOS.forEach(h => horas.add(h));
-        else bloqueios.forEach(b => horas.add(b.hora));
-        res.json([...horas]);
+        const oc = await ocupacaoDoDia(data);
+        // ocupado = nenhum barbeiro livre naquele horário
+        res.json([...HORARIOS].filter(h => oc.ids.every(id => !oc.livre(id, h))));
     } catch (err) {
         console.error('ERRO AO BUSCAR HORÁRIOS:', err.message);
         erro(res, 500, 'Erro ao buscar a agenda.');
@@ -797,14 +846,19 @@ app.get('/agenda', async (req, res) => {
         const data = req.query.data;
         if (typeof data !== 'string' || !dataReal(data)) return erro(res, 400, 'Data inválida.');
         await garantirLiberacao();
-        const [lista, bloqueios] = await Promise.all([Agendamento.find({ data }).select('hora'), Bloqueio.find({ data }).select('hora motivo')]);
-        const diaBloqueado = bloqueios.find(b => b.hora === '');
+        const oc = await ocupacaoDoDia(data);
+        // ?barbeiro=ID mostra a agenda daquele barbeiro; sem ele, um horário está livre se algum barbeiro estiver livre
+        const pedido = typeof req.query.barbeiro === 'string' && req.query.barbeiro ? req.query.barbeiro : '';
+        let ids = oc.ids;
+        if (pedido && !mongoose.isValidObjectId(pedido)) return erro(res, 400, 'Barbeiro inválido.');
+        if (pedido && barbeirosAtivos.some(b => String(b._id) === pedido)) ids = [pedido];
+        const horas = [...HORARIOS];
         const agora = agoraSP();
         res.json({
             data, hoje: agora.data, minutosAgora: agora.minutos,
-            ocupados: lista.map(ag => ag.hora),
-            bloqueados: diaBloqueado ? [...HORARIOS] : bloqueios.map(b => b.hora),
-            diaFechado: Boolean(diaBloqueado)
+            ocupados: horas.filter(h => ids.every(id => oc.agendado(id, h)) ),
+            bloqueados: horas.filter(h => ids.every(id => !oc.livre(id, h)) && !ids.every(id => oc.agendado(id, h))),
+            diaFechado: ids.every(id => oc.folgaDoDia(id))
         });
     } catch (err) {
         console.error('ERRO AO BUSCAR AGENDA:', err.message);
@@ -840,8 +894,8 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         const pendentes = await Agendamento.countDocuments({ email, statusPagamento: 'pendente', data: { $gte: agora.data } }).collation(COLLATION);
         if (pendentes >= 3) return erro(res, 429, 'Você já tem 3 agendamentos aguardando pagamento. Pague ou cancele algum para marcar outro.');
 
-        if (await Agendamento.findOne({ data, hora })) return erro(res, 400, 'Horário já reservado!');
-        if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário não está disponível.');
+        const escolha = await escolherBarbeiro(data, hora, str(req.body && req.body.barbeiro, 40));
+        if (escolha.erro) return erro(res, 400, escolha.erro);
 
         const preco = precoAtivo(servico);
         const descricao = `Corte ${servico} - ${data} ${hora}`;
@@ -874,6 +928,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
         try {
             await new Agendamento({
                 nome, email, telefone, origem: 'site', data, hora, servico, valor: preco,
+                barbeiro: escolha.id, barbeiroNome: escolha.nome,
                 pagamentoId: idPagamento.toString(), statusPagamento: 'pendente',
                 pixCopiaCola: codigoPix, qrCodeBase64, urlPagamentoCartao: linkCartao, referencia
             }).save();
@@ -882,7 +937,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
             throw err;
         }
 
-        res.status(201).json({ mensagem: 'Criado!', pixCopiaCola: codigoPix, qrCodeBase64, idPagamento, urlPagamentoCartao: linkCartao, pagarAte: new Date(prazo).toISOString() });
+        res.status(201).json({ mensagem: 'Criado!', pixCopiaCola: codigoPix, qrCodeBase64, idPagamento, urlPagamentoCartao: linkCartao, pagarAte: new Date(prazo).toISOString(), barbeiro: escolha.nome || null });
 
         const nomeSeguro = escapeHtml(nome);
         const linhasTabela =
@@ -890,6 +945,7 @@ app.post('/agendar', exigirLogin, async (req, res) => {
             linhaEmail('Serviço', escapeHtml(servico)) +
             linhaEmail('Data', formatarData(data)) +
             linhaEmail('Horário', escapeHtml(hora)) +
+            (escolha.nome ? linhaEmail('Barbeiro', escapeHtml(escolha.nome)) : '') +
             linhaEmail('Valor', brl(preco), '#2fae6b');
         notificar({
             to: OWNER_EMAIL, subject: `Novo agendamento: ${nome} - ${formatarData(data)} ${hora}`,
@@ -980,8 +1036,15 @@ app.post('/atendimentos', exigirLogin, exigirDono, async (req, res) => {
         const hora = b.hora === undefined || b.hora === '' ? horaPadrao : str(b.hora, 5);
         if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return erro(res, 400, 'Hora inválida.');
 
+        let barbeiro = null, barbeiroNome = '';
+        if (b.barbeiro) {
+            if (!mongoose.isValidObjectId(b.barbeiro)) return erro(res, 400, 'Barbeiro inválido.');
+            const bb = await Barbeiro.findById(b.barbeiro);
+            if (!bb) return erro(res, 400, 'Barbeiro inválido.');
+            barbeiro = bb._id; barbeiroNome = bb.nome;
+        }
         const doc = await Atendimento.create({
-            nome: limpar(b.nome, 80), servico, valor: r2(valor), forma, data, hora, observacao: limpar(b.observacao, 120)
+            nome: limpar(b.nome, 80), servico, valor: r2(valor), forma, data, hora, observacao: limpar(b.observacao, 120), barbeiro, barbeiroNome
         });
         logSeg('atendimento_registrado', req, { valor: doc.valor, forma, data });
         res.status(201).json(doc);
@@ -1131,7 +1194,7 @@ app.put('/servicos/:id', exigirLogin, exigirDono, async (req, res) => {
             const alvo = await Servico.findById(req.params.id);
             if (alvo && alvo.ativo) return erro(res, 400, 'Mantenha pelo menos um serviço ativo.');
         }
-        const doc = await Servico.findByIdAndUpdate(req.params.id, v.dados, { new: true });
+        const doc = await Servico.findByIdAndUpdate(req.params.id, v.dados, { returnDocument: 'after' });
         if (!doc) return erro(res, 404, 'Serviço não encontrado.');
         await carregarServicos();
         logSeg('servico_atualizado', req, { nome: doc.nome, ...v.dados });
@@ -1162,10 +1225,19 @@ app.post('/bloqueios', exigirLogin, exigirDono, async (req, res) => {
         if (!dataReal(data)) return erro(res, 400, 'Data inválida.');
         if (hora !== '' && !HORARIOS.has(hora)) return erro(res, 400, 'Horário inválido.');
         if (data < agoraSP().data) return erro(res, 400, 'Escolha hoje ou uma data futura.');
-        const emConflito = await Agendamento.countDocuments(hora ? { data, hora } : { data });
+        let barbeiro = null, barbeiroNome = '';
+        if (b.barbeiro) {
+            if (!mongoose.isValidObjectId(b.barbeiro)) return erro(res, 400, 'Barbeiro inválido.');
+            const bb = await Barbeiro.findById(b.barbeiro);
+            if (!bb) return erro(res, 400, 'Barbeiro inválido.');
+            barbeiro = bb._id; barbeiroNome = bb.nome;
+        }
+        // folga de um barbeiro só conflita com os horários dele (ou os antigos, sem barbeiro)
+        const filtro = { data, ...(hora ? { hora } : {}), ...(barbeiro ? { barbeiro: { $in: [barbeiro, null] } } : {}) };
+        const emConflito = await Agendamento.countDocuments(filtro);
         if (hora && emConflito) return erro(res, 400, 'Já existe um agendamento nesse horário.');
         try {
-            const doc = await Bloqueio.create({ data, hora, motivo: limpar(b.motivo, 80) });
+            const doc = await Bloqueio.create({ data, hora, motivo: limpar(b.motivo, 80), barbeiro, barbeiroNome });
             logSeg('bloqueio_criado', req, { data, hora: hora || 'dia inteiro' });
             res.status(201).json({ ...doc.toObject(), agendamentosNoDia: hora ? 0 : emConflito });
         } catch (err) {
@@ -1241,7 +1313,7 @@ app.put('/meu-perfil', exigirLogin, async (req, res) => {
         if (nome.length < 2) return erro(res, 400, 'Informe seu nome.');
         const telefone = normTelefone(b.telefone);
         if (telefone === null) return erro(res, 400, 'Informe um WhatsApp válido com DDD (ou deixe em branco).');
-        const u = await Usuario.findOneAndUpdate({ email: req.usuario.email }, { nome, telefone }, { new: true }).collation(COLLATION);
+        const u = await Usuario.findOneAndUpdate({ email: req.usuario.email }, { nome, telefone }, { returnDocument: 'after' }).collation(COLLATION);
         if (!u) return erro(res, 404, 'Conta não encontrada.');
         // horários futuros passam a mostrar o nome/telefone novos para o Rod
         await Agendamento.updateMany({ email: u.email, data: { $gte: agoraSP().data } }, { nome, telefone }).collation(COLLATION);
@@ -1277,9 +1349,10 @@ app.post('/agendamentos/manual', exigirLogin, exigirDono, async (req, res) => {
         const data = str(b.data, 10), hora = str(b.hora, 5);
         const problema = erroDeHorario(data, hora);
         if (problema) return erro(res, 400, problema);
-        if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário está bloqueado em Folgas. Remova o bloqueio antes.');
+        const escolha = await escolherBarbeiro(data, hora, str(b.barbeiro, 40));
+        if (escolha.erro) return erro(res, 400, escolha.erro);
         try {
-            const doc = await Agendamento.create({ nome, email: '', telefone, origem: 'painel', data, hora, servico, valor: preco, statusPagamento: 'pendente' });
+            const doc = await Agendamento.create({ nome, email: '', telefone, origem: 'painel', data, hora, servico, valor: preco, statusPagamento: 'pendente', barbeiro: escolha.id, barbeiroNome: escolha.nome });
             logSeg('agendamento_manual', req, { data, hora });
             res.status(201).json(doc);
         } catch (err) {
@@ -1312,10 +1385,14 @@ app.post('/agendamentos/:id/remarcar', exigirLogin, async (req, res) => {
             if (inicioDoAgendamento(ag) - Date.now() < REMARCAR_ANTECEDENCIA_H * 3600e3) return erro(res, 400, `Remarcações só até ${REMARCAR_ANTECEDENCIA_H} horas antes do horário. Fale com o Rod pelo WhatsApp.`);
             if ((ag.remarcacoes || 0) >= MAX_REMARCACOES) return erro(res, 400, `Este horário já foi remarcado ${MAX_REMARCACOES} vezes. Fale com o Rod pelo WhatsApp.`);
         }
-        if (await Bloqueio.findOne({ data, hora: { $in: ['', hora] } })) return erro(res, 400, 'Esse horário não está disponível.');
+        const pedido = str(req.body && req.body.barbeiro, 40) || (ag.barbeiro ? String(ag.barbeiro) : '');
+        let escolha = await escolherBarbeiro(data, hora, pedido);
+        // barbeiro antigo desativado: tenta qualquer outro livre
+        if (escolha.erro && pedido && !barbeirosAtivos.some(b => String(b._id) === pedido) && !(req.body && req.body.barbeiro)) escolha = await escolherBarbeiro(data, hora, '');
+        if (escolha.erro) return erro(res, 400, escolha.erro === 'Horário já reservado!' ? 'Esse horário não está disponível.' : escolha.erro);
         const antes = { data: ag.data, hora: ag.hora };
         try {
-            await Agendamento.updateOne({ _id: ag._id }, { $set: { data, hora, lembreteEnviado: false }, $inc: { remarcacoes: 1 } });
+            await Agendamento.updateOne({ _id: ag._id }, { $set: { data, hora, lembreteEnviado: false, barbeiro: escolha.id, barbeiroNome: escolha.nome }, $inc: { remarcacoes: 1 } });
         } catch (err) {
             if (err && err.code === 11000) return erro(res, 400, 'Horário já reservado!');
             throw err;
@@ -1408,7 +1485,7 @@ app.put('/avaliacoes/:id', exigirLogin, exigirDono, async (req, res) => {
     try {
         if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
         if (typeof (req.body && req.body.oculta) !== 'boolean') return erro(res, 400, 'Valor inválido.');
-        const doc = await Avaliacao.findByIdAndUpdate(req.params.id, { oculta: req.body.oculta }, { new: true });
+        const doc = await Avaliacao.findByIdAndUpdate(req.params.id, { oculta: req.body.oculta }, { returnDocument: 'after' });
         if (!doc) return erro(res, 404, 'Avaliação não encontrada.');
         logSeg('avaliacao_visibilidade', req, { oculta: doc.oculta });
         res.json(doc);
@@ -1421,6 +1498,84 @@ app.put('/avaliacoes/:id', exigirLogin, exigirDono, async (req, res) => {
 // ---------------------------------------------------------------------------
 // Erros (A10): sem vazar detalhes internos
 // ---------------------------------------------------------------------------
+
+// --- barbeiros ---
+
+app.get('/barbeiros', (req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.json(barbeirosAtivos.map(b => ({ _id: b._id, nome: b.nome })));
+});
+
+app.get('/barbeiros/todos', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        res.json(await Barbeiro.find().sort({ ordem: 1, createdAt: 1 }));
+    } catch (err) {
+        console.error('ERRO AO LISTAR BARBEIROS:', err.message);
+        erro(res, 500, 'Erro ao listar os barbeiros.');
+    }
+});
+
+// nomes iguais sem considerar acento nem maiúscula (Léo = leo)
+const MESMO_NOME = { locale: 'pt', strength: 1 };
+
+function validarComissao(v) {
+    if (v === undefined || v === null || v === '') return 0;
+    const n = typeof v === 'number' || typeof v === 'string' ? Number(v) : NaN;
+    return Number.isFinite(n) && n >= 0 && n <= 100 ? r2(n) : null;
+}
+
+app.post('/barbeiros', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        const b = req.body || {};
+        const nome = limpar(b.nome, 40);
+        if (nome.length < 2) return erro(res, 400, 'Informe o nome do barbeiro.');
+        const comissao = validarComissao(b.comissao);
+        if (comissao === null) return erro(res, 400, 'A comissão deve ser de 0 a 100%.');
+        if (await Barbeiro.exists({ nome }).collation(MESMO_NOME)) return erro(res, 400, 'Já existe um barbeiro com esse nome.');
+        const ultimo = await Barbeiro.findOne().sort({ ordem: -1 }).select('ordem');
+        const doc = await Barbeiro.create({ nome, comissao, ativo: true, ordem: ((ultimo && ultimo.ordem) || 0) + 1 });
+        await carregarBarbeiros();
+        logSeg('barbeiro_criado', req, { nome });
+        res.status(201).json(doc);
+    } catch (err) {
+        console.error('ERRO AO CRIAR BARBEIRO:', err.message);
+        erro(res, 500, 'Erro ao cadastrar o barbeiro.');
+    }
+});
+
+app.put('/barbeiros/:id', exigirLogin, exigirDono, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return erro(res, 400, 'Identificador inválido.');
+        const b = req.body || {}, dados = {};
+        if (b.nome !== undefined) {
+            const nome = limpar(b.nome, 40);
+            if (nome.length < 2) return erro(res, 400, 'Informe o nome do barbeiro.');
+            if (await Barbeiro.exists({ nome, _id: { $ne: req.params.id } }).collation(MESMO_NOME)) return erro(res, 400, 'Já existe um barbeiro com esse nome.');
+            dados.nome = nome;
+        }
+        if (b.comissao !== undefined) {
+            const c = validarComissao(b.comissao);
+            if (c === null) return erro(res, 400, 'A comissão deve ser de 0 a 100%.');
+            dados.comissao = c;
+        }
+        if (b.ativo !== undefined) {
+            if (typeof b.ativo !== 'boolean') return erro(res, 400, 'Valor inválido para ativo.');
+            dados.ativo = b.ativo;
+        }
+        if (!Object.keys(dados).length) return erro(res, 400, 'Nada para atualizar.');
+        const doc = await Barbeiro.findByIdAndUpdate(req.params.id, dados, { returnDocument: 'after' });
+        if (!doc) return erro(res, 404, 'Barbeiro não encontrado.');
+        const hoje = agoraSP().data;
+        if (dados.nome) await Agendamento.updateMany({ barbeiro: doc._id, data: { $gte: hoje } }, { barbeiroNome: doc.nome });
+        await carregarBarbeiros();
+        const futuros = dados.ativo === false ? await Agendamento.countDocuments({ barbeiro: doc._id, data: { $gte: hoje } }) : 0;
+        logSeg('barbeiro_atualizado', req, { nome: doc.nome, ...dados });
+        res.json({ ...doc.toObject(), agendamentosFuturos: futuros });
+    } catch (err) {
+        console.error('ERRO AO ATUALIZAR BARBEIRO:', err.message);
+        erro(res, 500, 'Erro ao atualizar o barbeiro.');
+    }
+});
 
 app.use((req, res) => erro(res, 404, 'Rota não encontrada.'));
 

@@ -11,7 +11,8 @@
         { nome: 'Progressiva + Corte', preco: 120, min: 120, icone: 'fa-wind' },
         { nome: 'Luzes + Corte',       preco: 100, min: 90,  icone: 'fa-wand-magic-sparkles' }
     ];
-    var estado = { servico: null, data: '', hora: '', agenda: null };
+    var estado = { servico: null, data: '', hora: '', agenda: null, barbeiro: '' };
+    var BARBEIROS = [];   // só aparece o passo "Barbeiro" com 2 ou mais ativos
     var contadorBusca = 0, intervaloPagamento = null, intervaloPrazo = null;
 
     var $ = function (id) { return document.getElementById(id); };
@@ -91,6 +92,48 @@
         atualizarResumo();
     }
 
+    // ---------------------------------------------------------------- barbeiros (quando a barbearia tem mais de um)
+    function nomeBarbeiro(id) { var b = BARBEIROS.filter(function (x) { return x._id === id; })[0]; return b ? b.nome : ''; }
+    function desenharBarbeiros() {
+        var passo = $('passo-barbeiro'), lista = $('lista-barbeiros');
+        var multi = BARBEIROS.length >= 2;
+        passo.hidden = !multi;
+        $('num-passo-data').textContent = multi ? '3' : '2';
+        $('num-passo-hora').textContent = multi ? '4' : '3';
+        if (!multi) { estado.barbeiro = ''; return; }
+        lista.innerHTML = '';
+        [{ _id: '', nome: 'Sem preferência' }].concat(BARBEIROS).forEach(function (b) {
+            var el = document.createElement('button');
+            el.type = 'button'; el.className = 'barb-chip'; el.dataset.barbeiro = b._id; el.setAttribute('role', 'radio');
+            var sel = b._id === estado.barbeiro;
+            el.classList.toggle('selected', sel); el.setAttribute('aria-checked', sel ? 'true' : 'false');
+            el.innerHTML = '<span class="barb-av" aria-hidden="true">' + (b._id ? esc(b.nome.trim().charAt(0).toUpperCase()) : '<i class="fas fa-shuffle"></i>') + '</span>' +
+                '<span class="barb-nome">' + esc(b.nome) + '</span>' +
+                (b._id ? '' : '<span class="barb-sub">primeiro livre</span>');
+            el.addEventListener('click', function () { selecionarBarbeiro(b._id); });
+            lista.appendChild(el);
+        });
+    }
+    function selecionarBarbeiro(id) {
+        if (id === estado.barbeiro) return;
+        estado.barbeiro = id;
+        document.querySelectorAll('.barb-chip').forEach(function (c) {
+            var sel = c.dataset.barbeiro === id; c.classList.toggle('selected', sel); c.setAttribute('aria-checked', sel ? 'true' : 'false');
+        });
+        estado.trocouBarbeiro = true;
+        atualizarResumo();
+        if (estado.data) carregarHorarios(false);
+    }
+    function carregarBarbeiros() {
+        fetch(API_URL + '/barbeiros').then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .then(function (lista) {
+                if (!Array.isArray(lista)) return;
+                BARBEIROS = lista.filter(function (b) { return b && typeof b._id === 'string' && typeof b.nome === 'string'; });
+                if (estado.barbeiro && !nomeBarbeiro(estado.barbeiro)) estado.barbeiro = '';
+                desenharBarbeiros(); atualizarResumo();
+            }).catch(function () { /* sem a lista, agenda única */ });
+    }
+
     // ---------------------------------------------------------------- dias
     function desenharDias() {
         var faixa = $('faixa-dias');
@@ -148,7 +191,7 @@
             lento = setTimeout(function () { if (minha === contadorBusca) { aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Carregando os horários, só um instante...'; aviso.style.display = 'block'; } }, 3500);
         }
         try {
-            var r = await fetch(API_URL + '/agenda?data=' + encodeURIComponent(iso));
+            var r = await fetch(API_URL + '/agenda?data=' + encodeURIComponent(iso) + (estado.barbeiro ? '&barbeiro=' + encodeURIComponent(estado.barbeiro) : ''));
             if (!r.ok) throw new Error('http ' + r.status);
             var agenda = await r.json();
             if (minha !== contadorBusca) return;
@@ -169,8 +212,10 @@
         var container = $('container-horarios'), aviso = $('aviso-horario');
         container.innerHTML = ''; aviso.className = 'aviso-horario'; aviso.style.display = 'none';
 
+        var trocou = estado.trocouBarbeiro; estado.trocouBarbeiro = false;
+        var com = estado.barbeiro ? ' com ' + esc(nomeBarbeiro(estado.barbeiro)) : '';
         if (agenda.diaFechado) {
-            aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-ban"></i> Não há atendimento neste dia. Escolha outra data.'; aviso.style.display = 'block';
+            aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-ban"></i> ' + (com ? 'Sem atendimento' + com + ' neste dia. Escolha outra data ou outro barbeiro.' : 'Não há atendimento neste dia. Escolha outra data.'); aviso.style.display = 'block';
             if (estado.hora) { estado.hora = ''; $('hora-selecionada').value = ''; atualizarResumo(); }
             return;
         }
@@ -203,14 +248,14 @@
         grupo('Tarde e noite', 'fa-cloud-sun', 13 * 60, 21 * 60 + 30);
 
         if (estado.hora && indisponiveis[estado.hora]) {
-            Toast.fire({ icon: 'info', title: 'O horário das ' + estado.hora + ' acabou de ser reservado. Escolha outro.' });
+            Toast.fire({ icon: 'info', title: trocou ? 'O horário das ' + estado.hora + ' não está livre' + com + '. Escolha outro.' :'O horário das ' + estado.hora + ' acabou de ser reservado. Escolha outro.' });
             estado.hora = ''; $('hora-selecionada').value = ''; atualizarResumo();
         }
         if (!mostrados) { aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="far fa-moon"></i> Os horários de hoje já passaram. Escolha outro dia.'; aviso.style.display = 'block'; }
-        else if (!livres) { aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-ban"></i> Agenda cheia neste dia. Tente outra data.'; aviso.style.display = 'block'; }
+        else if (!livres) { aviso.className = 'aviso-horario info'; aviso.innerHTML = '<i class="fas fa-ban"></i> Agenda cheia' + com + ' neste dia. Tente outra data' + (com ? ' ou outro barbeiro.' : '.'); aviso.style.display = 'block'; }
         else {
             aviso.className = 'aviso-horario livres'; aviso.style.display = 'block';
-            aviso.innerHTML = '<i class="far fa-circle-check"></i> ' + livres + (livres === 1 ? ' horário disponível' : ' horários disponíveis');
+            aviso.innerHTML = '<i class="far fa-circle-check"></i> ' + livres + (livres === 1 ? ' horário disponível' : ' horários disponíveis') + com;
         }
     }
 
@@ -240,6 +285,7 @@
             box.classList.add('ativo');
             box.innerHTML =
                 '<div class="rs-linha"><i class="fas ' + (s ? s.icone : 'fa-scissors') + '" aria-hidden="true"></i><span>' + (s ? esc(s.nome) : '<em>Escolha o serviço</em>') + '</span></div>' +
+                (BARBEIROS.length >= 2 ? '<div class="rs-linha"><i class="fas fa-user-check" aria-hidden="true"></i><span>' + (estado.barbeiro ? esc(nomeBarbeiro(estado.barbeiro)) : 'Sem preferência de barbeiro') + '</span></div>' : '') +
                 '<div class="rs-linha"><i class="far fa-calendar" aria-hidden="true"></i><span>' + (estado.data ? esc(RodUtil.dataExtenso(estado.data)) : '<em>Escolha o dia</em>') + '</span></div>' +
                 '<div class="rs-linha"><i class="far fa-clock" aria-hidden="true"></i><span>' + (estado.hora ? esc(estado.hora) : '<em>Escolha o horário</em>') + '</span></div>' +
                 (s ? '<div class="rs-total"><span>Total</span><strong>' + RodUtil.brl(s.preco) + '</strong></div>' : '');
@@ -277,7 +323,7 @@
         try {
             var resposta = await RodAuth.fetch(API_URL + '/agendar', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: estado.data, hora: estado.hora, servico: estado.servico })
+                body: JSON.stringify({ data: estado.data, hora: estado.hora, servico: estado.servico, barbeiro: estado.barbeiro || undefined })
             });
             var resultado = await resposta.json().catch(function () { return {}; });
             if (resposta.ok) { mostrarReserva(resultado, s); return; }
@@ -312,12 +358,13 @@
             '<div class="summary-row"><span><i class="fas fa-scissors"></i> Serviço</span><strong>' + esc(serv.nome) + '</strong></div>' +
             '<div class="summary-row"><span><i class="far fa-calendar"></i> Data</span><strong>' + esc(RodUtil.dataBR(reserva.data)) + ' · ' + esc(RodUtil.diaDaSemana(reserva.data, 'short')) + '</strong></div>' +
             '<div class="summary-row"><span><i class="far fa-clock"></i> Horário</span><strong>' + esc(reserva.hora) + '</strong></div>' +
+            (reserva.barbeiro ? '<div class="summary-row"><span><i class="fas fa-user"></i> Barbeiro</span><strong>' + esc(reserva.barbeiro) + '</strong></div>' : '') +
             '<div class="summary-row total"><span>Total</span><strong>' + RodUtil.brl(serv.preco) + '</strong></div></div>';
     }
 
     function mostrarReserva(r, serv) {
         pararTimers();
-        var reserva = { servico: serv.nome, data: estado.data, hora: estado.hora };
+        var reserva = { servico: serv.nome, data: estado.data, hora: estado.hora, barbeiro: typeof r.barbeiro === 'string' ? r.barbeiro : '' };
         var email = RodAuth.esc(localStorage.getItem('usuarioEmail') || '');
         var form = $('form-agendamento'); form.style.display = 'none';
         document.querySelector('#area-formulario .form-title').style.display = 'none';
@@ -567,7 +614,7 @@
         iniciarRevelar();
         var logado = iniciarSessao();
         if (logado) {
-            desenharDias(); atualizarResumo();
+            desenharDias(); atualizarResumo(); carregarBarbeiros();
             // acorda o servidor (plano gratuito dorme) enquanto o cliente escolhe o serviço
             fetch(API_URL + '/health').catch(function () {});
             // mantém a disponibilidade fresca: a cada minuto e quando a aba volta ao foco

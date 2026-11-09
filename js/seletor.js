@@ -59,7 +59,8 @@
             var minha = ++estado.busca, horas = $('.sel-horas'), aviso = $('.sel-aviso');
             horas.innerHTML = ''; aviso.textContent = 'Carregando horários...';
             try {
-                var r = await fetch(op.api + '/agenda?data=' + encodeURIComponent(iso));
+                var barb = typeof op.barbeiro === 'function' ? op.barbeiro(ov) : (op.barbeiro || '');
+                var r = await fetch(op.api + '/agenda?data=' + encodeURIComponent(iso) + (barb ? '&barbeiro=' + encodeURIComponent(barb) : ''));
                 var ag = await r.json();
                 if (minha !== estado.busca) return;
                 if (!r.ok) throw new Error();
@@ -97,6 +98,9 @@
                 fechar();
             } catch (e) { erro.textContent = 'Sem conexão. Tente de novo.'; btn.disabled = false; btn.innerHTML = rot; }
         });
+
+        // trocou o barbeiro: recarrega os horários do dia escolhido
+        if (op.recarregarAo) { var campoB = ov.querySelector(op.recarregarAo); if (campoB) campoB.addEventListener('change', function () { if (estado.data) { estado.hora = ''; atualizarBotao(); carregar(estado.data); } }); }
 
         var primeiro = ov.querySelector('input:not([type="date"]), select') || dias.querySelector('.day-chip');
         if (primeiro) primeiro.focus();

@@ -137,15 +137,20 @@
                         <div class="services-grid" id="lista-servicos" role="radiogroup" aria-label="Escolha o serviço"></div>
                     </fieldset>
 
+                    <fieldset class="passo" id="passo-barbeiro" hidden>
+                        <legend><span class="passo-num">2</span> Barbeiro</legend>
+                        <div class="barb-strip" id="lista-barbeiros" role="radiogroup" aria-label="Escolha o barbeiro"></div>
+                    </fieldset>
+
                     <fieldset class="passo" id="passo-data">
-                        <legend><span class="passo-num">2</span> Dia</legend>
+                        <legend><span class="passo-num" id="num-passo-data">2</span> Dia</legend>
                         <div class="day-strip" id="faixa-dias" role="radiogroup" aria-label="Escolha o dia"></div>
                         <label class="data-outra" for="data"><i class="far fa-calendar-alt"></i> Outra data</label>
                         <input type="date" id="data" required>
                     </fieldset>
 
                     <fieldset class="passo" id="passo-hora">
-                        <legend><span class="passo-num">3</span> Horário</legend>
+                        <legend><span class="passo-num" id="num-passo-hora">3</span> Horário</legend>
                         <p id="aviso-horario" class="aviso-horario" aria-live="polite">Escolha um dia para ver os horários.</p>
                         <div id="container-horarios" role="radiogroup" aria-label="Escolha o horário"></div>
                     </fieldset>
